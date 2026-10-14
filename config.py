@@ -90,7 +90,8 @@ class GameConfig:
     player_hp: float = 100.0
     player_fire_cooldown: int = 20
     limited_ammo: bool = True
-    player_ammo: int = 120           # 자동 재장전 없이 보급 카드로 보충
+    player_ammo: int = 120           # 탄창 용량 (예비 탄약은 무제한)
+    reload_seconds: float = 2.5
     regen_delay: int = 240           # 마지막 피격 후 회복 시작까지 프레임
     regen_rate: float = 0.05         # 프레임당 회복량
 

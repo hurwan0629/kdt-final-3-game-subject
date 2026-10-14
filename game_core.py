@@ -149,6 +149,8 @@ class GameCore:
             raise ValueError("레벨 경험치는 양수, 증가량은 0 이상이어야 합니다.")
         if not isinstance(self.cfg.player_ammo, int) or self.cfg.player_ammo < 0:
             raise ValueError("player_ammo는 0 이상의 정수여야 합니다.")
+        if self.cfg.reload_seconds <= 0 or self.cfg.fps <= 0:
+            raise ValueError("reload_seconds와 fps는 양수여야 합니다.")
         self.reset(seed)
 
     # ---------------- 초기화 ----------------
@@ -168,6 +170,7 @@ class GameCore:
         self.reward_choices = ()
         self.last_reward = ""
         self.reward_message_until = 0
+        self.reload_frames_left = 0
         self.bullets = []
         self.shapes = []
         self.enemies = []   # 스폰 위치 계산이 이전 판의 적을 참조하지 않도록 먼저 비움
@@ -294,8 +297,7 @@ class GameCore:
             return ()
         if not self.reward_choices:
             eligible = [card for card in REWARD_CARDS
-                        if (card.category != "전직" or (self.level >= 3 and self.player.job == "rookie"))
-                        and (card.key != "ammo" or self.cfg.limited_ammo)]
+                        if card.category != "전직" or (self.level >= 3 and self.player.job == "rookie")]
             indices = self.reward_rng.choice(len(eligible), size=3, replace=False)
             self.reward_choices = tuple(eligible[int(i)] for i in indices)
         return self.reward_choices
@@ -324,8 +326,6 @@ class GameCore:
         elif card.key == "range":
             p.bullet_speed_scale *= 1.2
             p.bullet_life_scale *= 1.15
-        elif card.key == "ammo":
-            p.ammo = min(p.max_ammo, p.ammo + 40)
         elif card.key == "scout":
             p.job = "scout"
             p.accel_scale *= 1.35
@@ -343,6 +343,17 @@ class GameCore:
         self.reward_choices = ()
         self.last_reward = card.title
         self.reward_message_until = self.frame + self.cfg.fps * 3
+        return True
+
+    @property
+    def reload_frames_total(self):
+        return math.ceil(self.cfg.reload_seconds * self.cfg.fps)
+
+    def request_reload(self):
+        if (self.game_over or not self.player.alive or not self.cfg.limited_ammo
+                or self.reload_frames_left or self.player.ammo >= self.player.max_ammo):
+            return False
+        self.reload_frames_left = self.reload_frames_total
         return True
 
     def pop_events(self) -> dict:
@@ -381,6 +392,10 @@ class GameCore:
             self.shapes.append(self._make_shape())
 
         self.frame += 1
+        if self.reload_frames_left:
+            self.reload_frames_left -= 1
+            if self.reload_frames_left == 0 and self.player.hp > 0:
+                self.player.ammo = self.player.max_ammo
         if self.player.hp <= 0:
             self.player.hp = 0.0
             self.player.alive = False
@@ -420,6 +435,8 @@ class GameCore:
         if not want_fire:
             return
         c = self.cfg
+        if t.team == "player" and self.reload_frames_left:
+            return
         offsets = (-0.20, 0.0, 0.20) if t.projectiles == 3 else (0.0,)
         if t.team == "player" and c.limited_ammo:
             # 마지막 탄약이 3발 미만이면 남은 수만큼 발사한다.
