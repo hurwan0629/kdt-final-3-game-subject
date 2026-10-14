@@ -14,7 +14,7 @@ tags: [space-skirmish, dev, reinforcement-learning]
 |---|---|---|
 | 이동·조준 | WASD와 마우스 | 이동 9개 × 회전 3개 |
 | 발사 | 좌클릭 | 자동 발사 |
-| 레벨업·카드 | 켜짐 | 꺼짐 |
+| 레벨업·강화·전직·스킬 | 켜짐. HUD에서 선택 | 꺼짐 |
 | 탄창·재장전 | 제한 탄창, R 재장전 | 탄약 무제한 |
 | 시간 | 60 게임 프레임/초 | 한 행동을 기본 4프레임 적용 |
 | 종료 | 사망, 메뉴에서 종료 | 사망 `terminated`, 3000 step에서 `truncated` |
@@ -55,9 +55,9 @@ tags: [space-skirmish, dev, reinforcement-learning]
 
 사용자 지정 `GameConfig`를 전달하면 그 설정을 그대로 씁니다. 기존 조건으로 학습하려면 `progression_enabled=False, limited_ammo=False`를 명시합니다.
 
-성장을 켜면 `env.game.open_rewards()` / `choose_reward(index)`, 탄창 제한을 켜면 `env.game.request_reload()`를 별도로 호출해야 합니다. 현재 27개 행동에는 이 선택이 포함되어 있지 않습니다. 기본 관찰에도 레벨·직업·강화 수치·탄약·재장전 시간이 모두 들어 있지는 않습니다. 사람과 같은 조건으로 학습하려면 행동과 관찰 설계를 함께 확장해야 합니다.
+성장을 켜면 `env.game.upgrade_stat(key)` / `choose_reward(index)`로 선택합니다. 전직 카드는 Lv.10·20…에 자동 생성됩니다. 탄약은 `request_reload()`, 스킬은 `request_bomb()` / `request_dash()` 또는 코어 step의 `want_bomb`, `want_dash`로 요청할 수 있습니다. 기본 27개 행동과 관찰에는 이 선택·스킬·성장 상태가 전부 포함되지는 않습니다. 같은 조건으로 학습하려면 행동·관찰 설계를 함께 확장해야 합니다.
 
-`info`에는 점수·처치·맵·프레임·이벤트와 함께 `level`, `xp`, `pending_rewards`, `job`, `ammo`, `reload_seconds_left`가 있습니다. 무제한 탄약일 때 `ammo`는 `None`입니다. 화면의 줌은 관찰값에 영향을 주지 않습니다.
+`info`에는 기존 상태와 함께 `upgrade_points`, `special_reward_levels`, `stat_levels`, `special_levels`가 있습니다. `pending_rewards`는 일반 포인트와 전직 선택권을 합한 수입니다. 무제한 탄약일 때 `ammo`는 `None`입니다. 줌은 관찰값에 영향을 주지 않습니다.
 
 맵·전투, 카드 추첨, 화면 연출은 난수 사용이 분리되어 있습니다. 같은 seed와 같은 행동·카드 선택을 사용하면 같은 코어 결과를 재현할 수 있습니다.
 

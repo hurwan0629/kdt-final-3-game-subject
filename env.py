@@ -226,7 +226,10 @@ class TankEnv(_BaseEnv):
                 "level": self.game.level, "xp": self.game.xp,
                 "pending_rewards": self.game.pending_rewards, "job": self.game.player.job,
                 "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None,
-                "reload_seconds_left": self.game.reload_frames_left / self.game_cfg.fps}
+                "reload_seconds_left": self.game.reload_frames_left / self.game_cfg.fps,
+                "upgrade_points": self.game.upgrade_points,
+                "special_reward_levels": list(self.game.special_reward_levels),
+                "stat_levels": dict(self.game.stat_levels), "special_levels": dict(self.game.special_levels)}
 
     def render(self):
         if self.render_mode != "human":

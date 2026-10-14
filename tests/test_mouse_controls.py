@@ -107,7 +107,7 @@ class MouseControlTests(unittest.TestCase):
         renderer._update_camera(self.game.player)
         self.assertEqual((renderer.camera_x, renderer.camera_y), (-320, -240))
 
-    def test_pause_focus_loss_and_reward_menu_block_fire_and_motion(self):
+    def test_pause_focus_loss_freeze_but_stat_selection_keeps_game_running(self):
         game = self.game
         app = GameApplication(game, self.renderer, seed=1)
         app.activate("start")
@@ -123,10 +123,12 @@ class MouseControlTests(unittest.TestCase):
         app.handle_event(pygame.event.Event(pygame.WINDOWFOCUSLOST))
         self.assertEqual(app.mode, "pause")
         key(pygame.K_p)
-        key(pygame.K_l)
+        key(pygame.K_1)
         state = (game.frame, game.player.x, game.player.ammo)
         app.update(0.1, key_state(pygame.K_d), (800, 360), (True, False, False))
-        self.assertEqual((game.frame, game.player.x, game.player.ammo), state)
+        self.assertGreater(game.frame, state[0])
+        self.assertGreater(game.player.x, state[1])
+        self.assertEqual(game.stat_levels["regen"], 1)
 
     def test_quick_click_survives_a_frame_without_a_simulation_tick(self):
         app = GameApplication(self.game, self.renderer, seed=1)

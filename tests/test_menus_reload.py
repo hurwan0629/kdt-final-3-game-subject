@@ -132,12 +132,12 @@ class MenusReloadTests(unittest.TestCase):
         self.key(pygame.K_r)
         self.assertEqual((self.game.reload_frames_left, self.game.score), (149, 190))
         self.key(pygame.K_ESCAPE)
-        self.key(pygame.K_l)
+        self.key(pygame.K_1)
         self.update(100)
-        self.assertEqual(self.game.reload_frames_left, 149)
-        self.key(pygame.K_l)
+        self.assertEqual(self.game.reload_frames_left, 144)
+        self.assertEqual(self.game.stat_levels["regen"], 1)
         self.update()
-        self.assertEqual(self.game.reload_frames_left, 148)
+        self.assertEqual(self.game.reload_frames_left, 143)
 
     def test_reload_rejects_full_magazine_death_and_unlimited_mode(self):
         game = self.game

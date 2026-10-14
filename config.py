@@ -109,6 +109,13 @@ class GameConfig:
     bullet_radius: float = 6.0
     bullet_life: int = 70
     bullet_damage: float = 7.0
+    laser_range: float = 720.0
+    bomb_damage: float = 45.0
+    bomb_radius: float = 130.0
+    bomb_cooldown_seconds: float = 6.0
+    dash_speed: float = 18.0
+    dash_seconds: float = 0.2
+    dash_cooldown_seconds: float = 4.0
 
     # 도형
     num_shapes: int = 72

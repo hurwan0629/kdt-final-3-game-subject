@@ -20,6 +20,7 @@ from env import build_vector
 from game_core import GameCore, encode_action, move_from_vector
 from terrain import list_maps
 from menus import menu_buttons
+from progression import STAT_UPGRADES, stat_rows, special_cards, stat_upgrades_visible
 
 MAX_FRAMES_PER_TICK = 5  # 느린 PC에서 업데이트가 밀려 멈추는 것 방지
 
@@ -63,14 +64,15 @@ class GameApplication:
         self.cfg = game.cfg
         self.mode = "main"
         self.running = True
-        self.rewards_open = False
         self.show_debug = False
         self.show_controls = True
+        self.show_stats = False
         self.auto_pause = True
         self.selected = 0
         self.acc = 0.0
         self.action = 0
         self.click_requested = False
+        self.skill_requests = set()
         self.suppress_fire = True
         self.map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
 
@@ -78,16 +80,18 @@ class GameApplication:
         return menu_buttons(self.mode, self.cfg, self.show_debug, self.show_controls, self.auto_pause)
 
     def activate(self, key):
+        self.show_stats = False
         self.click_requested = False
+        self.skill_requests.clear()
         self.suppress_fire = True
         self.acc = 0.0
         if key in ("start", "restart"):
             self.game.reset(self.seed)
-            self.mode, self.rewards_open, self.selected = "playing", False, 0
+            self.mode, self.selected = "playing", 0
         elif key == "resume":
             self.mode = "playing"
         elif key == "main":
-            self.mode, self.rewards_open, self.selected = "main", False, 0
+            self.mode, self.selected = "main", 0
         elif key == "quit":
             self.running = False
         elif key == "zoom":
@@ -140,17 +144,17 @@ class GameApplication:
                     self.activate("quit")
             return
         if ev.type == pygame.KEYDOWN:
-            if ev.key == pygame.K_l:
-                self.rewards_open = not self.rewards_open and bool(self.game.open_rewards())
-                self.acc = 0.0
-                self.click_requested = False
-                self.suppress_fire = True
+            stats = (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4,
+                     pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8)
+            specials = (pygame.K_F2, pygame.K_F3, pygame.K_F4)
+            if ev.key in stats:
+                self.game.upgrade_stat(STAT_UPGRADES[stats.index(ev.key)].key)
                 return
-            if self.rewards_open:
-                choices = (pygame.K_1, pygame.K_2, pygame.K_3)
-                if ev.key in choices and self.game.choose_reward(choices.index(ev.key)):
-                    self.rewards_open = False
-                    self.suppress_fire = True
+            if ev.key in specials:
+                self.game.choose_reward(specials.index(ev.key))
+                return
+            if ev.key in (pygame.K_q, pygame.K_SPACE):
+                self.skill_requests.add("bomb" if ev.key == pygame.K_q else "dash")
                 return
             if ev.key == pygame.K_r:
                 self.game.request_reload()
@@ -167,24 +171,53 @@ class GameApplication:
                 if name:
                     tc.map_name = name
                 self.activate("restart")
-        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not self.rewards_open and not self.suppress_fire:
-            self.click_requested = True
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.cfg.progression_enabled:
+                rows = stat_rows(self.cfg.width, self.cfg.height) if stat_upgrades_visible(self.game) else []
+                for card, rect in rows:
+                    if pygame.Rect(rect).collidepoint(ev.pos):
+                        self.game.upgrade_stat(card.key)
+                        self.suppress_fire, self.click_requested = True, False
+                        return
+                if self.game.reward_choices:
+                    for index, rect in enumerate(special_cards(self.cfg.width, self.cfg.height)):
+                        if pygame.Rect(rect).collidepoint(ev.pos):
+                            self.game.choose_reward(index)
+                            self.suppress_fire, self.click_requested = True, False
+                            return
+            if not self.suppress_fire:
+                self.click_requested = True
+
+    def pointer_over_rewards(self, pos):
+        if not self.cfg.progression_enabled:
+            return False
+        rects = ([rect for card, rect in stat_rows(self.cfg.width, self.cfg.height)]
+                 if stat_upgrades_visible(self.game) else [])
+        if self.game.reward_choices:
+            rects += special_cards(self.cfg.width, self.cfg.height)
+        return any(pygame.Rect(rect).collidepoint(pos) for rect in rects)
 
     def update(self, elapsed, keys, mouse_pos, buttons):
+        self.show_stats = (self.mode == "playing" and not self.game.game_over
+                           and bool(keys[pygame.K_TAB]))
         if not buttons[0]:
             self.suppress_fire = False
-        if self.mode != "playing" or self.rewards_open or self.game.game_over:
+        if self.mode != "playing" or self.game.game_over:
             self.acc = 0.0
             self.click_requested = False
+            self.skill_requests.clear()
             return
         dt = 1.0 / self.cfg.fps
         self.acc = min(self.acc + elapsed, dt * MAX_FRAMES_PER_TICK)
         while self.acc >= dt:
             self.renderer._update_camera(self.game.player)
             self.action, target, want_fire = read_player_input(keys, self.renderer, mouse_pos, buttons)
-            fire = (want_fire or self.click_requested) and not self.suppress_fire
-            self.game.step(self.action, want_fire=fire, aim_position=target)
+            fire = (want_fire or self.click_requested) and not self.suppress_fire and not self.pointer_over_rewards(mouse_pos)
+            self.game.step(self.action, want_fire=fire, aim_position=target,
+                           want_bomb="bomb" in self.skill_requests or keys[pygame.K_q],
+                           want_dash="dash" in self.skill_requests or keys[pygame.K_SPACE])
             self.click_requested = False
+            self.skill_requests.clear()
             self.game.pop_events()
             self.acc -= dt
             if self.game.game_over:
@@ -197,9 +230,9 @@ class GameApplication:
             return
         lines = debug_lines(self.game, obs_cfg, self.action) if self.show_debug else None
         self.renderer.draw(self.game, lines, self.mode == "pause", show_ai=self.show_debug,
-                           rewards_open=self.rewards_open and self.mode == "playing",
                            show_controls=self.show_controls,
-                           menu=self.buttons() if self.mode == "pause" else None, selected=self.selected)
+                           menu=self.buttons() if self.mode == "pause" else None, selected=self.selected,
+                           show_stats=self.show_stats)
 
 
 def main():

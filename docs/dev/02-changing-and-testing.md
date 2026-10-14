@@ -15,7 +15,8 @@ tags: [space-skirmish, dev]
 | 기본 체력·피해량·탄창·재장전 | `GameConfig` | 코어의 `_fire()`, `_regen_player()`, `request_reload()`, HUD |
 | 이동감·관성 | `accel`, `friction`, `_apply_tank_control()` | 지형 감속, 속도 강화 카드 |
 | WASD·조준·단축키 | `read_player_input()`, `GameApplication.handle_event()` | 조작 안내, 입력 테스트 |
-| 카드 추가·삭제·효과 | `REWARD_CARDS`, `choose_reward()` | 전직 자격, 설명, 랜덤 3장 선택, 보상 테스트 |
+| 강화·전직·스킬 추가 | `STAT_UPGRADES`, `SPECIAL_REWARDS`, `upgrade_stat()`, `choose_reward()` | Lv.10 단위 자격, HUD 클릭 영역, 효과·설명·테스트 |
+| 무기·스킬 동작 | `_fire()`, `_fire_laser()`, `_explode()`, `request_bomb()`, `request_dash()` | 탄약·벽 충돌·피해·스킬 쿨다운·연출 |
 | 메인/설정 메뉴 | `menu_buttons()`, `activate()`, `_draw_menu()` | 버튼 영역과 클릭 판정, 설정 유지 여부 |
 | 줌·카메라 | `set_zoom()`, 좌표 변환, `_update_camera()` | 마우스 조준 역변환, 화면 가장자리, HUD 크기 |
 | 새 맵 | `maps/*.txt` | 기본 20×15, P 한 개, 연결성, 3×3 반복 구역 연결 |
@@ -44,7 +45,7 @@ python random_agent_test.py --steps 200
 python docs/dev/render_screens.py
 ```
 
-실제 렌더러로 `docs/game/assets/`의 PNG를 갱신합니다. 별도 창을 띄우지 않고, 고정 seed와 설명용 상태를 사용합니다. 게임 코드·맵·설정 파일을 저장하거나 변경하지 않습니다. 레벨업 장면의 190점과 강제 사망, 숨기 위치는 화면 설명을 위한 재현입니다.
+실제 렌더러로 `docs/game/assets/`의 PNG를 갱신합니다. 고정 seed와 설명용 상태를 사용하며 게임 코드·맵·설정 파일은 변경하지 않습니다. Lv.6/Lv.10, 전직·스킬, 사망·숨기는 화면 설명을 위해 재현합니다.
 
 새 화면을 추가할 때는 이미지와 문서 링크도 함께 갱신하세요. 문서 폴더를 옮겨도 읽을 수 있도록 절대 경로 대신 상대 경로를 유지하는 것이 좋습니다.
 

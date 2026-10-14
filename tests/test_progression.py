@@ -16,7 +16,7 @@ import pygame
 from config import GameConfig, ObsConfig
 from env import TankEnv, build_vector
 from game_core import Bullet, GameCore, encode_action
-from progression import REWARD_CARDS
+from progression import STAT_UPGRADES, SPECIAL_REWARDS, special_cards, stat_rows
 from renderer import Renderer
 from terrain import list_maps
 
@@ -47,41 +47,43 @@ class ProgressionTests(unittest.TestCase):
         self.assertEqual(game.open_rewards(), ())
         game._add_score(190)
         self.assertEqual((game.level, game.xp, game.pending_rewards), (3, 30, 2))
+        self.assertEqual(game.open_rewards(), ())
+        game._add_score(1790)
+        self.assertEqual((game.level, game.upgrade_points, game.special_reward_levels), (10, 8, [10]))
         cards = game.open_rewards()
         self.assertEqual(len({card.key for card in cards}), 3)
         self.assertEqual(game.open_rewards(), cards)
         self.assertFalse(game.choose_reward(-1))
         self.assertFalse(game.choose_reward(3))
-        self.assertEqual(game.pending_rewards, 2)
+        self.assertEqual(game.pending_rewards, 9)
         self.assertTrue(game.choose_reward(0))
-        self.assertEqual(game.pending_rewards, 1)
+        self.assertEqual(game.pending_rewards, 8)
         self.assertFalse(game.choose_reward(0))
-        self.assertEqual(len(game.open_rewards()), 3)
+        self.assertEqual(game.open_rewards(), ())
 
-    def test_class_cards_unlock_at_level_three_and_only_once(self):
-        seen_classes = set()
-        for seed in range(30):
-            game = empty_game(seed)
-            game._add_score(60)
-            self.assertTrue(all(c.category != "전직" for c in game.open_rewards()))
-            game.reward_choices = ()
-            game._add_score(100)
-            seen_classes.update(c.key for c in game.open_rewards() if c.category == "전직")
-            game.reward_choices = ()
-            game.player.job = "scout"
-            self.assertTrue(all(c.category != "전직" for c in game.open_rewards()))
-        self.assertEqual(seen_classes, {"scout", "gunner", "guardian"})
+    def test_every_tenth_level_queues_special_rewards_without_losing_stat_points(self):
+        game = empty_game()
+        game._add_score(7980)
+        self.assertEqual((game.level, game.xp, game.upgrade_points, game.special_reward_levels), (20, 0, 17, [10, 20]))
+        first = game.reward_choices
+        self.assertTrue(game.upgrade_stat("hull"))
+        self.assertEqual(game.reward_choices, first)
+        self.assertTrue(game.choose_reward(0))
+        self.assertEqual(game.special_reward_levels, [20])
+        self.assertEqual(len(game.reward_choices), 3)
+        self.assertEqual(game.upgrade_points, 16)
+        self.assertTrue(game.choose_reward(0))
+        self.assertEqual(game.special_reward_levels, [])
 
     def test_every_card_changes_the_advertised_stat(self):
-        for card in REWARD_CARDS:
+        for card in STAT_UPGRADES:
             with self.subTest(card=card.key):
                 game = empty_game()
-                game.level, game.pending_rewards = 3, 1
-                game.reward_choices = (card,)
+                game.level, game.upgrade_points = 3, 1
                 p = game.player
                 p.hp = 20
                 p.ammo = 20
-                self.assertTrue(game.choose_reward(0))
+                self.assertTrue(game.upgrade_stat(card.key))
                 self.assertEqual(game.pending_rewards, 0)
                 self.assertEqual(game.last_reward, card.title)
                 if card.key == "damage":
@@ -94,8 +96,6 @@ class ProgressionTests(unittest.TestCase):
                     self.assertAlmostEqual(p.vx, game.cfg.accel * 1.15)
                 elif card.key == "hull":
                     self.assertEqual((p.max_hp, p.hp), (125, 45))
-                elif card.key == "heal":
-                    self.assertEqual(p.hp, 80)
                 elif card.key == "regen":
                     game._regen_player()
                     self.assertAlmostEqual(p.hp, 20 + game.cfg.regen_rate + 1.5 / game.cfg.fps)
@@ -104,32 +104,30 @@ class ProgressionTests(unittest.TestCase):
                     bullet = game.bullets[0]
                     self.assertAlmostEqual(math.hypot(bullet.vx, bullet.vy), game.cfg.bullet_speed * 1.2)
                     self.assertEqual(bullet.life, int(game.cfg.bullet_life * 1.15))
-                elif card.key == "scout":
-                    self.assertEqual(p.job, "scout")
-                    self.assertEqual((p.accel_scale, p.bullet_speed_scale), (1.35, 1.2))
-                elif card.key == "gunner":
-                    game._fire(p, True)
-                    self.assertEqual(p.job, "gunner")
-                    self.assertEqual(len(game.bullets), 3)
-                    self.assertTrue(all(b.damage == game.cfg.bullet_damage * 0.8 for b in game.bullets))
-                elif card.key == "guardian":
-                    self.assertEqual(p.job, "guardian")
-                    self.assertEqual((p.max_hp, p.hp), (160, 160))
-                    self.assertAlmostEqual(p.regen_bonus, 1.5 / game.cfg.fps)
+                elif card.key == "magazine":
+                    self.assertEqual((p.max_ammo, p.ammo), (140, 40))
+                elif card.key == "reload":
+                    self.assertEqual(game.reload_frames_total, 135)
 
     def test_health_and_fire_rate_limits(self):
         game = empty_game()
-        for key in ("heal",) + ("rapid",) * 40:
-            game.pending_rewards = 1
-            game.reward_choices = (next(c for c in REWARD_CARDS if c.key == key),)
-            game.choose_reward(0)
+        game.upgrade_points = 100
+        for _ in range(40):
+            game.upgrade_stat("rapid")
+            game.upgrade_stat("reload")
         self.assertEqual(game.player.hp, game.player.max_hp)
         self.assertEqual(game.player.fire_cooldown_max, 4)
+        self.assertEqual(game.reload_frames_total, 45)
+        points = game.upgrade_points
+        self.assertFalse(game.upgrade_stat("rapid"))
+        self.assertFalse(game.upgrade_stat("reload"))
+        self.assertFalse(game.upgrade_stat("bogus"))
+        self.assertEqual(game.upgrade_points, points)
 
     def test_seed_reset_and_reward_rng_do_not_change_combat_rng(self):
         a, b = empty_game(), empty_game()
-        a._add_score(190)
-        b._add_score(190)
+        a._add_score(1980)
+        b._add_score(1980)
         cards = a.open_rewards()
         self.assertEqual(cards, b.open_rewards())
         a.reward_choices = ()
@@ -142,7 +140,7 @@ class ProgressionTests(unittest.TestCase):
         self.assertEqual(a.player.damage_scale, 1)
         self.assertEqual(a.cfg.player_hp, 100)
         a.game_over = True
-        a.pending_rewards = 1
+        a.special_reward_levels = [10]
         self.assertEqual(a.open_rewards(), ())
         self.assertFalse(a.choose_reward(0))
 
@@ -223,28 +221,41 @@ class RendererTests(unittest.TestCase):
         self.assertEqual((renderer.camera_x, renderer.camera_y), (1280, 960))
         game._add_score(190)
         game.open_rewards()
-        renderer.draw(game, rewards_open=True)
+        renderer.draw(game)
 
-    def test_main_reward_input_pauses_combat_and_keeps_cards(self):
+    def test_rewards_are_selected_in_hud_without_pausing_combat(self):
         from main import GameApplication
+        from collections import defaultdict
         game = empty_game()
         app = GameApplication(game, self.renderer, seed=7)
         app.activate("start")
-        game._add_score(190)
+        game._add_score(1980)
         key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
-        key(pygame.K_l)
         cards = game.reward_choices
         key(pygame.K_4)
-        app.update(0.1, {}, (480, 360), (False, False, False))
-        self.assertEqual(game.frame, 0)
+        self.assertEqual(game.stat_levels["range"], 1)
+        app.update(0.1, defaultdict(bool), (480, 360), (False, False, False))
+        self.assertGreater(game.frame, 0)
         key(pygame.K_ESCAPE)
         self.assertEqual(app.mode, "pause")
         key(pygame.K_ESCAPE)
-        self.assertTrue(app.rewards_open)
         self.assertEqual(game.reward_choices, cards)
-        key(pygame.K_1)
-        self.assertFalse(app.rewards_open)
-        self.assertEqual(game.pending_rewards, 1)
+        key(pygame.K_F2)
+        self.assertEqual(game.special_reward_levels, [])
+        self.assertEqual(game.upgrade_points, 7)
+
+    def test_hud_rows_and_cards_fit_without_overlapping_health_panel(self):
+        game = self.game
+        game.reset(7)
+        game._add_score(1980)
+        screen = pygame.Rect(0, 0, 960, 720)
+        hp_panel = pygame.Rect(314, 620, 332, 84)
+        for _, rect in stat_rows(960, 720):
+            self.assertTrue(screen.contains(pygame.Rect(rect)))
+            self.assertFalse(hp_panel.colliderect(pygame.Rect(rect)))
+        for rect in special_cards(960, 720):
+            self.assertTrue(screen.contains(pygame.Rect(rect)))
+        self.renderer.draw(game)
 
     def test_zoom_setting_rebuilds_view_and_keeps_hud_resolution(self):
         renderer = self.renderer

@@ -15,7 +15,7 @@ import pygame.gfxdraw
 
 from config import GameConfig
 from terrain import WALL, BUSH, MUD, BREAKABLE
-from progression import JOB_NAMES
+from progression import JOB_NAMES, stat_rows, special_cards, stat_upgrades_visible, player_stat_summary
 
 COLORS = {
     "space_top": (6, 8, 22),
@@ -433,8 +433,8 @@ class Renderer:
         sx, sy = self.world_to_view(x, y)
         return -margin <= sx <= self.view_width + margin and -margin <= sy <= self.view_height + margin
 
-    def draw(self, game, debug_lines=None, paused=False, show_ai=False, rewards_open=False,
-             show_controls=True, menu=None, selected=-1):
+    def draw(self, game, debug_lines=None, paused=False, show_ai=False,
+             show_controls=True, menu=None, selected=-1, show_stats=False):
         self._tick += 1
         self._update_camera(game.player)
         self._track(game)
@@ -469,6 +469,7 @@ class Renderer:
         for b in game.bullets:
             if self._visible(b.x, b.y):
                 self._draw_bullet(b)
+        self._draw_combat_effects(game)
         for g in self._ghosts:
             if self._visible(g["x"], g["y"]):
                 self._draw_ghost(g)
@@ -486,18 +487,41 @@ class Renderer:
 
         self.screen = display
         pygame.transform.smoothscale(scr, (self.cfg.width, self.cfg.height), display)
-        self._draw_hud(game, paused, show_notice=not rewards_open and menu is None,
+        self._draw_hud(game, paused, show_notice=menu is None,
                        show_controls=show_controls)
         if debug_lines:
             self._draw_debug(debug_lines)
+        if show_stats and not paused and menu is None and not game.game_over:
+            self._draw_stats_panel(game)
         if menu is not None:
             self._draw_menu(menu, "일시정지 · 설정", selected)
         elif game.game_over:
             self._draw_game_over(game)
-        elif rewards_open:
-            self._draw_rewards(game)
         elif paused:
             self._draw_card(["일시정지"], ["P / ESC: 계속"])
+
+    def _draw_combat_effects(self, game):
+        for beam in game.beams:
+            start = self.world_to_view(beam.x, beam.y)
+            end = self.world_to_view(beam.end_x, beam.end_y)
+            pygame.draw.line(self.screen, (30, 105, 125), start, end, 10)
+            pygame.draw.line(self.screen, (95, 245, 255), start, end, 5)
+            pygame.draw.line(self.screen, (240, 255, 255), start, end, 2)
+        for bomb in game.bombs:
+            x, y = self.world_to_view(bomb.x, bomb.y)
+            self._blit_glow(self.screen, x, y, 24, (255, 175, 80), 0.7)
+            pygame.draw.circle(self.screen, (255, 190, 90), (int(x), int(y)), 8)
+            pygame.draw.circle(self.screen, (35, 25, 45), (int(x), int(y)), 4)
+        for explosion in game.explosions:
+            x, y = self.world_to_view(explosion.x, explosion.y)
+            progress = 1 - explosion.life / 18
+            radius = max(4, int(explosion.radius * (0.2 + 0.8 * progress)))
+            color = _mix((255, 185, 90), (40, 20, 55), progress)
+            self._blit_glow(self.screen, x, y, radius, color, round(1 - progress, 1))
+            pygame.draw.circle(self.screen, color, (int(x), int(y)), radius, 3)
+        if game.dash_frames_left:
+            x, y = self.world_to_view(game.player.x, game.player.y)
+            pygame.draw.circle(self.screen, (150, 245, 255), (int(x), int(y)), int(game.player.radius + 8), 3)
 
     def draw_main_menu(self, buttons, selected=0):
         pygame.transform.smoothscale(self._bg, (self.cfg.width, self.cfg.height), self.screen)
@@ -578,11 +602,14 @@ class Renderer:
         pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(R), (*color, 70))
 
         # 포 (발사 직후 반동으로 짧아짐)
-        recoil = max(0.0, (t.cooldown - (t.fire_cooldown_max - 6)) / 6) * 6
+        recoil = min(6.0, max(0.0, t.cooldown - (t.fire_cooldown_max - 6)))
         gun_len = (c.barrel_length - recoil) * scale
-        self._aa_poly(self.screen, self._rect_rot(x, y, t.angle, gun_len, 4.5 * scale, R * 0.4), dark)
-        self._aa_poly(self.screen, self._rect_rot(x, y, t.angle, gun_len - 1.5, 2.8 * scale, R * 0.4),
-                      (200, 210, 228))
+        angles = (-0.20, 0.0, 0.20) if t.job == "gunner" else (0.0,)
+        gun_width = 7 if t.job == "cannon" else 4.5
+        gun_color = (105, 240, 245) if t.job == "laser" else (255, 175, 100) if t.job == "cannon" else (200, 210, 228)
+        for offset in angles:
+            self._aa_poly(self.screen, self._rect_rot(x, y, t.angle + offset, gun_len, gun_width * scale, R * 0.4), dark)
+            self._aa_poly(self.screen, self._rect_rot(x, y, t.angle + offset, gun_len - 1.5, gun_width * 0.62 * scale, R * 0.4), gun_color)
 
         # 선체
         pts = [tf(x, y) for x, y in hull]
@@ -672,8 +699,8 @@ class Renderer:
             if bar.width:
                 pygame.draw.rect(self.screen, COLORS["player"], bar, border_radius=3)
         if game.cfg.limited_ammo and p.ammo == 0 and not game.game_over and not reloading and show_notice:
-            text = self.font_body.render("탄약 소진! [R] 재장전 (2.5초)", True, (255, 165, 100))
-            self.screen.blit(text, text.get_rect(midtop=(W / 2, 218)))
+            text = self.font_body.render("탄약 소진! [R] 재장전", True, (255, 165, 100))
+            self.screen.blit(text, text.get_rect(midtop=(W / 2, 270)))
 
         # 좌상단: 점수/처치/시간
         items = [(self.font_label.render(label, True, COLORS["label"]),
@@ -710,63 +737,129 @@ class Renderer:
 
         # 메뉴의 조작 안내 설정을 즉시 반영한다.
         if show_controls:
-            hint = "WASD: 이동   커서: 조준   좌클릭: 발사   R: 재장전   L: 보상   ESC: 메뉴"
-            surf = self.font_small.render(hint, True, COLORS["text"])
-            self.screen.blit(surf, surf.get_rect(midbottom=(W / 2, by - 14)))
+            for i, hint in enumerate(("WASD 이동 · 마우스 조준 / 발사 · Tab 능력치", "R 재장전 · Q 폭탄 · Space 대시 · ESC 메뉴")):
+                surf = self.font_small.render(hint, True, COLORS["text"])
+                self.screen.blit(surf, surf.get_rect(midtop=(W / 2 + 30, 10 + i * 23)))
+        self._draw_skills(game)
 
     def _draw_progression(self, game, show_notice):
         p = game.player
-        panel = pygame.Rect(14, 64, 300, 90)
+        W, H = self.cfg.width, self.cfg.height
+        panel = pygame.Rect(W // 2 - 166, H - 100, 332, 84)
         self._panel(panel)
         title = f"Lv.{game.level}  {JOB_NAMES[p.job]}"
-        self.screen.blit(self.font_hud.render(title, True, COLORS["white"]), (28, 72))
-        bar = pygame.Rect(28, 107, 270, 10)
-        pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=5)
+        text = self.font_body.render(title, True, COLORS["white"])
+        self.screen.blit(text, text.get_rect(midtop=(W // 2, H - 98)))
+        bar = pygame.Rect(W // 2 - 160, H - 67, 320, 18)
+        pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=9)
         fill = bar.copy()
         fill.width = int(bar.width * game.xp / game.xp_to_next_level)
         if fill.width:
-            pygame.draw.rect(self.screen, COLORS["player"], fill, border_radius=5)
-        xp = f"경험치 {game.xp} / {game.xp_to_next_level}   보상 {game.pending_rewards}개"
-        self.screen.blit(self.font_small.render(xp, True, COLORS["text"]), (28, 126))
-        message = ""
-        if game.pending_rewards and not game.game_over:
-            message = f"레벨 업! [L] 보상 선택 — 남은 보상 {game.pending_rewards}개"
-        elif game.frame < game.reward_message_until:
-            message = f"{game.last_reward} 적용 완료!"
-        if message and show_notice:
-            text = self.font_body.render(message, True, (255, 230, 130))
-            box = pygame.Rect(0, 0, text.get_width() + 36, 44)
-            box.midtop = (self.cfg.width // 2, 168)
-            self._panel(box, 220)
-            self.screen.blit(text, text.get_rect(center=box.center))
+            pygame.draw.rect(self.screen, COLORS["player"], fill, border_radius=9)
+        xp = self.font_label.render(f"EXP  {game.xp} / {game.xp_to_next_level}", True, COLORS["white"])
+        self.screen.blit(xp, xp.get_rect(center=bar.center))
+        if stat_upgrades_visible(game):
+            self._draw_stat_upgrades(game)
+        self._draw_rewards(game)
+        if game.frame < game.reward_message_until and show_notice:
+            text = self.font_small.render(f"{game.last_reward} 적용 완료", True, (160, 240, 220))
+            self.screen.blit(text, text.get_rect(midtop=(W / 2 + 30, 262)))
+
+    def _draw_stats_panel(self, game):
+        rect = pygame.Rect(self.cfg.width // 2 - 230, self.cfg.height // 2 - 220, 460, 440)
+        self._panel(rect, 175, 16)
+        title = self.font_card.render("나의 능력치", True, COLORS["white"])
+        self.screen.blit(title, (rect.x + 24, rect.y + 18))
+        ship = self.font_body.render(f"Lv.{game.level} · {JOB_NAMES[game.player.job]}", True, COLORS["player"])
+        self.screen.blit(ship, (rect.x + 24, rect.y + 52))
+        for i, (label, value) in enumerate(player_stat_summary(game)):
+            y = rect.y + 92 + i * 31
+            name = self.font_body.render(label, True, COLORS["text"])
+            number = self.font_body.render(value, True, COLORS["white"])
+            self.screen.blit(name, (rect.x + 24, y))
+            self.screen.blit(number, number.get_rect(topright=(rect.right - 24, y)))
+        hint = f"수리 대기 {game.cfg.regen_delay / game.cfg.fps:g}초 · 이동 속도는 일반 지형 기준"
+        self.screen.blit(self.font_small.render(hint, True, COLORS["label"]), (rect.x + 24, rect.bottom - 55))
+        hint = self.font_small.render("Tab을 놓으면 닫힘 · 전투는 계속됩니다", True, COLORS["player"])
+        self.screen.blit(hint, (rect.x + 24, rect.bottom - 31))
+
+    def _draw_stat_upgrades(self, game):
+        H = self.cfg.height
+        self._panel(pygame.Rect(14, H - 342, 278, 326), 215, 14)
+        title = self.font_body.render(f"능력치 강화   ·   {game.upgrade_points} 포인트", True,
+                                      COLORS["player"] if game.upgrade_points else COLORS["text"])
+        self.screen.blit(title, (28, H - 330))
+        mouse = pygame.mouse.get_pos()
+        rows = stat_rows(self.cfg.width, H)
+        hovered = next((card for card, rect in rows if pygame.Rect(rect).collidepoint(mouse)), None)
+        hint = hovered.description[0] if hovered else "1–8 또는 + 클릭으로 강화"
+        self.screen.blit(self.font_small.render(hint, True, COLORS["label"]), (28, H - 308))
+        colors = [(80, 210, 170), (90, 175, 240), (240, 145, 105), (125, 170, 245),
+                  (215, 190, 100), (195, 150, 230), (95, 205, 210), (120, 190, 250)]
+        for i, (card, coords) in enumerate(rows):
+            rect, color = pygame.Rect(coords), colors[i]
+            enabled = game.can_upgrade_stat(card.key)
+            pygame.draw.rect(self.screen, (25, 38, 59), rect, border_radius=13)
+            pygame.draw.rect(self.screen, color if enabled else _darken(color, 0.35), rect, 1, border_radius=13)
+            label = self.font_small.render(card.title, True, COLORS["white"] if enabled else COLORS["text"])
+            self.screen.blit(label, (rect.x + 10, rect.y + 3))
+            rank = game.stat_levels[card.key]
+            # 강화 횟수가 늘어도 행의 폭은 유지한다.
+            for tick in range(5):
+                fill_color = color if tick < min(rank, 5) else (46, 58, 81)
+                pygame.draw.rect(self.screen, fill_color, (rect.x + 144 + tick * 5, rect.y + 9, 3, 8), border_radius=1)
+            num = self.font_label.render(f"{rank}", True, color)
+            self.screen.blit(num, (rect.x + 174, rect.y + 4))
+            key = self.font_label.render(f"[{i + 1}]", True, COLORS["text"])
+            self.screen.blit(key, (rect.right - 59, rect.y + 4))
+            plus = pygame.Rect(rect.right - 30, rect.y + 2, 28, 22)
+            pygame.draw.rect(self.screen, color if enabled else _darken(color, 0.4), plus, border_radius=11)
+            text = self.font_body.render("+", True, (12, 22, 35))
+            self.screen.blit(text, text.get_rect(center=plus.center))
+
+    def _draw_skills(self, game):
+        rect = pygame.Rect(self.cfg.width - 224, self.cfg.height - 110, 210, 94)
+        self._panel(rect, 190)
+        self.screen.blit(self.font_label.render("전술 스킬", True, COLORS["label"]), (rect.x + 14, rect.y + 8))
+        for i, (key, label, cooldown) in enumerate((("bomb", "Q · 폭탄", game.bomb_cooldown),
+                                                    ("dash", "Space · 대시", game.dash_cooldown))):
+            status = f"{cooldown / game.cfg.fps:.1f}초" if cooldown else "준비"
+            rank = game.special_levels[key]
+            text = f"{label}  {status}" if rank else f"{label}  미획득"
+            color = COLORS["player"] if rank and not cooldown else COLORS["text"]
+            self.screen.blit(self.font_small.render(text, True, color), (rect.x + 14, rect.y + 30 + i * 27))
+
+    def _wrapped_text(self, text, width):
+        lines, line = [], ""
+        for char in text:
+            if line and self.font_small.size(line + char)[0] > width:
+                lines.append(line)
+                line = ""
+            line += char
+        return lines + ([line] if line else [])
 
     def _draw_rewards(self, game):
-        W, H = self.cfg.width, self.cfg.height
-        shade = pygame.Surface((W, H), pygame.SRCALPHA)
-        shade.fill((0, 0, 12, 210))
-        self.screen.blit(shade, (0, 0))
-        title = self.font_card.render("레벨업 보상 — 카드 한 장을 선택하세요", True, COLORS["white"])
-        self.screen.blit(title, title.get_rect(center=(W // 2, H // 2 - 175)))
-        gap, margin = 18, 30
-        width = (W - 2 * margin - 2 * gap) // 3
-        accents = {"강화": (95, 205, 255), "능력치": (178, 150, 255),
-                   "회복": (100, 230, 165), "전직": (255, 205, 95)}
+        level = game.special_reward_levels[0] if game.special_reward_levels else (game.level // 10 + 1) * 10
+        heading = f"Lv.{level} 전직 · 스킬 선택  /  F2–F4 또는 클릭" if game.reward_choices else f"다음 전직 · 스킬 보상  Lv.{level}"
+        self.screen.blit(self.font_small.render(heading, True, (245, 210, 130)), (20, 62))
         for i, card in enumerate(game.reward_choices):
-            rect = pygame.Rect(margin + i * (width + gap), H // 2 - 110, width, 240)
-            self._panel(rect, 245, 16)
-            color = accents[card.category]
-            pygame.draw.rect(self.screen, color, (rect.x + 16, rect.y + 18, width - 32, 4), border_radius=2)
-            label = self.font_body.render(f"[{i + 1}]  {card.category}", True, color)
-            self.screen.blit(label, (rect.x + 20, rect.y + 38))
-            name = self.font_card.render(card.title, True, COLORS["white"])
-            self.screen.blit(name, (rect.x + 20, rect.y + 76))
-            for j, line in enumerate(card.description):
-                text = self.font_small.render(line, True, COLORS["text"])
-                self.screen.blit(text, (rect.x + 20, rect.y + 126 + j * 28))
-            self.screen.blit(self.font_body.render(f"{i + 1} 키로 선택", True, color), (rect.x + 20, rect.bottom - 44))
-        hint = f"전투 일시정지 · 남은 보상 {game.pending_rewards}개 · L / ESC: 닫기 (카드 유지) · 전직은 Lv.3부터"
-        text = self.font_small.render(hint, True, COLORS["text"])
-        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 + 166)))
+            rect = pygame.Rect(special_cards(self.cfg.width, self.cfg.height)[i])
+            self._panel(rect, 238, 12)
+            color = (245, 190, 100) if card.category == "전직" else (125, 205, 235)
+            pygame.draw.rect(self.screen, color, (rect.x + 10, rect.y + 10, rect.width - 20, 3), border_radius=2)
+            label = self.font_label.render(f"[F{i + 2}]  {card.category}", True, color)
+            self.screen.blit(label, (rect.x + 12, rect.y + 21))
+            name = self.font_body.render(card.title, True, COLORS["white"])
+            self.screen.blit(name, (rect.x + 12, rect.y + 45))
+            y = rect.y + 76
+            rank = game.special_levels[card.key]
+            descriptions = card.description if not rank else (
+                "다시 선택: 숙련 +1",
+                "기본 피해 +20%" if card.category == "전직" else "기본 피해 +25%" if card.key == "bomb" else "재사용 시간 -15%")
+            for description in descriptions:
+                for line in self._wrapped_text(description, rect.width - 24):
+                    self.screen.blit(self.font_small.render(line, True, COLORS["text"]), (rect.x + 12, y))
+                    y += 18
 
     def _draw_debug(self, lines):
         lh = 16

@@ -12,7 +12,7 @@ import numpy as np
 
 from config import GameConfig, SHAPE_TYPES, SHAPE_KINDS
 from terrain import TileMap, load_map, empty_map, generate_random_map, expand_map, BUSH, MUD, BREAKABLE
-from progression import REWARD_CARDS
+from progression import STAT_UPGRADES, SPECIAL_REWARDS
 
 # --------------------------------------------------------------------------
 # 행동 정의: 이동 9 × 회전 3 = 27
@@ -82,6 +82,7 @@ class Tank:
     job: str = "rookie"
     ammo: int = 0
     max_ammo: int = 0
+    reload_scale: float = 1.0
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -123,6 +124,37 @@ class Bullet:
     team: str
     damage: float
     radius: float
+    blast_radius: float = 0.0
+    prev_x: float = None
+    prev_y: float = None
+
+
+@dataclass
+class Bomb:
+    x: float
+    y: float
+    vx: float
+    vy: float
+    life: int
+    damage: float
+    radius: float = 8.0
+
+
+@dataclass
+class Beam:
+    x: float
+    y: float
+    end_x: float
+    end_y: float
+    life: int = 6
+
+
+@dataclass
+class Explosion:
+    x: float
+    y: float
+    radius: float
+    life: int = 18
 
 
 def empty_events():
@@ -166,11 +198,21 @@ class GameCore:
         self.events = empty_events()
         self.level = 1
         self.xp = 0
-        self.pending_rewards = 0
+        self.upgrade_points = 0
+        self.special_reward_levels = []
+        self.stat_levels = {card.key: 0 for card in STAT_UPGRADES}
+        self.special_levels = {card.key: 0 for card in SPECIAL_REWARDS}
         self.reward_choices = ()
         self.last_reward = ""
         self.reward_message_until = 0
         self.reload_frames_left = 0
+        self.bomb_cooldown = 0
+        self.dash_cooldown = 0
+        self.dash_frames_left = 0
+        self.dash_direction = (1.0, 0.0)
+        self.bombs = []
+        self.beams = []
+        self.explosions = []
         self.bullets = []
         self.shapes = []
         self.enemies = []   # 스폰 위치 계산이 이전 판의 적을 참조하지 않도록 먼저 비움
@@ -282,6 +324,10 @@ class GameCore:
     def xp_to_next_level(self):
         return self.cfg.level_xp_base + (self.level - 1) * self.cfg.level_xp_growth
 
+    @property
+    def pending_rewards(self):
+        return self.upgrade_points + len(self.special_reward_levels)
+
     def _add_score(self, amount):
         self.score += amount
         if not self.cfg.progression_enabled:
@@ -290,64 +336,82 @@ class GameCore:
         while self.xp >= self.xp_to_next_level:
             self.xp -= self.xp_to_next_level
             self.level += 1
-            self.pending_rewards += 1
+            if self.level % 10 == 0:
+                self.special_reward_levels.append(self.level)
+            else:
+                self.upgrade_points += 1
+        self.open_rewards()
 
     def open_rewards(self):
-        if self.game_over or not self.player.alive or self.pending_rewards == 0:
+        if self.game_over or not self.player.alive or not self.special_reward_levels:
             return ()
         if not self.reward_choices:
-            eligible = [card for card in REWARD_CARDS
-                        if card.category != "전직" or (self.level >= 3 and self.player.job == "rookie")]
-            indices = self.reward_rng.choice(len(eligible), size=3, replace=False)
-            self.reward_choices = tuple(eligible[int(i)] for i in indices)
+            indices = self.reward_rng.choice(len(SPECIAL_REWARDS), size=3, replace=False)
+            self.reward_choices = tuple(SPECIAL_REWARDS[int(i)] for i in indices)
         return self.reward_choices
 
     def choose_reward(self, index):
-        if self.game_over or not self.player.alive or not self.reward_choices:
+        if self.game_over or not self.player.alive or not self.reward_choices or not self.special_reward_levels:
             return False
         if not isinstance(index, int) or not 0 <= index < len(self.reward_choices):
             return False
         card = self.reward_choices[index]
         p = self.player
-        if card.key == "damage":
+        if card.key in ("laser", "gunner", "cannon"):
+            p.job = card.key
+            p.projectiles = 3 if card.key == "gunner" else 1
+        self.special_levels[card.key] += 1
+        self.special_reward_levels.pop(0)
+        self.reward_choices = ()
+        self._reward_notice(card.title)
+        self.open_rewards()
+        return True
+
+    def can_upgrade_stat(self, key):
+        return (key in self.stat_levels and self.upgrade_points > 0 and not self.game_over
+                and self.player.alive and not (key == "rapid" and self.player.fire_cooldown_max <= 4)
+                and not (key == "reload" and self.reload_frames_total <= math.ceil(0.75 * self.cfg.fps)))
+
+    def upgrade_stat(self, key):
+        if not self.can_upgrade_stat(key):
+            return False
+        p = self.player
+        if key == "damage":
             p.damage_scale *= 1.25
-        elif card.key == "rapid":
+        elif key == "rapid":
+            old_cooldown = p.fire_cooldown_max
             p.fire_cooldown_max = max(4, int(p.fire_cooldown_max * 0.85))
-            p.cooldown = min(p.cooldown, p.fire_cooldown_max)
-        elif card.key == "speed":
+            p.cooldown = math.ceil(p.cooldown * p.fire_cooldown_max / old_cooldown)
+        elif key == "speed":
             p.accel_scale *= 1.15
-        elif card.key == "hull":
+        elif key == "hull":
             p.max_hp += 25
             p.hp = min(p.max_hp, p.hp + 25)
-        elif card.key == "heal":
-            p.hp = min(p.max_hp, p.hp + p.max_hp * 0.6)
-        elif card.key == "regen":
+        elif key == "regen":
             p.regen_bonus += 1.5 / self.cfg.fps
-        elif card.key == "range":
+        elif key == "range":
             p.bullet_speed_scale *= 1.2
             p.bullet_life_scale *= 1.15
-        elif card.key == "scout":
-            p.job = "scout"
-            p.accel_scale *= 1.35
-            p.bullet_speed_scale *= 1.2
-        elif card.key == "gunner":
-            p.job = "gunner"
-            p.projectiles = 3
-            p.damage_scale *= 0.8
-        elif card.key == "guardian":
-            p.job = "guardian"
-            p.max_hp += 60
-            p.hp = p.max_hp
-            p.regen_bonus += 1.5 / self.cfg.fps
-        self.pending_rewards -= 1
-        self.reward_choices = ()
-        self.last_reward = card.title
-        self.reward_message_until = self.frame + self.cfg.fps * 3
+        elif key == "magazine":
+            p.max_ammo += 20
+            p.ammo = min(p.max_ammo, p.ammo + 20)
+        elif key == "reload":
+            old_total = self.reload_frames_total
+            p.reload_scale *= 0.9
+            if self.reload_frames_left:
+                self.reload_frames_left = math.ceil(self.reload_frames_left * self.reload_frames_total / old_total)
+        self.upgrade_points -= 1
+        self.stat_levels[key] += 1
+        self._reward_notice(next(card.title for card in STAT_UPGRADES if card.key == key))
         return True
+
+    def _reward_notice(self, title):
+        self.last_reward = title
+        self.reward_message_until = self.frame + self.cfg.fps * 3
 
     @property
     def reload_frames_total(self):
-        return math.ceil(self.cfg.reload_seconds * self.cfg.fps)
+        return math.ceil(max(0.75, self.cfg.reload_seconds * self.player.reload_scale) * self.cfg.fps)
 
     def request_reload(self):
         if (self.game_over or not self.player.alive or not self.cfg.limited_ammo
@@ -356,21 +420,116 @@ class GameCore:
         self.reload_frames_left = self.reload_frames_total
         return True
 
+    def request_bomb(self):
+        if self.game_over or not self.player.alive or not self.special_levels["bomb"] or self.bomb_cooldown:
+            return False
+        p, c = self.player, self.cfg
+        rank = self.special_levels["bomb"]
+        self.bombs.append(Bomb(p.x, p.y, math.cos(p.angle) * 5, math.sin(p.angle) * 5,
+                               c.fps, c.bomb_damage * p.damage_scale * (1 + 0.25 * (rank - 1))))
+        self.bomb_cooldown = math.ceil(c.bomb_cooldown_seconds * c.fps)
+        return True
+
+    def request_dash(self, move=0, aim_position=None):
+        if self.game_over or not self.player.alive or not self.special_levels["dash"] or self.dash_cooldown:
+            return False
+        dx, dy = MOVE_VECTORS[move]
+        if not move:
+            if aim_position is not None:
+                dx, dy = aim_position[0] - self.player.x, aim_position[1] - self.player.y
+            else:
+                dx, dy = math.cos(self.player.angle), math.sin(self.player.angle)
+        distance = math.hypot(dx, dy)
+        if distance < 1e-6:
+            dx, dy, distance = math.cos(self.player.angle), math.sin(self.player.angle), 1.0
+        self.dash_direction = (dx / distance, dy / distance)
+        self.dash_frames_left = max(1, math.ceil(self.cfg.dash_seconds * self.cfg.fps))
+        duration = max(1.0, self.cfg.dash_cooldown_seconds * 0.85 ** (self.special_levels["dash"] - 1))
+        self.dash_cooldown = math.ceil(duration * self.cfg.fps)
+        return True
+
+    def _tick_effects(self):
+        for effects in (self.beams, self.explosions):
+            for effect in effects:
+                effect.life -= 1
+            effects[:] = [effect for effect in effects if effect.life > 0]
+
+    def _move_bombs(self):
+        for bomb in self.bombs:
+            bomb.x += bomb.vx
+            bomb.y += bomb.vy
+            bomb.vx *= 0.985
+            bomb.vy *= 0.985
+            self.terrain.resolve_circle(bomb, bounce=True)
+            self._clamp_to_arena(bomb)
+            bomb.life -= 1
+            if bomb.life <= 0:
+                self._explode(bomb.x, bomb.y, bomb.damage, self.cfg.bomb_radius, "player")
+        self.bombs = [bomb for bomb in self.bombs if bomb.life > 0]
+
+    def _explode(self, x, y, damage, radius, team):
+        by_player = team == "player"
+        self.explosions.append(Explosion(x, y, radius))
+        targets = self.enemies if by_player else [self.player]
+        for target in list(targets) + list(self.shapes):
+            if isinstance(target, Tank) and not target.alive:
+                continue
+            distance = math.hypot(target.x - x, target.y - y)
+            if distance <= radius + target.radius:
+                dealt = damage * (0.4 + 0.6 * max(0.0, 1 - distance / radius))
+                if isinstance(target, Tank):
+                    self._damage_tank(target, dealt, by_player)
+                else:
+                    self._damage_shape(target, dealt, by_player)
+        for col, row in list(self.terrain.hp):
+            cx, cy = self.terrain.center(col, row)
+            if math.hypot(cx - x, cy - y) <= radius:
+                self.terrain.damage_tile(col, row, damage)
+
+    def _fire_laser(self, tank, damage):
+        c = self.cfg
+        dx, dy = math.cos(tank.angle), math.sin(tank.angle)
+        length = c.laser_range * tank.bullet_life_scale
+        hit = self.terrain.raycast(tank.x, tank.y, dx, dy, length)
+        ex, ey = tank.x + dx * hit, tank.y + dy * hit
+        self.beams.append(Beam(tank.x, tank.y, ex, ey))
+        for target in list(self.enemies) + list(self.shapes):
+            if isinstance(target, Tank) and not target.alive:
+                continue
+            if _segment_circle_hit(tank.x, tank.y, ex, ey, target.x, target.y, target.radius + 4) is not None:
+                if isinstance(target, Tank):
+                    self._damage_tank(target, damage, True)
+                else:
+                    self._damage_shape(target, damage, True)
+        if hit < length:
+            col, row = self.terrain.tile_of(ex + dx * 0.01, ey + dy * 0.01)
+            self.terrain.damage_tile(col, row, damage)
+
     def pop_events(self) -> dict:
         ev = self.events
         self.events = empty_events()
         return ev
 
-    def step(self, action: int, *, want_fire: bool = True, aim_position=None):
+    def step(self, action: int, *, want_fire: bool = True, aim_position=None,
+             want_bomb: bool = False, want_dash: bool = False):
         """1프레임 진행. 사람 입력은 발사 여부와 월드 좌표 조준점을 별도로 전달한다."""
         if self.game_over:
             return
         move, rot = decode_action(action)
+        for name in ("bomb_cooldown", "dash_cooldown"):
+            setattr(self, name, max(0, getattr(self, name) - 1))
+        self._tick_effects()
+        if want_dash:
+            self.request_dash(move, aim_position)
+        if self.dash_frames_left:
+            self.player.vx, self.player.vy = (v * self.cfg.dash_speed for v in self.dash_direction)
         self._apply_tank_control(self.player, move, rot, self.player.accel_scale, 1.0)
         if aim_position is not None:
             dx, dy = aim_position[0] - self.player.x, aim_position[1] - self.player.y
             if dx * dx + dy * dy > 1e-6:
                 self.player.angle = math.atan2(dy, dx)
+        if want_bomb:
+            self.request_bomb()
 
         for e in self.enemies:
             if e.alive:
@@ -381,6 +540,7 @@ class GameCore:
                     self._respawn_enemy(e)
 
         self._fire(self.player, want_fire)
+        self._move_bombs()
         self._move_shapes()
         self._move_bullets()
         self._collide_bullets()
@@ -392,6 +552,8 @@ class GameCore:
             self.shapes.append(self._make_shape())
 
         self.frame += 1
+        if self.dash_frames_left:
+            self.dash_frames_left -= 1
         if self.reload_frames_left:
             self.reload_frames_left -= 1
             if self.reload_frames_left == 0 and self.player.hp > 0:
@@ -410,10 +572,13 @@ class GameCore:
         mx, my = MOVE_VECTORS[move]
         t.vx = t.vx * c.friction + mx * c.accel * accel_scale
         t.vy = t.vy * c.friction + my * c.accel * accel_scale
-        t.x += t.vx
-        t.y += t.vy
-        self.terrain.resolve_circle(t)
-        self._clamp_to_arena(t)
+        # 대시와 누적 속도 강화도 얇은 벽을 건너뛰지 않도록 나눠 이동한다.
+        count = max(1, math.ceil(math.hypot(t.vx, t.vy) / max(1, t.radius * 0.5)))
+        for _ in range(count):
+            t.x += t.vx / count
+            t.y += t.vy / count
+            self.terrain.resolve_circle(t)
+            self._clamp_to_arena(t)
         t.angle = wrap_angle(t.angle + ROT_DIR[rot] * c.turn_speed * turn_scale)
 
     def _clamp_to_arena(self, obj):
@@ -437,6 +602,18 @@ class GameCore:
         c = self.cfg
         if t.team == "player" and self.reload_frames_left:
             return
+        weapon = t.job if t.team == "player" else "rookie"
+        mastery = 1 + 0.2 * max(0, self.special_levels.get(weapon, 0) - 1)
+        damage = c.bullet_damage * t.damage_scale * mastery
+        cooldown = t.fire_cooldown_max
+        if weapon == "laser":
+            if c.limited_ammo and t.ammo <= 0:
+                return
+            if c.limited_ammo:
+                t.ammo -= 1
+            self._fire_laser(t, damage * 1.4)
+            t.cooldown = max(4, int(cooldown * 0.65))
+            return
         offsets = (-0.20, 0.0, 0.20) if t.projectiles == 3 else (0.0,)
         if t.team == "player" and c.limited_ammo:
             # 마지막 탄약이 3발 미만이면 남은 수만큼 발사한다.
@@ -444,16 +621,23 @@ class GameCore:
                 return
             offsets = offsets[:t.ammo]
             t.ammo -= len(offsets)
+        if weapon == "gunner":
+            damage *= 0.8
+        if weapon == "cannon":
+            damage *= 4
+            cooldown *= 2
         for offset in offsets:
             ca, sa = math.cos(t.angle + offset), math.sin(t.angle + offset)
             self.bullets.append(Bullet(
                 x=t.x + ca * c.barrel_length, y=t.y + sa * c.barrel_length,
-                vx=ca * c.bullet_speed * t.bullet_speed_scale,
-                vy=sa * c.bullet_speed * t.bullet_speed_scale,
-                life=int(c.bullet_life * t.bullet_life_scale), owner_id=t.id, team=t.team,
-                damage=c.bullet_damage * t.damage_scale, radius=c.bullet_radius,
+                vx=ca * c.bullet_speed * t.bullet_speed_scale * (0.7 if weapon == "cannon" else 1),
+                vy=sa * c.bullet_speed * t.bullet_speed_scale * (0.7 if weapon == "cannon" else 1),
+                life=int(c.bullet_life * t.bullet_life_scale * (1.6 if weapon == "cannon" else 1)),
+                owner_id=t.id, team=t.team, damage=damage,
+                radius=10 if weapon == "cannon" else c.bullet_radius,
+                blast_radius=90 if weapon == "cannon" else 0,
             ))
-        t.cooldown = t.fire_cooldown_max
+        t.cooldown = cooldown
 
     # ---------------- 적 AI ----------------
     def _enemy_ai(self, e: Tank):
@@ -602,12 +786,25 @@ class GameCore:
         tm = self.terrain
         alive = []
         for b in self.bullets:
+            b.prev_x, b.prev_y = b.x, b.y
             b.x += b.vx
             b.y += b.vy
             b.life -= 1
             if not (b.life > 0 and b.radius <= b.x <= c.world_width - b.radius and b.radius <= b.y <= c.world_height - b.radius):
                 continue
-            if tm.has_solid and tm.is_solid_at(b.x, b.y):   # 벽에 닿으면 소멸
+            travel = math.hypot(b.vx, b.vy)
+            wall = tm.raycast(b.prev_x, b.prev_y, b.vx / travel, b.vy / travel, travel) if tm.has_solid and travel else travel
+            if tm.has_solid and (wall < travel or tm.is_solid_at(b.x, b.y)):
+                if travel:
+                    b.x, b.y = b.prev_x + b.vx * wall / travel, b.prev_y + b.vy * wall / travel
+                if self._bullet_hit(b):
+                    continue
+                if b.blast_radius:
+                    self._explode(b.x, b.y, b.damage, b.blast_radius, b.team)
+                    continue
+                # 정확히 경계에 닿았을 때 진행 방향의 타일을 찾는다.
+                b.x += math.copysign(0.01, b.vx) if b.vx else 0
+                b.y += math.copysign(0.01, b.vy) if b.vy else 0
                 tc, tr = tm.tile_of(b.x, b.y)
                 if tm.tiles[tr][tc] == BREAKABLE:
                     tm.damage_tile(tc, tr, b.damage)
@@ -625,24 +822,31 @@ class GameCore:
 
     def _bullet_hit(self, b: Bullet) -> bool:
         """탄환이 무언가에 맞았으면 데미지 처리 후 True."""
-        bx, by, br = b.x, b.y, b.radius
         by_player = b.team == "player"
-        # 탱크
         targets = self.enemies if by_player else (self.player,)
-        for t in targets:
-            r = br + t.radius
-            if t.alive and (t.x - bx) ** 2 + (t.y - by) ** 2 < r * r:
-                self._damage_tank(t, b.damage, by_player=by_player)
-                return True
-        # 도형 (호출 수가 많아 거리 계산을 인라인)
-        for s in self.shapes:
-            r = br + s.radius
-            if (s.x - bx) ** 2 + (s.y - by) ** 2 < r * r and s.hp > 0:
-                self._damage_shape(s, b.damage, by_player=by_player)
-                return True
-        return False
+        hits = []
+        sx, sy = (b.prev_x, b.prev_y) if b.prev_x is not None else (b.x, b.y)
+        for target in list(targets) + self.shapes:
+            if target.hp <= 0 or (isinstance(target, Tank) and not target.alive):
+                continue
+            fraction = _segment_circle_hit(sx, sy, b.x, b.y, target.x, target.y, target.radius + b.radius)
+            if fraction is not None:
+                hits.append((fraction, target))
+        if not hits:
+            return False
+        fraction, target = min(hits, key=lambda item: item[0])
+        if b.blast_radius:
+            self._explode(sx + (b.x - sx) * fraction, sy + (b.y - sy) * fraction,
+                          b.damage, b.blast_radius, b.team)
+        elif isinstance(target, Tank):
+            self._damage_tank(target, b.damage, by_player)
+        else:
+            self._damage_shape(target, b.damage, by_player)
+        return True
 
     def _damage_tank(self, t: Tank, dmg: float, by_player: bool):
+        if t.team == "player" and self.dash_frames_left:
+            return
         dealt = min(dmg, t.hp)
         if dealt <= 0:
             return
@@ -705,6 +909,22 @@ class GameCore:
         c = self.cfg
         if p.hp > 0 and self.frame - p.last_hit_frame >= c.regen_delay:
             p.hp = min(p.max_hp, p.hp + c.regen_rate + p.regen_bonus)
+
+
+def _segment_circle_hit(x0, y0, x1, y1, cx, cy, radius):
+    dx, dy, ox, oy = x1 - x0, y1 - y0, x0 - cx, y0 - cy
+    c = ox * ox + oy * oy - radius * radius
+    if c <= 0:
+        return 0.0
+    a = dx * dx + dy * dy
+    if a < 1e-12:
+        return None
+    b = 2 * (ox * dx + oy * dy)
+    disc = b * b - 4 * a * c
+    if disc < 0:
+        return None
+    fraction = (-b - math.sqrt(disc)) / (2 * a)
+    return fraction if 0 <= fraction <= 1 else None
 
 
 def _overlap(a, b) -> bool:

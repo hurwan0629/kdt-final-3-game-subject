@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "game/01-controls-and-flow.md",
+                "file": "dev/01-structure.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "01-controls-and-flow"
+              "title": "01-structure"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "game/01-controls-and-flow.md",
+                "file": "dev/01-structure.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "game/01-controls-and-flow.md",
+                "file": "dev/01-structure.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "game/01-controls-and-flow.md",
+                "file": "dev/01-structure.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,6 +190,11 @@
   },
   "active": "3c47a43530498af9",
   "lastOpenFiles": [
+    "game/assets/12-skills.png",
+    "game/assets/11-cannon.png",
+    "game/assets/10-laser.png",
+    "game/assets/09-stats.png",
+    "game/01-controls-and-flow.md",
     "game/assets/01-main-menu.png",
     "game/assets/02-playing.png",
     "game/assets/03-reloading.png",
@@ -197,11 +202,6 @@
     "game/assets/map-ring.png",
     "game/assets/map-hello-world.png",
     "game/assets/map-drift.png",
-    "game/assets/map-belt.png",
-    "game/assets/08-hidden-player.png",
-    "game/assets/07-terrain-stage2.png",
-    "game/assets/06-game-over.png",
-    "game/01-controls-and-flow.md",
     "game/03-rewards.md",
     "game/02-combat-and-reload.md"
   ]

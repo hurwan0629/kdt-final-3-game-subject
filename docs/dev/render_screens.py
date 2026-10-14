@@ -5,6 +5,7 @@
 """
 import os
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -20,6 +21,7 @@ from game_core import GameCore
 from main import GameApplication
 from renderer import Renderer
 from terrain import BUSH, list_maps
+from progression import SPECIAL_REWARDS
 
 
 def main():
@@ -43,16 +45,24 @@ def main():
         game.step(0, want_fire=False)
         game.pop_events()
     capture("02-playing.png")
+    game._add_score(700)
+    for key in ("damage", "magazine", "speed"):
+        game.upgrade_stat(key)
+    capture("09-stats.png")
+    keys = defaultdict(bool)
+    keys[pygame.K_TAB] = True
+    app.update(0, keys, (480, 360), (False, False, False))
+    capture("13-stats-panel.png")
+    keys[pygame.K_TAB] = False
+    app.update(0, keys, (480, 360), (False, False, False))
     game.player.ammo = 15
     app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r))
     capture("03-reloading.png")
-    game._add_score(190)
-    app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_l))
+    game._add_score(1980 - game.score)
     capture("04-rewards.png")
     app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
     capture("05-settings.png")
     app.activate("resume")
-    app.rewards_open = False
     game._damage_tank(game.player, game.player.hp, by_player=False)
     game.step(0, want_fire=False)
     capture("06-game-over.png")
@@ -62,7 +72,6 @@ def main():
     tc.map_name = "belt"
     tc.mud_enabled = tc.breakable_enabled = True
     game.reset(42)
-    app.rewards_open = False
     renderer.draw(game)
     game.frame = 30
     capture("07-terrain-stage2.png")
@@ -70,6 +79,35 @@ def main():
                 if game.terrain.tiles[r][c] == BUSH and 20 <= c < 40 and 15 <= r < 30)
     game.player.x, game.player.y = game.terrain.center(*bush)
     capture("08-hidden-player.png")
+
+    def grant(key):
+        game.special_reward_levels = [game.level]
+        game.reward_choices = (next(card for card in SPECIAL_REWARDS if card.key == key),)
+        game.choose_reward(0)
+
+    tc.map_name = "drift"
+    game.reset(42)
+    game.level = 10
+    grant("laser")
+    game.player.angle = 0
+    renderer.draw(game)
+    game.frame = 30
+    game._fire(game.player, True)
+    capture("10-laser.png")
+    game.reset(42)
+    game.level = 10
+    grant("cannon")
+    game.frame = 30
+    game._explode(game.player.x + 160, game.player.y, 28, 90, "player")
+    capture("11-cannon.png")
+    game.reset(42)
+    game.level = 20
+    grant("bomb")
+    grant("dash")
+    game.frame = 30
+    game.request_bomb()
+    game.request_dash(3)
+    capture("12-skills.png")
 
     # 맵 비교는 동일 배율로 렌더링한 확장 월드 전체를 사용한다.
     overview_cfg = GameConfig(num_shapes=0, num_enemies=0, camera_zoom=1 / 3)
