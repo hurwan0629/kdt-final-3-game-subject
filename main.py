@@ -1,6 +1,6 @@
-"""사람이 키보드로 플레이하는 진입점.
+"""WASD 이동과 마우스 조준/발사로 플레이하는 진입점.
 
-키 입력 → (이동, 회전) → 행동 번호 → GameCore.step(action)
+WASD 이동 + 커서 조준 + 좌클릭 발사. P/ESC 일시정지.
 게임은 1/60초 고정 간격으로 업데이트되고, 화면 그리기는 그와 별개로 돈다.
 
     python main.py                 # 랜덤 seed, 기본 맵
@@ -23,14 +23,12 @@ from terrain import list_maps
 MAX_FRAMES_PER_TICK = 5  # 느린 PC에서 업데이트가 밀려 멈추는 것 방지
 
 
-def read_action(keys) -> int:
-    dx = (keys[pygame.K_d] - keys[pygame.K_a])
-    dy = (keys[pygame.K_s] - keys[pygame.K_w])
+def read_player_input(keys, renderer, mouse_pos, buttons):
+    target = renderer.screen_to_world(*mouse_pos)
+    dx = keys[pygame.K_d] - keys[pygame.K_a]
+    dy = keys[pygame.K_s] - keys[pygame.K_w]
     move = move_from_vector(dx, dy)
-    left = keys[pygame.K_q] or keys[pygame.K_LEFT]
-    right = keys[pygame.K_e] or keys[pygame.K_RIGHT]
-    rot = 1 if left and not right else 2 if right and not left else 0
-    return encode_action(move, rot)
+    return encode_action(move, 0), target, bool(buttons[0])
 
 
 def debug_lines(game, obs_cfg, action):
@@ -80,6 +78,7 @@ def main():
     from renderer import Renderer
     renderer = Renderer(cfg)
     game = GameCore(cfg, seed=args.seed)
+    renderer._update_camera(game.player)
 
     dt = 1.0 / cfg.fps
     acc = 0.0
@@ -87,20 +86,27 @@ def main():
     paused = False
     rewards_open = False
     action = 0
+    click_requested = False
 
     while True:
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
                 pygame.quit()
                 return
+            if ev.type == pygame.WINDOWFOCUSLOST:
+                paused = True
+                acc = 0.0
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not paused and not rewards_open:
+                click_requested = True
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_ESCAPE:
                     if rewards_open:
                         rewards_open = False
                         acc = 0.0
                         continue
-                    pygame.quit()
-                    return
+                    paused = not paused
+                    acc = 0.0
+                    continue
                 if ev.key == pygame.K_l:
                     rewards_open = not rewards_open and bool(game.open_rewards())
                     acc = 0.0
@@ -115,11 +121,16 @@ def main():
                     game.reset(args.seed)
                     paused = False
                     rewards_open = False
+                    click_requested = False
                     acc = 0.0
                 elif ev.key == pygame.K_F1:
                     show_debug = not show_debug
                 elif ev.key == pygame.K_p:
                     paused = not paused
+                    acc = 0.0
+                elif ev.key == pygame.K_q and paused:
+                    pygame.quit()
+                    return
                 elif ev.key == pygame.K_n:
                     cur = ("empty", None) if not tc.enabled else ("random", None) if tc.random_map \
                         else ("map", tc.map_name)
@@ -132,14 +143,22 @@ def main():
                     game.reset(args.seed)
                     paused = False
                     rewards_open = False
+                    click_requested = False
                     acc = 0.0
 
+        if paused or rewards_open:
+            click_requested = False
         acc += renderer.clock.tick(cfg.fps) / 1000.0
         acc = min(acc, dt * MAX_FRAMES_PER_TICK)
-        action = read_action(pygame.key.get_pressed())
+        mouse_pos = pygame.mouse.get_pos()
+        buttons = pygame.mouse.get_pressed()
+        keys = pygame.key.get_pressed()
         while acc >= dt:
             if not paused and not rewards_open:
-                game.step(action)
+                renderer._update_camera(game.player)
+                action, target, want_fire = read_player_input(keys, renderer, mouse_pos, buttons)
+                game.step(action, want_fire=want_fire or click_requested, aim_position=target)
+                click_requested = False
                 game.pop_events()  # 사람 플레이에서는 이벤트를 쓰지 않음
             acc -= dt
 

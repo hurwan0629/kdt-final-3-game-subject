@@ -70,7 +70,12 @@ def _hp_color(ratio):
 class Renderer:
     def __init__(self, cfg: GameConfig, caption: str = "Space Skirmish - RL Demo"):
         self.cfg = cfg
+        if not 0 < cfg.camera_zoom <= 1:
+            raise ValueError("camera_zoom은 0보다 크고 1 이하여야 합니다.")
         self.screen = pygame.display.set_mode((cfg.width, cfg.height))
+        self.view_width = round(cfg.width / cfg.camera_zoom)
+        self.view_height = round(cfg.height / cfg.camera_zoom)
+        self._view = pygame.Surface((self.view_width, self.view_height)).convert()
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
         # 시스템 폰트가 없으면 pygame 기본 폰트로 대체됨 → 실행 파일에서도 안전
@@ -94,7 +99,7 @@ class Renderer:
         self._terrain_key = None
         self._floor = None        # 배경 + 성운/중력장/소행성 캐시
         self._cloud_layer = None  # 우주선 위에 덮는 가스 구름 레이어 캐시
-        self._fx_layer = pygame.Surface((cfg.width, cfg.height), pygame.SRCALPHA)
+        self._fx_layer = pygame.Surface((self.view_width, self.view_height), pygame.SRCALPHA)
         self._tick = 0
 
         # 연출용 기록 (게임 상태와 무관)
@@ -160,8 +165,8 @@ class Renderer:
         for x, y, phase, speed in self._twinkles:
             b = 0.5 + 0.5 * math.sin(self._tick * speed + phase)
             c = int(90 + 165 * b)
-            sx, sy = self.world_to_screen(x, y)
-            if -2 <= sx <= self.cfg.width + 2 and -2 <= sy <= self.cfg.height + 2:
+            sx, sy = self.world_to_view(x, y)
+            if -2 <= sx <= self.view_width + 2 and -2 <= sy <= self.view_height + 2:
                 pygame.draw.circle(self.screen, (c, c, min(255, c + 20)), (int(sx), int(sy)), 1 if b < 0.7 else 2)
 
     # ------------------------------------------------------------------
@@ -400,17 +405,27 @@ class Renderer:
     # ------------------------------------------------------------------
     # 그리기
     # ------------------------------------------------------------------
-    def world_to_screen(self, x, y):
+    def world_to_view(self, x, y):
         return x - self.camera_x, y - self.camera_y
+
+    def world_to_screen(self, x, y):
+        vx, vy = self.world_to_view(x, y)
+        return vx * self.cfg.width / self.view_width, vy * self.cfg.height / self.view_height
+
+    def screen_to_world(self, x, y):
+        return (x * self.view_width / self.cfg.width + self.camera_x,
+                y * self.view_height / self.cfg.height + self.camera_y)
 
     def _update_camera(self, player):
         c = self.cfg
-        self.camera_x = int(max(0, min(player.x - c.width / 2, c.world_width - c.width)))
-        self.camera_y = int(max(0, min(player.y - c.height / 2, c.world_height - c.height)))
+        self.camera_x = (int(max(0, min(player.x - self.view_width / 2, c.world_width - self.view_width)))
+                         if c.world_width >= self.view_width else (c.world_width - self.view_width) // 2)
+        self.camera_y = (int(max(0, min(player.y - self.view_height / 2, c.world_height - self.view_height)))
+                         if c.world_height >= self.view_height else (c.world_height - self.view_height) // 2)
 
     def _visible(self, x, y, margin=100):
-        sx, sy = self.world_to_screen(x, y)
-        return -margin <= sx <= self.cfg.width + margin and -margin <= sy <= self.cfg.height + margin
+        sx, sy = self.world_to_view(x, y)
+        return -margin <= sx <= self.view_width + margin and -margin <= sy <= self.view_height + margin
 
     def draw(self, game, debug_lines=None, paused=False, show_ai=False, rewards_open=False):
         self._tick += 1
@@ -418,7 +433,9 @@ class Renderer:
         self._track(game)
         self._ensure_terrain(game.terrain)
         self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔
-        scr = self.screen
+        display = self.screen
+        self.screen = scr = self._view
+        scr.fill(COLORS["space_top"])
         scr.blit(self._floor, (-self.camera_x, -self.camera_y))
         self._draw_twinkles()
         f = game.frame
@@ -460,6 +477,8 @@ class Renderer:
         if show_ai:
             self._draw_ai_debug(game)
 
+        self.screen = display
+        pygame.transform.smoothscale(scr, (self.cfg.width, self.cfg.height), display)
         self._draw_hud(game, paused, show_notice=not rewards_open)
         if debug_lines:
             self._draw_debug(debug_lines)
@@ -468,7 +487,7 @@ class Renderer:
         elif rewards_open:
             self._draw_rewards(game)
         elif paused:
-            self._draw_card(["PAUSED"], ["Press P to resume"])
+            self._draw_card(["일시정지"], ["P / ESC: 계속    Q: 종료    R: 새 게임"])
 
     def _draw_shape(self, s, f):
         sprite, flash = self._shape_sprites[s.kind]
@@ -477,13 +496,13 @@ class Renderer:
         if scale < 0.08:
             return
         img = pygame.transform.rotozoom(img, -math.degrees(s.angle), scale)
-        x, y = self.world_to_screen(s.x, s.y)
+        x, y = self.world_to_view(s.x, s.y)
         self.screen.blit(img, img.get_rect(center=(int(x), int(y))))
 
     def _draw_bullet(self, b):
         color = COLORS["player_shot"] if b.team == "player" else COLORS["enemy_shot"]
         r = b.radius
-        x, y = self.world_to_screen(b.x, b.y)
+        x, y = self.world_to_view(b.x, b.y)
         tail = (x - b.vx * 2.2, y - b.vy * 2.2)
         pygame.draw.line(self.screen, _darken(color, 0.55), tail, (x, y), max(2, int(r * 1.1)))
         self._blit_glow(self.screen, x, y, r * 3.2, color, 0.75)
@@ -491,7 +510,7 @@ class Renderer:
 
     def _draw_ship(self, t, f, hull, color, dark, is_player=False):
         c = self.cfg
-        x, y = self.world_to_screen(t.x, t.y)
+        x, y = self.world_to_view(t.x, t.y)
         scale = self._spawn_scale(t.id, f)
         if scale < 0.08:
             return
@@ -542,7 +561,7 @@ class Renderer:
     def _draw_ghost(self, g):
         """파괴 연출: 천체는 커지며 사라지고, 우주선은 폭발."""
         t = g["age"] / DEATH_FRAMES
-        x, y = self.world_to_screen(g["x"], g["y"])
+        x, y = self.world_to_view(g["x"], g["y"])
         if g["kind"] == "ship":
             r = g["r"] * (1 + 2.2 * t)
             self._blit_glow(self.screen, x, y, r * 1.4, (255, 170, 80), round((1 - t) * 8) / 8 * 1.2)
@@ -559,7 +578,7 @@ class Renderer:
     def _hp_bar(self, cx, y, w, ratio, h=6):
         if not self._visible(cx, y):
             return
-        cx, y = self.world_to_screen(cx, y)
+        cx, y = self.world_to_view(cx, y)
         x = int(cx - w / 2)
         w = int(w)
         pygame.draw.rect(self.screen, COLORS["hp_bg"], (x - 1, y - 1, w + 2, h + 2), border_radius=(h + 2) // 2)
@@ -573,12 +592,12 @@ class Renderer:
             if not e.alive:
                 continue
             if e.ai_path:
-                pts = [self.world_to_screen(e.x, e.y)] + [self.world_to_screen(*tm.center(c, r)) for c, r in e.ai_path]
+                pts = [self.world_to_view(e.x, e.y)] + [self.world_to_view(*tm.center(c, r)) for c, r in e.ai_path]
                 pygame.draw.lines(self.screen, (235, 190, 40), False, pts, 2)
             if e.ai_can_see:
-                pygame.draw.line(self.screen, (60, 220, 110), self.world_to_screen(e.x, e.y), self.world_to_screen(p.x, p.y), 2)
+                pygame.draw.line(self.screen, (60, 220, 110), self.world_to_view(e.x, e.y), self.world_to_view(p.x, p.y), 2)
             if e.ai_goal:
-                gx, gy = self.world_to_screen(*e.ai_goal)
+                gx, gy = self.world_to_view(*e.ai_goal)
                 pygame.draw.circle(self.screen, (235, 190, 40), (int(gx), int(gy)), 5, 2)
 
     # ------------------------------------------------------------------
@@ -594,6 +613,16 @@ class Renderer:
         p = game.player
         W, H = self.cfg.width, self.cfg.height
         secs = game.frame / self.cfg.fps
+
+        ammo = f"탄약 {p.ammo} / {p.max_ammo}" if game.cfg.limited_ammo else "탄약 무제한"
+        rect = pygame.Rect(W - 224, 14, 210, 70)
+        self._panel(rect)
+        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS["white"]
+        self.screen.blit(self.font_body.render(ammo, True, color), (rect.x + 14, rect.y + 10))
+        self.screen.blit(self.font_small.render("P / ESC: 일시정지", True, COLORS["text"]), (rect.x + 14, rect.y + 42))
+        if game.cfg.limited_ammo and p.ammo == 0 and not game.game_over:
+            text = self.font_body.render("탄약 소진! [L] 보급 카드 또는 [R] 새 게임", True, (255, 165, 100))
+            self.screen.blit(text, text.get_rect(midtop=(W / 2, 218)))
 
         # 좌상단: 점수/처치/시간
         items = [(self.font_label.render(label, True, COLORS["label"]),
@@ -630,7 +659,7 @@ class Renderer:
 
         # 조작 안내: 시작 10초 동안과 일시정지 중에만
         if secs < 10 or paused:
-            hint = "WASD move   Q/E rotate   L rewards   F1 debug   N map   P pause   R restart   ESC quit"
+            hint = "WASD: 이동   커서: 조준   좌클릭: 발사   L: 보상   P / ESC: 일시정지   R: 새 게임"
             surf = self.font_small.render(hint, True, COLORS["text"])
             self.screen.blit(surf, surf.get_rect(midbottom=(W / 2, by - 14)))
 
@@ -670,7 +699,7 @@ class Renderer:
         gap, margin = 18, 30
         width = (W - 2 * margin - 2 * gap) // 3
         accents = {"강화": (95, 205, 255), "능력치": (178, 150, 255),
-                   "회복": (100, 230, 165), "전직": (255, 205, 95)}
+                   "회복": (100, 230, 165), "전직": (255, 205, 95), "보급": (255, 165, 100)}
         for i, card in enumerate(game.reward_choices):
             rect = pygame.Rect(margin + i * (width + gap), H // 2 - 110, width, 240)
             self._panel(rect, 245, 16)
@@ -702,7 +731,7 @@ class Renderer:
         shade = pygame.Surface((W, H), pygame.SRCALPHA)
         shade.fill((0, 0, 10, 130))
         self.screen.blit(shade, (0, 0))
-        ch = 120 + (70 if stats else 0)
+        ch = 140 + (70 if stats else 0)
         card = pygame.Rect(0, 0, 420, ch)
         card.center = (W / 2, H / 2)
         self._panel(card, 225, 18)

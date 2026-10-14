@@ -82,6 +82,7 @@ class ProgressionTests(unittest.TestCase):
                 game.reward_choices = (card,)
                 p = game.player
                 p.hp = 20
+                p.ammo = 20
                 self.assertTrue(game.choose_reward(0))
                 self.assertEqual(game.pending_rewards, 0)
                 self.assertEqual(game.last_reward, card.title)
@@ -105,6 +106,8 @@ class ProgressionTests(unittest.TestCase):
                     bullet = game.bullets[0]
                     self.assertAlmostEqual(math.hypot(bullet.vx, bullet.vy), game.cfg.bullet_speed * 1.2)
                     self.assertEqual(bullet.life, int(game.cfg.bullet_life * 1.15))
+                elif card.key == "ammo":
+                    self.assertEqual(p.ammo, 60)
                 elif card.key == "scout":
                     self.assertEqual(p.job, "scout")
                     self.assertEqual((p.accel_scale, p.bullet_speed_scale), (1.35, 1.2))
@@ -221,7 +224,7 @@ class RendererTests(unittest.TestCase):
         p.x = game.cfg.world_width - p.radius
         p.y = game.cfg.world_height - p.radius
         renderer._update_camera(p)
-        self.assertEqual((renderer.camera_x, renderer.camera_y), (1920, 1440))
+        self.assertEqual((renderer.camera_x, renderer.camera_y), (1280, 960))
         game._add_score(190)
         game.open_rewards()
         renderer.draw(game, rewards_open=True)
@@ -234,7 +237,8 @@ class RendererTests(unittest.TestCase):
         clock.tick.return_value = 17
         frames = []
         fake_renderer = SimpleNamespace(clock=clock, draw=Mock(
-            side_effect=lambda g, *args, **kwargs: frames.append((g.frame, kwargs["rewards_open"]))))
+            side_effect=lambda g, *args, **kwargs: frames.append((g.frame, kwargs["rewards_open"]))),
+            _update_camera=self.renderer._update_camera, screen_to_world=self.renderer.screen_to_world)
         key = lambda k: [pygame.event.Event(pygame.KEYDOWN, key=k)]
         batches = [key(pygame.K_l), key(pygame.K_4), key(pygame.K_ESCAPE),
                    key(pygame.K_l), key(pygame.K_1), [pygame.event.Event(pygame.QUIT)]]

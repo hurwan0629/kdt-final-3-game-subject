@@ -80,6 +80,8 @@ class Tank:
     regen_bonus: float = 0.0
     projectiles: int = 1
     job: str = "rookie"
+    ammo: int = 0
+    max_ammo: int = 0
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -145,6 +147,8 @@ class GameCore:
             raise ValueError("world_scale은 1 이상의 정수여야 합니다.")
         if self.cfg.level_xp_base <= 0 or self.cfg.level_xp_growth < 0:
             raise ValueError("레벨 경험치는 양수, 증가량은 0 이상이어야 합니다.")
+        if not isinstance(self.cfg.player_ammo, int) or self.cfg.player_ammo < 0:
+            raise ValueError("player_ammo는 0 이상의 정수여야 합니다.")
         self.reset(seed)
 
     # ---------------- 초기화 ----------------
@@ -175,6 +179,7 @@ class GameCore:
             id=self._new_id(), team="player", x=px, y=py,
             hp=c.player_hp, max_hp=c.player_hp, radius=c.tank_radius,
             fire_cooldown_max=c.player_fire_cooldown,
+            ammo=c.player_ammo, max_ammo=c.player_ammo,
             angle=float(self.rng.uniform(-math.pi, math.pi)),
         )
         for _ in range(c.num_enemies):
@@ -289,7 +294,8 @@ class GameCore:
             return ()
         if not self.reward_choices:
             eligible = [card for card in REWARD_CARDS
-                        if card.category != "전직" or (self.level >= 3 and self.player.job == "rookie")]
+                        if (card.category != "전직" or (self.level >= 3 and self.player.job == "rookie"))
+                        and (card.key != "ammo" or self.cfg.limited_ammo)]
             indices = self.reward_rng.choice(len(eligible), size=3, replace=False)
             self.reward_choices = tuple(eligible[int(i)] for i in indices)
         return self.reward_choices
@@ -318,6 +324,8 @@ class GameCore:
         elif card.key == "range":
             p.bullet_speed_scale *= 1.2
             p.bullet_life_scale *= 1.15
+        elif card.key == "ammo":
+            p.ammo = min(p.max_ammo, p.ammo + 40)
         elif card.key == "scout":
             p.job = "scout"
             p.accel_scale *= 1.35
@@ -342,12 +350,16 @@ class GameCore:
         self.events = empty_events()
         return ev
 
-    def step(self, action: int):
-        """플레이어 행동 하나로 1프레임 진행."""
+    def step(self, action: int, *, want_fire: bool = True, aim_position=None):
+        """1프레임 진행. 사람 입력은 발사 여부와 월드 좌표 조준점을 별도로 전달한다."""
         if self.game_over:
             return
         move, rot = decode_action(action)
         self._apply_tank_control(self.player, move, rot, self.player.accel_scale, 1.0)
+        if aim_position is not None:
+            dx, dy = aim_position[0] - self.player.x, aim_position[1] - self.player.y
+            if dx * dx + dy * dy > 1e-6:
+                self.player.angle = math.atan2(dy, dx)
 
         for e in self.enemies:
             if e.alive:
@@ -357,7 +369,7 @@ class GameCore:
                 if e.respawn_timer <= 0:
                     self._respawn_enemy(e)
 
-        self._fire(self.player, True)
+        self._fire(self.player, want_fire)
         self._move_shapes()
         self._move_bullets()
         self._collide_bullets()
@@ -409,6 +421,12 @@ class GameCore:
             return
         c = self.cfg
         offsets = (-0.20, 0.0, 0.20) if t.projectiles == 3 else (0.0,)
+        if t.team == "player" and c.limited_ammo:
+            # 마지막 탄약이 3발 미만이면 남은 수만큼 발사한다.
+            if t.ammo <= 0:
+                return
+            offsets = offsets[:t.ammo]
+            t.ammo -= len(offsets)
         for offset in offsets:
             ca, sa = math.cos(t.angle + offset), math.sin(t.angle + offset)
             self.bullets.append(Bullet(

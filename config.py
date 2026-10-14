@@ -71,6 +71,7 @@ class GameConfig:
     width: int = 960
     height: int = 720
     world_scale: int = 3             # 2880x2160 월드, 60x45 타일
+    camera_zoom: float = 0.6         # 60% 줌: 화면에 1600x1200 월드 영역 표시
     progression_enabled: bool = True
     level_xp_base: int = 60
     level_xp_growth: int = 40
@@ -88,6 +89,8 @@ class GameConfig:
     # 플레이어
     player_hp: float = 100.0
     player_fire_cooldown: int = 20
+    limited_ammo: bool = True
+    player_ammo: int = 120           # 자동 재장전 없이 보급 카드로 보충
     regen_delay: int = 240           # 마지막 피격 후 회복 시작까지 프레임
     regen_rate: float = 0.05         # 프레임당 회복량
 

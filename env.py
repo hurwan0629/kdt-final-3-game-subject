@@ -162,7 +162,7 @@ class TankEnv(_BaseEnv):
                  reward_config: RewardConfig = None, env_config: EnvConfig = None,
                  render_mode: str = None):
         # 27개 이동/회전 행동으로 학습할 때는 카드 선택을 요구하지 않는다.
-        self.game_cfg = game_config or GameConfig(progression_enabled=False)
+        self.game_cfg = game_config or GameConfig(progression_enabled=False, limited_ammo=False)
         self.obs_cfg = obs_config or ObsConfig()
         self.reward_cfg = reward_config or RewardConfig()
         self.env_cfg = env_config or EnvConfig()
@@ -224,7 +224,8 @@ class TankEnv(_BaseEnv):
         return {"score": self.game.score, "kills": self.game.kills, "map": self.game.terrain.name,
                 "frames": self.game.frame, "steps": self.steps, "events": events,
                 "level": self.game.level, "xp": self.game.xp,
-                "pending_rewards": self.game.pending_rewards, "job": self.game.player.job}
+                "pending_rewards": self.game.pending_rewards, "job": self.game.player.job,
+                "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None}
 
     def render(self):
         if self.render_mode != "human":
