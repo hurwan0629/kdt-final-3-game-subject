@@ -1,0 +1,154 @@
+# Space Skirmish: 강화학습용 탑뷰 우주선 슈팅 데모 (diep.io 축소판)
+
+우주를 배경으로 우주선을 조종해 별 조각과 행성을 부수고 적 우주선과 싸우는 게임입니다. 사람이 키보드로 플레이할 수 있고, 같은 게임을 화면 없이 강화학습 환경(Gymnasium 스타일)으로도 쓸 수 있는 구조의 데모입니다.
+
+## 실행
+
+```bash
+pip install -r requirements.txt
+python main.py                 # 사람 플레이 (랜덤 seed, 기본 맵 drift)
+python main.py --seed 42       # seed 고정
+python main.py --map belt      # 맵 선택 (drift / ring / belt)
+python main.py --random-map    # 랜덤 맵 생성
+python main.py --stage2        # 중력장 + 소행성(부서지는 벽) 켜기
+python main.py --no-terrain    # 지형 없는 빈 우주
+python random_agent_test.py    # headless 검사: 맵 검증 + 맵별 랜덤 실행 + 속도 + 재현성
+```
+
+## 조작
+
+| 키 | 동작 |
+|---|---|
+| W A S D | 이동 (대각선은 두 키 조합) |
+| Q / E 또는 ← / → | 포신 왼쪽 / 오른쪽 회전 |
+| (자동) | 일정 간격 자동 연사 |
+| F1 | 디버그 표시 토글 (관찰값, 적 A* 경로, 시야선) |
+| N | 다음 맵 (손맵들 → 랜덤 맵 → 빈 우주 순환) |
+| P | 일시정지 |
+| R | 재시작 |
+| ESC | 종료 |
+
+마우스 조준은 일부러 쓰지 않습니다. 사람과 AI가 같은 행동 집합을 쓰게 하기 위해서입니다.
+
+## 파일 구조
+
+```
+config.py            모든 설정값 (게임/지형/적 AI 난이도/관찰 N·M·K/보상 계수/frame_skip)
+game_core.py         게임 규칙과 상태만 담당 (pygame 의존 없음, 1/60초 고정 간격)
+terrain.py           타일맵: 맵 파싱·검증, 벽 충돌, 시야선/레이캐스트, A*, 랜덤 맵 생성 (pygame 의존 없음)
+maps/*.txt           손으로 만든 맵 (drift, ring, belt)
+env.py               TankEnv: reset(seed) / step(action), 관찰·보상 계산
+renderer.py          pygame으로 상태를 그리기만 함 (우주 컨셉 그래픽)
+main.py              키보드 → 행동 번호 → game_core
+random_agent_test.py 랜덤 에이전트 속도 측정 + 같은 seed 재현성 확인
+```
+
+의존 방향은 `main → renderer, game_core`와 `env → game_core → terrain`입니다. `game_core`는 화면을 전혀 모르기 때문에 env는 화면 없이(headless) 돌아갑니다.
+
+## 컨셉과 화면 표현
+
+코드(게임 규칙)는 원래 이름을 그대로 쓰고, 화면에만 우주 컨셉을 입혔습니다. 그래서 강화학습 쪽 코드와 관찰은 그래픽과 상관없습니다.
+
+| 게임 규칙 | 화면 표현 |
+|---|---|
+| 탱크 / 포신 | 우주선 / 기수 방향의 포 (움직이면 엔진 불꽃) |
+| 도형 square / triangle / pentagon | 별 조각 / 작은 암석 행성 / 고리 행성 |
+| 탄환 | 플라즈마 탄 |
+
+## 지형
+
+경기장은 48px 타일로 된 20×15 격자입니다(`TerrainConfig.tile_size`). 맵은 `maps/` 폴더의 텍스트 파일로 정의합니다.
+
+| 문자 | 지형 (화면) | 효과 |
+|---|---|---|
+| `.` | 빈 우주 | |
+| `#` | 성운 | 이동과 탄환을 막음. 우주선은 성운을 따라 미끄러지듯 이동 |
+| `*` | 가스 구름 | 안에 있는 우주선은 상대에게 보이지 않음 (적 AI 감지 불가, 플레이어 관찰에서도 제외, 화면에서도 가려짐) |
+| `~` | 중력장 (2단계) | 이동 가속 × 0.5 |
+| `+` | 소행성 (2단계) | 체력 40. 탄환에 맞아 부서지면 빈 우주가 됨 |
+| `P` / `E` | 플레이어 / 적 시작 위치 | |
+
+맵은 답답하지 않도록 지형이 화면의 10% 안팎만 차지하게 만들었습니다. 랜덤 맵의 지형 밀도도 `random_*_density`로 조절할 수 있습니다.
+
+- **기능 끄기:** 2단계 기능은 기본으로 꺼져 있습니다(`mud_enabled`, `breakable_enabled`). 끄면 `~`는 빈 우주, `+`는 일반 성운으로 취급합니다.
+- **맵 선택:**
+  - `enabled=False`이면 빈 경기장 모드입니다.
+  - `random_map=True`이면 `reset`마다 랜덤 맵을 생성합니다. 모든 빈칸이 연결될 때까지(BFS 검증) 다시 생성합니다.
+  - `map_pool=("drift", "belt")`처럼 지정하면 `reset`마다 seed로 맵을 고릅니다.
+- **맵 검증:** 맵을 불러올 때 크기, 허용된 문자, `P`가 1개인지, 모든 빈칸이 연결됐는지 검사합니다. 잘못된 맵은 어느 줄이 문제인지 알려줍니다. `;`로 시작하는 줄은 주석입니다.
+
+### 적 AI
+
+- **감지:** 사거리 안, 가스 구름 밖, **시야선이 트였을 때**(사이에 성운 없음)만 플레이어를 봅니다.
+- **목표:** 보이는 플레이어와 가장 가까운 천체(도형)를 가중 거리로 비교해 고릅니다.
+- **추격:** 쫓던 플레이어를 놓치면 마지막으로 본 위치를 2초 동안 기억하고 그곳으로 갑니다.
+- **경로:** 목표가 직접 안 보이면 8방향 **A\***로 경로를 찾아 따라갑니다(성운 모서리 대각선 통과 금지).
+- **발사:** 시야선이 트였을 때만 쏩니다.
+
+## 행동 (Discrete 27)
+
+`action = move * 3 + rot` 이며, `encode_action(move, rot)` / `decode_action(action)`로 변환합니다.
+
+- move: 0=정지, 1=↑, 2=↗, 3=→, 4=↘, 5=↓, 6=↙, 7=←, 8=↖
+- rot: 0=유지, 1=왼쪽, 2=오른쪽
+
+규칙 기반 적 AI도 같은 8방향 이동과 회전 규칙을 따릅니다.
+
+## 관찰 (float32, 기본 길이 363 = 벡터 121 + 격자 2×11×11)
+
+위치는 경기장 크기로 정규화합니다. 각 목록은 가까운 순서로 정렬하고, 대상이 부족하면 0으로 채우며 `exists=0`이 됩니다.
+
+| 블록 | 필드 | 크기 |
+|---|---|---|
+| 내 탱크 | x, y, vx, vy, hp, sin θ, cos θ, 재장전 진행도, 수풀 안 여부 | 9 |
+| 적 탱크 ×N(3) | exists, dx, dy, vx, vy, hp, sin, cos (수풀에 숨은 적은 제외) | 24 |
+| 도형 ×M(8) | exists, dx, dy, hp, 점수, 반지름 | 48 |
+| 적 탄환 ×K(8) | exists, dx, dy, vx, vy | 40 |
+| 레이캐스트 (선택) | `n_rays`개 방향의 가장 가까운 벽까지 거리 (기본 0 = 끔) | n_rays |
+| 지형 격자 | 내 칸 중심 11×11 타일, 지형 종류별 0/1 채널 (벽, 수풀 / 2단계를 켜면 + 진흙, 부서지는 벽). 맵 바깥은 벽 | C×11×11 |
+
+- **관찰 형식:** `ObsConfig(obs_mode="dict")`로 바꾸면 `{"vector": (121,), "grid": (C, 11, 11)}` 형태로 받습니다. CNN을 쓸 때 편합니다.
+- **빈 경기장 모드에서도** 격자 채널은 그대로 두기 때문에 관찰 크기가 바뀌지 않습니다.
+
+## 보상 (`config.RewardConfig`)
+
+| 이벤트 | 값 |
+|---|---|
+| 도형 데미지 | +0.002 × 데미지 × (점수 / 최대체력) |
+| 도형 파괴 | +0.01 × 점수 |
+| 적 데미지 | +0.01 × 데미지 |
+| 적 처치 | +2.0 |
+| 피격 | −0.02 × 받은 데미지 |
+| 사망 | −5.0 → `terminated` |
+| step 수 초과 (3000) | `truncated` |
+
+`game_core`는 이벤트만 기록합니다. 보상으로 바꾸는 계산은 `env.compute_reward`에서 하므로, 보상 설계를 바꿀 때 게임 규칙을 건드릴 필요가 없습니다.
+
+## 강화학습에서 쓰는 법
+
+```python
+from env import TankEnv
+from config import EnvConfig, ObsConfig
+
+env = TankEnv(env_config=EnvConfig(frame_skip=4, max_steps=3000), obs_config=ObsConfig(n_shapes=6))
+obs, info = env.reset(seed=0)
+obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
+```
+
+- gymnasium이 설치되어 있으면 `gymnasium.Env`를 상속하고 `spaces`를 그대로 제공합니다. 그래서 stable-baselines3 같은 라이브러리에 바로 넣을 수 있습니다.
+- `TankEnv(render_mode="human")`으로 만들면 학습된 에이전트가 플레이하는 화면을 볼 수 있습니다.
+- 적 난이도는 `config.EnemyAIConfig`(반응 주기, 조준 오차, 회전 속도, 발사 간격, 기억 시간 등)로 조절합니다.
+- 지형은 `GameConfig().terrain`(`TerrainConfig`)으로 설정합니다. 예: `cfg.terrain.map_pool = ("drift", "ring", "belt")`
+
+## 재현성
+
+모든 랜덤은 `reset(seed)`로 만든 `numpy.random.Generator` 하나만 사용합니다. 그래서 같은 seed에 같은 행동 시퀀스를 넣으면 같은 결과가 나옵니다. `random_agent_test.py`가 이를 확인합니다.
+
+## 실행 파일 만들기 (PyInstaller)
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name SpaceSkirmish --add-data "maps;maps" main.py
+```
+
+이미지 에셋은 없고, 맵 폴더만 `--add-data`로 함께 넣으면 됩니다(macOS/Linux에서는 `maps:maps`). 파일 경로는 모두 `config.resource_path()`로 만들기 때문에 실행 파일에서도 동작합니다.

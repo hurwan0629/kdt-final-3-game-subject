@@ -1,0 +1,136 @@
+# Python: bytecode, virtual environments, package/build output
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.Python
+__pypackages__/
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# Test, coverage, type checking, linting and profiling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+*.prof
+*.lprof
+
+# Notebooks: keep .ipynb sources, ignore temporary state
+.ipynb_checkpoints/
+.virtual_documents/
+.ipython/
+
+# Secrets and local settings (env.py is a tracked Python source)
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+.envrc
+/.aws/
+
+# Reinforcement learning: generated experiment output directories
+# Keep experiment scripts/configs outside these directories.
+/runs/
+/logs/
+/outputs/
+/results/
+/checkpoints/
+/trained_models/
+/replay_buffers/
+/tensorboard/
+/tb_logs/
+/wandb/
+/mlruns/
+/mlartifacts/
+/lightning_logs/
+/ray_results/
+/optuna.db
+/optuna.db-journal
+/optuna.db-shm
+/optuna.db-wal
+events.out.tfevents.*
+*.monitor.csv
+
+# Common Stable-Baselines3 generated files
+best_model.zip
+rl_model_*_steps.zip
+replay_buffer.pkl
+vecnormalize.pkl
+vec_normalize.pkl
+
+# Model artifacts in models/: allow Python code and config in that folder
+/models/**/*.pt
+/models/**/*.pth
+/models/**/*.ckpt
+/models/**/*.safetensors
+/models/**/*.onnx
+/models/**/*.h5
+/models/**/*.keras
+/models/**/*.zip
+/models/**/*.pkl
+
+# Large/generated datasets: keep small fixtures and metadata elsewhere
+/data/raw/
+/data/processed/
+/data/cache/
+/data/downloads/
+
+# Pygame/Gymnasium: generated recordings, replays and screenshots
+# Do not globally ignore images/audio/video: they may be game assets.
+/recordings/
+/videos/
+/screenshots/
+/replays/
+
+# Local caches, temporary files and runtime logs
+/.cache/
+/tmp/
+/temp/
+*.log
+*.tmp
+*.temp
+
+# PyInstaller: build/ and dist/ above cover generated bundles.
+# Keep .spec files: they can contain reproducible packaging configuration.
+
+# Editor-specific personal state; keep shareable VS Code configuration
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.code-workspace
+*.swp
+*.swo
+*~
+
+# OS-generated metadata
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Intentionally tracked: maps/*.txt, assets, source notebooks,
+# requirements.txt, dependency lockfiles, training configs and .spec files.
+# No global *.zip / *.pkl / *.npy / *.npz rules: these can be source data.

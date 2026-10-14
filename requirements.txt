@@ -1,0 +1,4 @@
+pygame>=2.5
+numpy>=1.24
+# 선택: 설치되어 있으면 env.TankEnv가 gymnasium.Env를 상속
+# gymnasium>=0.29
