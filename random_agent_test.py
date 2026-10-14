@@ -19,7 +19,7 @@ from terrain import list_maps, load_map, parse_map, generate_random_map, MapErro
 
 
 def make_env(map_name="drift", stage2=False, random_map=False, terrain=True, obs_mode="flat"):
-    cfg = GameConfig()
+    cfg = GameConfig(progression_enabled=False)
     tc = cfg.terrain
     tc.enabled = terrain
     tc.map_name = map_name

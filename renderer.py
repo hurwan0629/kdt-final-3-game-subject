@@ -15,6 +15,7 @@ import pygame.gfxdraw
 
 from config import GameConfig
 from terrain import WALL, BUSH, MUD, BREAKABLE
+from progression import JOB_NAMES
 
 COLORS = {
     "space_top": (6, 8, 22),
@@ -73,19 +74,22 @@ class Renderer:
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
         # 시스템 폰트가 없으면 pygame 기본 폰트로 대체됨 → 실행 파일에서도 안전
-        sans = "segoeui,arial,helvetica"
+        sans = "malgungothic,applegothic,nanumgothic,notosanscjkkr,segoeui,arial"
         self.font_hud = pygame.font.SysFont(sans, 22, bold=True)
         self.font_label = pygame.font.SysFont(sans, 13, bold=True)
         self.font_small = pygame.font.SysFont(sans, 14)
         self.font_big = pygame.font.SysFont(sans, 56, bold=True)
+        self.font_card = pygame.font.SysFont(sans, 24, bold=True)
+        self.font_body = pygame.font.SysFont(sans, 17)
         self.font_mono = pygame.font.SysFont("consolas,couriernew,monospace", 13)
 
         self._rand = random.Random(2024)   # 렌더러 전용 (배경 별 배치 등)
         self._glow_cache = {}
         self._bg = self._make_background()
-        self._twinkles = [(self._rand.uniform(0, cfg.width), self._rand.uniform(0, cfg.height),
+        self.camera_x = self.camera_y = 0
+        self._twinkles = [(self._rand.uniform(0, cfg.world_width), self._rand.uniform(0, cfg.world_height),
                            self._rand.uniform(0, 6.28), self._rand.uniform(0.02, 0.07))
-                          for _ in range(45)]
+                          for _ in range(45 * cfg.world_scale ** 2)]
         self._shape_sprites = {k: self._make_shape_sprite(k) for k in ("square", "triangle", "pentagon")}
         self._terrain_key = None
         self._floor = None        # 배경 + 성운/중력장/소행성 캐시
@@ -129,7 +133,7 @@ class Renderer:
     # 배경: 그라데이션 우주 + 희미한 성운 + 별
     # ------------------------------------------------------------------
     def _make_background(self):
-        w, h = self.cfg.width, self.cfg.height
+        w, h = self.cfg.world_width, self.cfg.world_height
         rnd = self._rand
         surf = pygame.Surface((w, h))
         for y in range(h):
@@ -140,7 +144,7 @@ class Renderer:
             col = rnd.choice([(70, 40, 130), (30, 50, 120), (110, 40, 100)])
             self._blit_glow(haze, rnd.uniform(0, w), rnd.uniform(0, h), rnd.uniform(160, 300), col, 0.35)
         surf.blit(haze, (0, 0), special_flags=pygame.BLEND_ADD)
-        for _ in range(260):
+        for _ in range(260 * self.cfg.world_scale ** 2):
             x, y = rnd.randrange(w), rnd.randrange(h)
             b = rnd.choice([70, 90, 120, 160, 210])
             tint = rnd.choice([(1, 1, 1), (0.8, 0.9, 1), (1, 0.9, 0.8)])
@@ -156,7 +160,9 @@ class Renderer:
         for x, y, phase, speed in self._twinkles:
             b = 0.5 + 0.5 * math.sin(self._tick * speed + phase)
             c = int(90 + 165 * b)
-            pygame.draw.circle(self.screen, (c, c, min(255, c + 20)), (int(x), int(y)), 1 if b < 0.7 else 2)
+            sx, sy = self.world_to_screen(x, y)
+            if -2 <= sx <= self.cfg.width + 2 and -2 <= sy <= self.cfg.height + 2:
+                pygame.draw.circle(self.screen, (c, c, min(255, c + 20)), (int(sx), int(sy)), 1 if b < 0.7 else 2)
 
     # ------------------------------------------------------------------
     # 지형 (지형이 바뀔 때만 다시 그림)
@@ -167,7 +173,7 @@ class Renderer:
             return
         self._terrain_key = key
         T = tm.tile
-        W, H = self.cfg.width, self.cfg.height
+        W, H = self.cfg.world_width, self.cfg.world_height
         floor = self._bg.copy()
         add = pygame.Surface((W, H))
         add.fill((0, 0, 0))
@@ -394,27 +400,41 @@ class Renderer:
     # ------------------------------------------------------------------
     # 그리기
     # ------------------------------------------------------------------
-    def draw(self, game, debug_lines=None, paused=False, show_ai=False):
+    def world_to_screen(self, x, y):
+        return x - self.camera_x, y - self.camera_y
+
+    def _update_camera(self, player):
+        c = self.cfg
+        self.camera_x = int(max(0, min(player.x - c.width / 2, c.world_width - c.width)))
+        self.camera_y = int(max(0, min(player.y - c.height / 2, c.world_height - c.height)))
+
+    def _visible(self, x, y, margin=100):
+        sx, sy = self.world_to_screen(x, y)
+        return -margin <= sx <= self.cfg.width + margin and -margin <= sy <= self.cfg.height + margin
+
+    def draw(self, game, debug_lines=None, paused=False, show_ai=False, rewards_open=False):
         self._tick += 1
+        self._update_camera(game.player)
         self._track(game)
         self._ensure_terrain(game.terrain)
         self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔
         scr = self.screen
-        scr.blit(self._floor, (0, 0))
+        scr.blit(self._floor, (-self.camera_x, -self.camera_y))
         self._draw_twinkles()
         f = game.frame
         p = game.player
         player_hidden = p.alive and game.is_hidden(p)
 
         for s in game.shapes:
-            self._draw_shape(s, f)
+            if self._visible(s.x, s.y):
+                self._draw_shape(s, f)
         for e in game.enemies:
-            if e.alive:
+            if e.alive and self._visible(e.x, e.y):
                 self._draw_ship(e, f, ENEMY_HULL, COLORS["enemy"], COLORS["enemy_dark"])
         if p.alive and not player_hidden:
             self._draw_ship(p, f, PLAYER_HULL, COLORS["player"], COLORS["player_dark"], is_player=True)
         # 가스 구름은 우주선 위에 덮는다 → 안에 있는 적은 실제로 가려짐
-        scr.blit(self._cloud_layer, (0, 0))
+        scr.blit(self._cloud_layer, (-self.camera_x, -self.camera_y))
         if player_hidden:  # 내 우주선만 반투명하게 보여줌
             self._fx_layer.fill((0, 0, 0, 0))
             self.screen = self._fx_layer
@@ -423,9 +443,11 @@ class Renderer:
             self._fx_layer.set_alpha(150)
             scr.blit(self._fx_layer, (0, 0))
         for b in game.bullets:
-            self._draw_bullet(b)
+            if self._visible(b.x, b.y):
+                self._draw_bullet(b)
         for g in self._ghosts:
-            self._draw_ghost(g)
+            if self._visible(g["x"], g["y"]):
+                self._draw_ghost(g)
         # 체력바는 모든 물체 위에 (숨은 적의 체력바는 그리지 않음)
         for s in game.shapes:
             if s.hp < s.max_hp:
@@ -438,11 +460,13 @@ class Renderer:
         if show_ai:
             self._draw_ai_debug(game)
 
-        self._draw_hud(game, paused)
+        self._draw_hud(game, paused, show_notice=not rewards_open)
         if debug_lines:
             self._draw_debug(debug_lines)
         if game.game_over:
             self._draw_game_over(game)
+        elif rewards_open:
+            self._draw_rewards(game)
         elif paused:
             self._draw_card(["PAUSED"], ["Press P to resume"])
 
@@ -453,18 +477,21 @@ class Renderer:
         if scale < 0.08:
             return
         img = pygame.transform.rotozoom(img, -math.degrees(s.angle), scale)
-        self.screen.blit(img, img.get_rect(center=(int(s.x), int(s.y))))
+        x, y = self.world_to_screen(s.x, s.y)
+        self.screen.blit(img, img.get_rect(center=(int(x), int(y))))
 
     def _draw_bullet(self, b):
         color = COLORS["player_shot"] if b.team == "player" else COLORS["enemy_shot"]
         r = b.radius
-        tail = (b.x - b.vx * 2.2, b.y - b.vy * 2.2)
-        pygame.draw.line(self.screen, _darken(color, 0.55), tail, (b.x, b.y), max(2, int(r * 1.1)))
-        self._blit_glow(self.screen, b.x, b.y, r * 3.2, color, 0.75)
-        self._aa_circle(self.screen, b.x, b.y, r * 0.75, _mix(color, (255, 255, 255), 0.6))
+        x, y = self.world_to_screen(b.x, b.y)
+        tail = (x - b.vx * 2.2, y - b.vy * 2.2)
+        pygame.draw.line(self.screen, _darken(color, 0.55), tail, (x, y), max(2, int(r * 1.1)))
+        self._blit_glow(self.screen, x, y, r * 3.2, color, 0.75)
+        self._aa_circle(self.screen, x, y, r * 0.75, _mix(color, (255, 255, 255), 0.6))
 
     def _draw_ship(self, t, f, hull, color, dark, is_player=False):
         c = self.cfg
+        x, y = self.world_to_screen(t.x, t.y)
         scale = self._spawn_scale(t.id, f)
         if scale < 0.08:
             return
@@ -474,10 +501,10 @@ class Renderer:
         ca, sa = math.cos(t.angle), math.sin(t.angle)
 
         def tf(px, py):
-            return t.x + (px * ca - py * sa) * R, t.y + (px * sa + py * ca) * R
+            return x + (px * ca - py * sa) * R, y + (px * sa + py * ca) * R
 
         # 엔진 불꽃: 속도가 빠를수록 길게
-        spd = min(1.0, math.hypot(t.vx, t.vy) / c.max_speed)
+        spd = min(1.0, math.hypot(t.vx, t.vy) / (c.max_speed * t.accel_scale))
         flick = 0.08 * ((self._tick // 2) % 3)
         length = 0.35 + 0.55 * spd + flick
         ex, ey = tf(-0.62, 0)
@@ -486,13 +513,13 @@ class Renderer:
         self._aa_poly(self.screen, [tf(-0.55, 0.12), tf(-0.55, -0.12), tf(-0.6 - length * 0.6, 0)], (255, 235, 170))
 
         # 보호막 (충돌 범위 표시)
-        pygame.gfxdraw.aacircle(self.screen, int(t.x), int(t.y), int(R), (*color, 70))
+        pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(R), (*color, 70))
 
         # 포 (발사 직후 반동으로 짧아짐)
         recoil = max(0.0, (t.cooldown - (t.fire_cooldown_max - 6)) / 6) * 6
         gun_len = (c.barrel_length - recoil) * scale
-        self._aa_poly(self.screen, self._rect_rot(t.x, t.y, t.angle, gun_len, 4.5 * scale, R * 0.4), dark)
-        self._aa_poly(self.screen, self._rect_rot(t.x, t.y, t.angle, gun_len - 1.5, 2.8 * scale, R * 0.4),
+        self._aa_poly(self.screen, self._rect_rot(x, y, t.angle, gun_len, 4.5 * scale, R * 0.4), dark)
+        self._aa_poly(self.screen, self._rect_rot(x, y, t.angle, gun_len - 1.5, 2.8 * scale, R * 0.4),
                       (200, 210, 228))
 
         # 선체
@@ -508,27 +535,31 @@ class Renderer:
 
         if is_player:
             label = self.font_label.render("YOU", True, COLORS["white"])
-            pos = label.get_rect(center=(t.x, t.y - t.radius - 16))
+            pos = label.get_rect(center=(x, y - t.radius - 16))
             self.screen.blit(self.font_label.render("YOU", True, (0, 0, 0)), pos.move(1, 1))
             self.screen.blit(label, pos)
 
     def _draw_ghost(self, g):
         """파괴 연출: 천체는 커지며 사라지고, 우주선은 폭발."""
         t = g["age"] / DEATH_FRAMES
+        x, y = self.world_to_screen(g["x"], g["y"])
         if g["kind"] == "ship":
             r = g["r"] * (1 + 2.2 * t)
-            self._blit_glow(self.screen, g["x"], g["y"], r * 1.4, (255, 170, 80), round((1 - t) * 8) / 8 * 1.2)
+            self._blit_glow(self.screen, x, y, r * 1.4, (255, 170, 80), round((1 - t) * 8) / 8 * 1.2)
             ring = _mix(g["color"], (255, 255, 255), 0.4)
-            pygame.gfxdraw.aacircle(self.screen, int(g["x"]), int(g["y"]), int(r), (*ring, int(255 * (1 - t))))
-            pygame.gfxdraw.aacircle(self.screen, int(g["x"]), int(g["y"]), int(r) - 1, (*ring, int(200 * (1 - t))))
+            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r), (*ring, int(255 * (1 - t))))
+            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r) - 1, (*ring, int(200 * (1 - t))))
             return
         sprite = self._shape_sprites[g["kind"]][1]
         img = pygame.transform.rotozoom(sprite, -math.degrees(g["angle"]), 1 + 0.7 * t)
         img.set_alpha(int(255 * (1 - t) ** 1.5))
-        self.screen.blit(img, img.get_rect(center=(int(g["x"]), int(g["y"]))))
-        self._blit_glow(self.screen, g["x"], g["y"], g["r"] * 2, g["color"], round((1 - t) * 8) / 8 * 0.6)
+        self.screen.blit(img, img.get_rect(center=(int(x), int(y))))
+        self._blit_glow(self.screen, x, y, g["r"] * 2, g["color"], round((1 - t) * 8) / 8 * 0.6)
 
     def _hp_bar(self, cx, y, w, ratio, h=6):
+        if not self._visible(cx, y):
+            return
+        cx, y = self.world_to_screen(cx, y)
         x = int(cx - w / 2)
         w = int(w)
         pygame.draw.rect(self.screen, COLORS["hp_bg"], (x - 1, y - 1, w + 2, h + 2), border_radius=(h + 2) // 2)
@@ -542,12 +573,13 @@ class Renderer:
             if not e.alive:
                 continue
             if e.ai_path:
-                pts = [(e.x, e.y)] + [tm.center(c, r) for c, r in e.ai_path]
+                pts = [self.world_to_screen(e.x, e.y)] + [self.world_to_screen(*tm.center(c, r)) for c, r in e.ai_path]
                 pygame.draw.lines(self.screen, (235, 190, 40), False, pts, 2)
             if e.ai_can_see:
-                pygame.draw.line(self.screen, (60, 220, 110), (e.x, e.y), (p.x, p.y), 2)
+                pygame.draw.line(self.screen, (60, 220, 110), self.world_to_screen(e.x, e.y), self.world_to_screen(p.x, p.y), 2)
             if e.ai_goal:
-                pygame.draw.circle(self.screen, (235, 190, 40), (int(e.ai_goal[0]), int(e.ai_goal[1])), 5, 2)
+                gx, gy = self.world_to_screen(*e.ai_goal)
+                pygame.draw.circle(self.screen, (235, 190, 40), (int(gx), int(gy)), 5, 2)
 
     # ------------------------------------------------------------------
     # HUD
@@ -558,7 +590,7 @@ class Renderer:
         pygame.draw.rect(surf, (*COLORS["panel_edge"], 150), surf.get_rect(), 1, border_radius=radius)
         self.screen.blit(surf, rect.topleft)
 
-    def _draw_hud(self, game, paused):
+    def _draw_hud(self, game, paused, show_notice=True):
         p = game.player
         W, H = self.cfg.width, self.cfg.height
         secs = game.frame / self.cfg.fps
@@ -576,6 +608,9 @@ class Renderer:
             self.screen.blit(lab, (x, rect.y + 13))
             self.screen.blit(val, (x + lab.get_width() + 6, rect.y + 6))
             x += lab.get_width() + val.get_width() + 18
+
+        if game.cfg.progression_enabled:
+            self._draw_progression(game, show_notice)
 
         # 하단 중앙: 선체 내구도
         w, h = 320, 18
@@ -595,9 +630,63 @@ class Renderer:
 
         # 조작 안내: 시작 10초 동안과 일시정지 중에만
         if secs < 10 or paused:
-            hint = "WASD move   Q/E or Left/Right rotate   F1 debug   N next map   P pause   R restart   ESC quit"
+            hint = "WASD move   Q/E rotate   L rewards   F1 debug   N map   P pause   R restart   ESC quit"
             surf = self.font_small.render(hint, True, COLORS["text"])
             self.screen.blit(surf, surf.get_rect(midbottom=(W / 2, by - 14)))
+
+    def _draw_progression(self, game, show_notice):
+        p = game.player
+        panel = pygame.Rect(14, 64, 300, 90)
+        self._panel(panel)
+        title = f"Lv.{game.level}  {JOB_NAMES[p.job]}"
+        self.screen.blit(self.font_hud.render(title, True, COLORS["white"]), (28, 72))
+        bar = pygame.Rect(28, 107, 270, 10)
+        pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=5)
+        fill = bar.copy()
+        fill.width = int(bar.width * game.xp / game.xp_to_next_level)
+        if fill.width:
+            pygame.draw.rect(self.screen, COLORS["player"], fill, border_radius=5)
+        xp = f"경험치 {game.xp} / {game.xp_to_next_level}   보상 {game.pending_rewards}개"
+        self.screen.blit(self.font_small.render(xp, True, COLORS["text"]), (28, 126))
+        message = ""
+        if game.pending_rewards and not game.game_over:
+            message = f"레벨 업! [L] 보상 선택 — 남은 보상 {game.pending_rewards}개"
+        elif game.frame < game.reward_message_until:
+            message = f"{game.last_reward} 적용 완료!"
+        if message and show_notice:
+            text = self.font_body.render(message, True, (255, 230, 130))
+            box = pygame.Rect(0, 0, text.get_width() + 36, 44)
+            box.midtop = (self.cfg.width // 2, 168)
+            self._panel(box, 220)
+            self.screen.blit(text, text.get_rect(center=box.center))
+
+    def _draw_rewards(self, game):
+        W, H = self.cfg.width, self.cfg.height
+        shade = pygame.Surface((W, H), pygame.SRCALPHA)
+        shade.fill((0, 0, 12, 210))
+        self.screen.blit(shade, (0, 0))
+        title = self.font_card.render("레벨업 보상 — 카드 한 장을 선택하세요", True, COLORS["white"])
+        self.screen.blit(title, title.get_rect(center=(W // 2, H // 2 - 175)))
+        gap, margin = 18, 30
+        width = (W - 2 * margin - 2 * gap) // 3
+        accents = {"강화": (95, 205, 255), "능력치": (178, 150, 255),
+                   "회복": (100, 230, 165), "전직": (255, 205, 95)}
+        for i, card in enumerate(game.reward_choices):
+            rect = pygame.Rect(margin + i * (width + gap), H // 2 - 110, width, 240)
+            self._panel(rect, 245, 16)
+            color = accents[card.category]
+            pygame.draw.rect(self.screen, color, (rect.x + 16, rect.y + 18, width - 32, 4), border_radius=2)
+            label = self.font_body.render(f"[{i + 1}]  {card.category}", True, color)
+            self.screen.blit(label, (rect.x + 20, rect.y + 38))
+            name = self.font_card.render(card.title, True, COLORS["white"])
+            self.screen.blit(name, (rect.x + 20, rect.y + 76))
+            for j, line in enumerate(card.description):
+                text = self.font_small.render(line, True, COLORS["text"])
+                self.screen.blit(text, (rect.x + 20, rect.y + 126 + j * 28))
+            self.screen.blit(self.font_body.render(f"{i + 1} 키로 선택", True, color), (rect.x + 20, rect.bottom - 44))
+        hint = f"전투 일시정지 · 남은 보상 {game.pending_rewards}개 · L / ESC: 닫기 (카드 유지) · 전직은 Lv.3부터"
+        text = self.font_small.render(hint, True, COLORS["text"])
+        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 + 166)))
 
     def _draw_debug(self, lines):
         lh = 16

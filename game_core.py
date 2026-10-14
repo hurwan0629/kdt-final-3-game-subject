@@ -1,7 +1,7 @@
 """게임 규칙과 상태. pygame에 의존하지 않는다.
 
 - step(action)을 한 번 부르면 정확히 1프레임(1/fps 초)이 진행된다.
-- 모든 랜덤은 seed로 만든 self.rng 하나만 사용하므로 같은 seed + 같은 행동열 → 같은 결과.
+- 전투와 카드 추첨은 별도 난수열을 사용하며, 같은 seed + 같은 행동/카드 선택 → 같은 결과.
 - 보상은 여기서 계산하지 않고, 플레이어 관점의 이벤트만 self.events에 누적한다
   (env.py가 pop_events()로 꺼내서 보상으로 변환).
 """
@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from config import GameConfig, SHAPE_TYPES, SHAPE_KINDS
-from terrain import TileMap, load_map, empty_map, generate_random_map, BUSH, MUD, BREAKABLE
+from terrain import TileMap, load_map, empty_map, generate_random_map, expand_map, BUSH, MUD, BREAKABLE
+from progression import REWARD_CARDS
 
 # --------------------------------------------------------------------------
 # 행동 정의: 이동 9 × 회전 3 = 27
@@ -72,6 +73,13 @@ class Tank:
     alive: bool = True
     respawn_timer: int = 0
     last_hit_frame: int = -10**9
+    damage_scale: float = 1.0
+    accel_scale: float = 1.0
+    bullet_speed_scale: float = 1.0
+    bullet_life_scale: float = 1.0
+    regen_bonus: float = 0.0
+    projectiles: int = 1
+    job: str = "rookie"
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -133,17 +141,29 @@ def empty_events():
 class GameCore:
     def __init__(self, config: GameConfig = None, seed: int = None):
         self.cfg = config or GameConfig()
+        if not isinstance(self.cfg.world_scale, int) or self.cfg.world_scale < 1:
+            raise ValueError("world_scale은 1 이상의 정수여야 합니다.")
+        if self.cfg.level_xp_base <= 0 or self.cfg.level_xp_growth < 0:
+            raise ValueError("레벨 경험치는 양수, 증가량은 0 이상이어야 합니다.")
         self.reset(seed)
 
     # ---------------- 초기화 ----------------
     def reset(self, seed: int = None):
         self.rng = np.random.default_rng(seed)
+        # 카드 열기/선택이 맵 생성과 전투 난수열을 바꾸지 않도록 분리한다.
+        self.reward_rng = np.random.default_rng(seed)
         self.frame = 0
         self.score = 0
         self.kills = 0
         self.game_over = False
         self._next_id = 0
         self.events = empty_events()
+        self.level = 1
+        self.xp = 0
+        self.pending_rewards = 0
+        self.reward_choices = ()
+        self.last_reward = ""
+        self.reward_message_until = 0
         self.bullets = []
         self.shapes = []
         self.enemies = []   # 스폰 위치 계산이 이전 판의 적을 참조하지 않도록 먼저 비움
@@ -177,13 +197,13 @@ class GameCore:
         if cols * tc.tile_size != c.width or rows * tc.tile_size != c.height:
             raise ValueError(f"화면 크기 {c.width}x{c.height}가 타일 크기 {tc.tile_size}로 나누어떨어지지 않습니다.")
         if not tc.enabled:
-            return empty_map(tc, cols, rows)
+            return empty_map(tc, cols * c.world_scale, rows * c.world_scale)
         if tc.random_map:
-            return generate_random_map(self.rng, tc, cols, rows)
+            return generate_random_map(self.rng, tc, cols * c.world_scale, rows * c.world_scale)
         name = tc.map_name
         if tc.map_pool:
             name = tc.map_pool[int(self.rng.integers(len(tc.map_pool)))]
-        return load_map(name, tc, cols, rows)
+        return expand_map(load_map(name, tc, cols, rows), c.world_scale, tc)
 
     def is_hidden(self, t) -> bool:
         """수풀 안에 있는 탱크는 상대에게 보이지 않는다."""
@@ -250,6 +270,73 @@ class GameCore:
         e.ai_goal = None
 
     # ---------------- 외부 API ----------------
+    @property
+    def xp_to_next_level(self):
+        return self.cfg.level_xp_base + (self.level - 1) * self.cfg.level_xp_growth
+
+    def _add_score(self, amount):
+        self.score += amount
+        if not self.cfg.progression_enabled:
+            return
+        self.xp += amount
+        while self.xp >= self.xp_to_next_level:
+            self.xp -= self.xp_to_next_level
+            self.level += 1
+            self.pending_rewards += 1
+
+    def open_rewards(self):
+        if self.game_over or not self.player.alive or self.pending_rewards == 0:
+            return ()
+        if not self.reward_choices:
+            eligible = [card for card in REWARD_CARDS
+                        if card.category != "전직" or (self.level >= 3 and self.player.job == "rookie")]
+            indices = self.reward_rng.choice(len(eligible), size=3, replace=False)
+            self.reward_choices = tuple(eligible[int(i)] for i in indices)
+        return self.reward_choices
+
+    def choose_reward(self, index):
+        if self.game_over or not self.player.alive or not self.reward_choices:
+            return False
+        if not isinstance(index, int) or not 0 <= index < len(self.reward_choices):
+            return False
+        card = self.reward_choices[index]
+        p = self.player
+        if card.key == "damage":
+            p.damage_scale *= 1.25
+        elif card.key == "rapid":
+            p.fire_cooldown_max = max(4, int(p.fire_cooldown_max * 0.85))
+            p.cooldown = min(p.cooldown, p.fire_cooldown_max)
+        elif card.key == "speed":
+            p.accel_scale *= 1.15
+        elif card.key == "hull":
+            p.max_hp += 25
+            p.hp = min(p.max_hp, p.hp + 25)
+        elif card.key == "heal":
+            p.hp = min(p.max_hp, p.hp + p.max_hp * 0.6)
+        elif card.key == "regen":
+            p.regen_bonus += 1.5 / self.cfg.fps
+        elif card.key == "range":
+            p.bullet_speed_scale *= 1.2
+            p.bullet_life_scale *= 1.15
+        elif card.key == "scout":
+            p.job = "scout"
+            p.accel_scale *= 1.35
+            p.bullet_speed_scale *= 1.2
+        elif card.key == "gunner":
+            p.job = "gunner"
+            p.projectiles = 3
+            p.damage_scale *= 0.8
+        elif card.key == "guardian":
+            p.job = "guardian"
+            p.max_hp += 60
+            p.hp = p.max_hp
+            p.regen_bonus += 1.5 / self.cfg.fps
+        self.pending_rewards -= 1
+        self.reward_choices = ()
+        self.last_reward = card.title
+        self.reward_message_until = self.frame + self.cfg.fps * 3
+        return True
+
     def pop_events(self) -> dict:
         ev = self.events
         self.events = empty_events()
@@ -260,7 +347,7 @@ class GameCore:
         if self.game_over:
             return
         move, rot = decode_action(action)
-        self._apply_tank_control(self.player, move, rot, 1.0, 1.0)
+        self._apply_tank_control(self.player, move, rot, self.player.accel_scale, 1.0)
 
         for e in self.enemies:
             if e.alive:
@@ -307,12 +394,12 @@ class GameCore:
         r = obj.radius
         if obj.x < r:
             obj.x, obj.vx = r, max(0.0, obj.vx)
-        elif obj.x > c.width - r:
-            obj.x, obj.vx = c.width - r, min(0.0, obj.vx)
+        elif obj.x > c.world_width - r:
+            obj.x, obj.vx = c.world_width - r, min(0.0, obj.vx)
         if obj.y < r:
             obj.y, obj.vy = r, max(0.0, obj.vy)
-        elif obj.y > c.height - r:
-            obj.y, obj.vy = c.height - r, min(0.0, obj.vy)
+        elif obj.y > c.world_height - r:
+            obj.y, obj.vy = c.world_height - r, min(0.0, obj.vy)
 
     def _fire(self, t: Tank, want_fire: bool):
         if t.cooldown > 0:
@@ -321,13 +408,16 @@ class GameCore:
         if not want_fire:
             return
         c = self.cfg
-        ca, sa = math.cos(t.angle), math.sin(t.angle)
-        self.bullets.append(Bullet(
-            x=t.x + ca * c.barrel_length, y=t.y + sa * c.barrel_length,
-            vx=ca * c.bullet_speed, vy=sa * c.bullet_speed,
-            life=c.bullet_life, owner_id=t.id, team=t.team,
-            damage=c.bullet_damage, radius=c.bullet_radius,
-        ))
+        offsets = (-0.20, 0.0, 0.20) if t.projectiles == 3 else (0.0,)
+        for offset in offsets:
+            ca, sa = math.cos(t.angle + offset), math.sin(t.angle + offset)
+            self.bullets.append(Bullet(
+                x=t.x + ca * c.barrel_length, y=t.y + sa * c.barrel_length,
+                vx=ca * c.bullet_speed * t.bullet_speed_scale,
+                vy=sa * c.bullet_speed * t.bullet_speed_scale,
+                life=int(c.bullet_life * t.bullet_life_scale), owner_id=t.id, team=t.team,
+                damage=c.bullet_damage * t.damage_scale, radius=c.bullet_radius,
+            ))
         t.cooldown = t.fire_cooldown_max
 
     # ---------------- 적 AI ----------------
@@ -460,9 +550,9 @@ class GameCore:
             s.x += s.vx
             s.y += s.vy
             s.angle += s.spin
-            if s.x < s.radius or s.x > c.width - s.radius:
+            if s.x < s.radius or s.x > c.world_width - s.radius:
                 s.vx = -s.vx
-            if s.y < s.radius or s.y > c.height - s.radius:
+            if s.y < s.radius or s.y > c.world_height - s.radius:
                 s.vy = -s.vy
             self.terrain.resolve_circle(s, bounce=True)
             self._clamp_to_arena(s)
@@ -480,7 +570,7 @@ class GameCore:
             b.x += b.vx
             b.y += b.vy
             b.life -= 1
-            if not (b.life > 0 and b.radius <= b.x <= c.width - b.radius and b.radius <= b.y <= c.height - b.radius):
+            if not (b.life > 0 and b.radius <= b.x <= c.world_width - b.radius and b.radius <= b.y <= c.world_height - b.radius):
                 continue
             if tm.has_solid and tm.is_solid_at(b.x, b.y):   # 벽에 닿으면 소멸
                 tc, tr = tm.tile_of(b.x, b.y)
@@ -534,7 +624,7 @@ class GameCore:
             if by_player:
                 self.events["enemies_killed"] += 1
                 self.kills += 1
-                self.score += self.cfg.enemy_kill_score
+                self._add_score(self.cfg.enemy_kill_score)
 
     def _damage_shape(self, s: Shape, dmg: float, by_player: bool):
         dealt = min(dmg, s.hp)
@@ -546,7 +636,7 @@ class GameCore:
             if s.hp <= 0:
                 self.events["shape_destroyed_score"] += s.score
                 self.events["shapes_destroyed"] += 1
-                self.score += s.score
+                self._add_score(s.score)
 
     # ---------------- 몸체 충돌 ----------------
     def _collide_bodies(self):
@@ -579,7 +669,7 @@ class GameCore:
         p = self.player
         c = self.cfg
         if p.hp > 0 and self.frame - p.last_hit_frame >= c.regen_delay:
-            p.hp = min(p.max_hp, p.hp + c.regen_rate)
+            p.hp = min(p.max_hp, p.hp + c.regen_rate + p.regen_bonus)
 
 
 def _overlap(a, b) -> bool:

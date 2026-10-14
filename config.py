@@ -50,7 +50,7 @@ class EnemyAIConfig:
 class TerrainConfig:
     # 화면 표현: 벽=성운 띠, 수풀=가스 구름, 진흙=중력장, 부서지는 벽=소행성
     enabled: bool = True             # False면 벽 없는 빈 경기장
-    tile_size: int = 48              # 960x720 → 20x15 타일
+    tile_size: int = 48              # 기본 맵 템플릿 960x720 → 20x15 타일
     map_name: str = "drift"          # maps/<map_name>.txt (drift / ring / belt)
     map_pool: tuple = ()             # 비어있지 않으면 reset마다 seed로 이 중 하나 선택
     random_map: bool = False         # (2단계) True면 reset마다 랜덤 맵 생성
@@ -67,9 +67,13 @@ class TerrainConfig:
 
 @dataclass
 class GameConfig:
-    # 경기장 / 시간
+    # 화면 / 월드 / 시간 (기존 맵 템플릿을 world_scale만큼 반복 확장)
     width: int = 960
     height: int = 720
+    world_scale: int = 3             # 2880x2160 월드, 60x45 타일
+    progression_enabled: bool = True
+    level_xp_base: int = 60
+    level_xp_growth: int = 40
     fps: int = 60                    # 고정 업데이트 주기 (1프레임 = 1/fps 초)
 
     # 탱크 공통
@@ -88,7 +92,7 @@ class GameConfig:
     regen_rate: float = 0.05         # 프레임당 회복량
 
     # 적
-    num_enemies: int = 3
+    num_enemies: int = 9
     enemy_hp: float = 60.0
     enemy_ai: EnemyAIConfig = field(default_factory=EnemyAIConfig)
     enemy_kill_score: int = 200
@@ -103,10 +107,18 @@ class GameConfig:
     bullet_damage: float = 7.0
 
     # 도형
-    num_shapes: int = 12
+    num_shapes: int = 72
     shape_drift: float = 0.25        # 도형 표류 속도 최대값
     spawn_margin: float = 40.0
     spawn_min_dist_from_tanks: float = 120.0
+
+    @property
+    def world_width(self) -> int:
+        return self.width * self.world_scale
+
+    @property
+    def world_height(self) -> int:
+        return self.height * self.world_scale
 
     @property
     def max_speed(self) -> float:

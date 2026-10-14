@@ -302,6 +302,22 @@ def empty_map(tcfg: TerrainConfig, cols, rows) -> TileMap:
     return TileMap(tiles, tcfg.tile_size, (cols // 2, rows // 2), [], "empty", tcfg)
 
 
+def expand_map(tm: TileMap, scale: int, tcfg: TerrainConfig) -> TileMap:
+    """원본 타일 크기를 유지하고 맵을 반복 배치한다. 시작점은 중앙 구역에 둔다."""
+    if scale == 1:
+        return tm
+    tiles = [[tm.tiles[r % tm.rows][c % tm.cols] for c in range(tm.cols * scale)]
+             for r in range(tm.rows * scale)]
+    player = (tm.player_start[0] + (scale // 2) * tm.cols,
+              tm.player_start[1] + (scale // 2) * tm.rows)
+    enemies = [(c + sx * tm.cols, r + sy * tm.rows)
+               for sy in range(scale) for sx in range(scale) for c, r in tm.enemy_starts]
+    expanded = TileMap(tiles, tm.tile, player, enemies, tm.name, tcfg)
+    if not expanded.is_connected():
+        raise MapError(f"[{tm.name}] 확장된 맵의 구역들이 연결되지 않습니다.")
+    return expanded
+
+
 def generate_random_map(rng, tcfg: TerrainConfig, cols, rows, max_attempts=50) -> TileMap:
     """랜덤 맵 생성. BFS로 모든 빈칸이 연결될 때까지 다시 생성 (끝내 실패하면 고립된 칸을 벽으로 메움)."""
     p = (cols // 2, rows // 2)

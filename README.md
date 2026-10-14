@@ -15,6 +15,24 @@ python main.py --no-terrain    # 지형 없는 빈 우주
 python random_agent_test.py    # headless 검사: 맵 검증 + 맵별 랜덤 실행 + 속도 + 재현성
 ```
 
+## 확장 월드와 레벨업
+
+- 화면은 960×720, 기본 월드는 2880×2160(60×45 타일)입니다. 기존 맵 템플릿을 가로·세로 3번 반복하여 연결하고, 중앙 구역에서 시작합니다. 랜덤 맵과 빈 경기장도 같은 크기로 생성합니다.
+- 카메라는 플레이어를 중심으로 따라가며, 월드 가장자리에서는 화면이 밖으로 넘어가지 않도록 멈춥니다. 화면 밖에서도 전투와 이동은 계속됩니다.
+- 도형 파괴와 적 처치로 얻은 점수가 경험치가 됩니다. 첫 레벨업은 60 XP, 이후 필요 경험치는 레벨마다 40씩 증가합니다. 레벨을 올릴 때마다 카드 선택권이 1개 쌓입니다.
+- **레벨업 안내가 나오면 `L` → 무작위 카드 3장 중 `1` / `2` / `3`으로 선택**합니다. 카드 창에서는 전투가 멈춥니다. `L` 또는 `ESC`로 닫으면 보상과 카드는 유지되고, 다시 열어도 재추첨되지 않습니다. 보상이 여러 개면 선택 후 `L`을 다시 누릅니다.
+- 화력·속사·이동·최대 체력·탄속/사거리 강화, 즉시 회복, 자동 회복 카드를 선택할 수 있습니다. 강화는 누적됩니다.
+- **Lv.3부터 전직 카드**가 등장합니다. 정찰선은 이동/탄속 강화, 포격선은 3방향 동시 발사, 수호선은 체력/회복 강화입니다. 한 판에 한 번 전직할 수 있습니다.
+- `R` 재시작과 `N` 맵 변경은 레벨, 보상, 강화, 전직을 초기화합니다.
+
+설정은 `GameConfig.world_scale`(1이면 원래 크기), `level_xp_base`, `level_xp_growth`, `num_shapes`, `num_enemies`에서 조절합니다. 카드 정의와 설명은 `progression.py`에 있습니다.
+
+기본 `TankEnv()`는 카드 선택 없이 기존 27개 이동/회전 행동으로 학습할 수 있도록 레벨업을 끕니다. 직접 `GameConfig`를 전달할 때도 같은 학습 방식이면 `progression_enabled=False`를 지정하세요. 레벨업을 켠 환경에서는 `env.game.open_rewards()`와 `env.game.choose_reward(0~2)`로 별도 선택해야 하며, 카드 선택은 기본 행동 공간에 포함되지 않습니다. 관찰 벡터의 위치는 확장 월드 크기로 정규화하고, `info`에 `level`, `xp`, `pending_rewards`, `job`을 제공합니다.
+
+```bash
+python -m unittest discover -s tests -v  # 월드/카메라/카드/입력 회귀 검증 (화면 없이 실행)
+```
+
 ## 조작
 
 | 키 | 동작 |
@@ -25,6 +43,8 @@ python random_agent_test.py    # headless 검사: 맵 검증 + 맵별 랜덤 실
 | F1 | 디버그 표시 토글 (관찰값, 적 A* 경로, 시야선) |
 | N | 다음 맵 (손맵들 → 랜덤 맵 → 빈 우주 순환) |
 | P | 일시정지 |
+| L | 레벨업 보상 카드 열기 / 닫기 |
+| 1 / 2 / 3 | 열린 보상 카드 선택 |
 | R | 재시작 |
 | ESC | 종료 |
 
@@ -37,6 +57,7 @@ config.py            모든 설정값 (게임/지형/적 AI 난이도/관찰 N·
 game_core.py         게임 규칙과 상태만 담당 (pygame 의존 없음, 1/60초 고정 간격)
 terrain.py           타일맵: 맵 파싱·검증, 벽 충돌, 시야선/레이캐스트, A*, 랜덤 맵 생성 (pygame 의존 없음)
 maps/*.txt           손으로 만든 맵 (drift, ring, belt)
+progression.py       레벨업 보상 카드와 전직 이름
 env.py               TankEnv: reset(seed) / step(action), 관찰·보상 계산
 renderer.py          pygame으로 상태를 그리기만 함 (우주 컨셉 그래픽)
 main.py              키보드 → 행동 번호 → game_core
@@ -57,7 +78,7 @@ random_agent_test.py 랜덤 에이전트 속도 측정 + 같은 seed 재현성 �
 
 ## 지형
 
-경기장은 48px 타일로 된 20×15 격자입니다(`TerrainConfig.tile_size`). 맵은 `maps/` 폴더의 텍스트 파일로 정의합니다.
+맵 템플릿은 48px 타일로 된 20×15 격자이고(`TerrainConfig.tile_size`), 기본 경기장은 템플릿을 확장한 60×45 격자입니다. 맵은 `maps/` 폴더의 텍스트 파일로 정의합니다.
 
 | 문자 | 지형 (화면) | 효과 |
 |---|---|---|
@@ -142,7 +163,7 @@ obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
 
 ## 재현성
 
-모든 랜덤은 `reset(seed)`로 만든 `numpy.random.Generator` 하나만 사용합니다. 그래서 같은 seed에 같은 행동 시퀀스를 넣으면 같은 결과가 나옵니다. `random_agent_test.py`가 이를 확인합니다.
+맵과 전투는 `reset(seed)`로 만든 `numpy.random.Generator`를 사용합니다. 카드 추첨은 같은 seed로 초기화한 별도 생성기를 사용하므로 카드 창을 열어도 전투 난수열은 바뀌지 않습니다. 같은 seed에 같은 행동과 보상 선택을 넣으면 같은 결과가 나옵니다. `random_agent_test.py`와 `tests/test_progression.py`가 이를 확인합니다.
 
 ## 실행 파일 만들기 (PyInstaller)
 

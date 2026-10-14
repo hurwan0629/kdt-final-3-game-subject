@@ -46,7 +46,7 @@ class _Box:
 def build_vector(game: GameCore, oc: ObsConfig) -> np.ndarray:
     """지형 격자를 제외한 벡터 관찰 (내 탱크, 적, 도형, 적 탄환, 레이)."""
     c = game.cfg
-    W, H = float(c.width), float(c.height)
+    W, H = float(c.world_width), float(c.world_height)
     vmax = c.max_speed
     bspd = c.bullet_speed
     p = game.player
@@ -161,7 +161,8 @@ class TankEnv(_BaseEnv):
     def __init__(self, game_config: GameConfig = None, obs_config: ObsConfig = None,
                  reward_config: RewardConfig = None, env_config: EnvConfig = None,
                  render_mode: str = None):
-        self.game_cfg = game_config or GameConfig()
+        # 27개 이동/회전 행동으로 학습할 때는 카드 선택을 요구하지 않는다.
+        self.game_cfg = game_config or GameConfig(progression_enabled=False)
         self.obs_cfg = obs_config or ObsConfig()
         self.reward_cfg = reward_config or RewardConfig()
         self.env_cfg = env_config or EnvConfig()
@@ -221,7 +222,9 @@ class TankEnv(_BaseEnv):
 
     def _info(self, events):
         return {"score": self.game.score, "kills": self.game.kills, "map": self.game.terrain.name,
-                "frames": self.game.frame, "steps": self.steps, "events": events}
+                "frames": self.game.frame, "steps": self.steps, "events": events,
+                "level": self.game.level, "xp": self.game.xp,
+                "pending_rewards": self.game.pending_rewards, "job": self.game.player.job}
 
     def render(self):
         if self.render_mode != "human":

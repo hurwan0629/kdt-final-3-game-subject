@@ -85,16 +85,36 @@ def main():
     acc = 0.0
     show_debug = False
     paused = False
+    rewards_open = False
     action = 0
 
     while True:
         for ev in pygame.event.get():
-            if ev.type == pygame.QUIT or (ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE):
+            if ev.type == pygame.QUIT:
                 pygame.quit()
                 return
             if ev.type == pygame.KEYDOWN:
+                if ev.key == pygame.K_ESCAPE:
+                    if rewards_open:
+                        rewards_open = False
+                        acc = 0.0
+                        continue
+                    pygame.quit()
+                    return
+                if ev.key == pygame.K_l:
+                    rewards_open = not rewards_open and bool(game.open_rewards())
+                    acc = 0.0
+                    continue
+                if rewards_open:
+                    choice_keys = (pygame.K_1, pygame.K_2, pygame.K_3)
+                    if ev.key in choice_keys and game.choose_reward(choice_keys.index(ev.key)):
+                        rewards_open = False
+                        acc = 0.0
+                    continue
                 if ev.key == pygame.K_r:
                     game.reset(args.seed)
+                    paused = False
+                    rewards_open = False
                     acc = 0.0
                 elif ev.key == pygame.K_F1:
                     show_debug = not show_debug
@@ -110,19 +130,21 @@ def main():
                     if name:
                         tc.map_name = name
                     game.reset(args.seed)
+                    paused = False
+                    rewards_open = False
                     acc = 0.0
 
         acc += renderer.clock.tick(cfg.fps) / 1000.0
         acc = min(acc, dt * MAX_FRAMES_PER_TICK)
         action = read_action(pygame.key.get_pressed())
         while acc >= dt:
-            if not paused:
+            if not paused and not rewards_open:
                 game.step(action)
                 game.pop_events()  # 사람 플레이에서는 이벤트를 쓰지 않음
             acc -= dt
 
         lines = debug_lines(game, obs_cfg, action) if show_debug else None
-        renderer.draw(game, lines, paused, show_ai=show_debug)
+        renderer.draw(game, lines, paused, show_ai=show_debug, rewards_open=rewards_open)
         pygame.display.flip()
 
 
