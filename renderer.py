@@ -73,9 +73,7 @@ class Renderer:
         if not 0 < cfg.camera_zoom <= 1:
             raise ValueError("camera_zoom은 0보다 크고 1 이하여야 합니다.")
         self.screen = pygame.display.set_mode((cfg.width, cfg.height))
-        self.view_width = round(cfg.width / cfg.camera_zoom)
-        self.view_height = round(cfg.height / cfg.camera_zoom)
-        self._view = pygame.Surface((self.view_width, self.view_height)).convert()
+        self.set_zoom(cfg.camera_zoom)
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
         # 시스템 폰트가 없으면 pygame 기본 폰트로 대체됨 → 실행 파일에서도 안전
@@ -99,7 +97,6 @@ class Renderer:
         self._terrain_key = None
         self._floor = None        # 배경 + 성운/중력장/소행성 캐시
         self._cloud_layer = None  # 우주선 위에 덮는 가스 구름 레이어 캐시
-        self._fx_layer = pygame.Surface((self.view_width, self.view_height), pygame.SRCALPHA)
         self._tick = 0
 
         # 연출용 기록 (게임 상태와 무관)
@@ -405,6 +402,15 @@ class Renderer:
     # ------------------------------------------------------------------
     # 그리기
     # ------------------------------------------------------------------
+    def set_zoom(self, zoom):
+        if not 0 < zoom <= 1:
+            raise ValueError("camera_zoom은 0보다 크고 1 이하여야 합니다.")
+        self.cfg.camera_zoom = zoom
+        self.view_width = round(self.cfg.width / zoom)
+        self.view_height = round(self.cfg.height / zoom)
+        self._view = pygame.Surface((self.view_width, self.view_height)).convert()
+        self._fx_layer = pygame.Surface((self.view_width, self.view_height), pygame.SRCALPHA)
+
     def world_to_view(self, x, y):
         return x - self.camera_x, y - self.camera_y
 
@@ -427,7 +433,8 @@ class Renderer:
         sx, sy = self.world_to_view(x, y)
         return -margin <= sx <= self.view_width + margin and -margin <= sy <= self.view_height + margin
 
-    def draw(self, game, debug_lines=None, paused=False, show_ai=False, rewards_open=False):
+    def draw(self, game, debug_lines=None, paused=False, show_ai=False, rewards_open=False,
+             show_controls=True, menu=None, selected=-1):
         self._tick += 1
         self._update_camera(game.player)
         self._track(game)
@@ -479,15 +486,51 @@ class Renderer:
 
         self.screen = display
         pygame.transform.smoothscale(scr, (self.cfg.width, self.cfg.height), display)
-        self._draw_hud(game, paused, show_notice=not rewards_open)
+        self._draw_hud(game, paused, show_notice=not rewards_open and menu is None,
+                       show_controls=show_controls)
         if debug_lines:
             self._draw_debug(debug_lines)
-        if game.game_over:
+        if menu is not None:
+            self._draw_menu(menu, "일시정지 · 설정", selected)
+        elif game.game_over:
             self._draw_game_over(game)
         elif rewards_open:
             self._draw_rewards(game)
         elif paused:
-            self._draw_card(["일시정지"], ["P / ESC: 계속    Q: 종료    R: 새 게임"])
+            self._draw_card(["일시정지"], ["P / ESC: 계속"])
+
+    def draw_main_menu(self, buttons, selected=0):
+        pygame.transform.smoothscale(self._bg, (self.cfg.width, self.cfg.height), self.screen)
+        self._draw_menu(buttons, "SPACE SKIRMISH", selected, main=True)
+
+    def _draw_menu(self, buttons, title, selected, main=False):
+        W, H = self.cfg.width, self.cfg.height
+        shade = pygame.Surface((W, H), pygame.SRCALPHA)
+        shade.fill((0, 0, 15, 170 if main else 215))
+        self.screen.blit(shade, (0, 0))
+        if not main:
+            self._panel(pygame.Rect(W // 2 - 225, H // 2 - 276, 450, 552), 240, 20)
+        font = self.font_big if main else self.font_card
+        text = font.render(title, True, COLORS["white"])
+        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 - (188 if main else 224))))
+        sub = "당신의 우주선을 지휘하세요" if main else "설정을 클릭해 변경 · ESC / P로 계속하기"
+        text = self.font_body.render(sub, True, COLORS["text"])
+        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 - (132 if main else 184))))
+        mouse = pygame.mouse.get_pos()
+        for i, button in enumerate(buttons):
+            active = button.enabled and (i == selected or button.rect.collidepoint(mouse))
+            color = (32, 65, 95) if active else (20, 29, 51)
+            edge = COLORS["player"] if active else COLORS["panel_edge"]
+            if not button.enabled:
+                color, edge = (21, 23, 35), (48, 51, 66)
+            pygame.draw.rect(self.screen, color, button.rect, border_radius=10)
+            pygame.draw.rect(self.screen, edge, button.rect, 2 if active else 1, border_radius=10)
+            text_color = COLORS["white"] if button.enabled else (94, 100, 120)
+            label = (self.font_card if main else self.font_body).render(button.label, True, text_color)
+            self.screen.blit(label, label.get_rect(center=button.rect.center))
+        hint = "클릭 또는 ↑↓ / Enter로 선택" if main else "새 게임은 진행도를 초기화합니다 · 설정은 이번 실행 동안 유지됩니다"
+        text = self.font_small.render(hint, True, COLORS["text"])
+        self.screen.blit(text, text.get_rect(center=(W // 2, buttons[-1].rect.bottom + 30)))
 
     def _draw_shape(self, s, f):
         sprite, flash = self._shape_sprites[s.kind]
@@ -609,19 +652,27 @@ class Renderer:
         pygame.draw.rect(surf, (*COLORS["panel_edge"], 150), surf.get_rect(), 1, border_radius=radius)
         self.screen.blit(surf, rect.topleft)
 
-    def _draw_hud(self, game, paused, show_notice=True):
+    def _draw_hud(self, game, paused, show_notice=True, show_controls=True):
         p = game.player
         W, H = self.cfg.width, self.cfg.height
         secs = game.frame / self.cfg.fps
 
         ammo = f"탄약 {p.ammo} / {p.max_ammo}" if game.cfg.limited_ammo else "탄약 무제한"
-        rect = pygame.Rect(W - 224, 14, 210, 70)
+        rect = pygame.Rect(W - 224, 14, 210, 88)
         self._panel(rect)
         color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS["white"]
         self.screen.blit(self.font_body.render(ammo, True, color), (rect.x + 14, rect.y + 10))
-        self.screen.blit(self.font_small.render("P / ESC: 일시정지", True, COLORS["text"]), (rect.x + 14, rect.y + 42))
-        if game.cfg.limited_ammo and p.ammo == 0 and not game.game_over:
-            text = self.font_body.render("탄약 소진! [L] 보급 카드 또는 [R] 새 게임", True, (255, 165, 100))
+        reloading = game.reload_frames_left > 0
+        hint = f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초" if reloading else "R: 재장전 · ESC: 메뉴"
+        self.screen.blit(self.font_small.render(hint, True, COLORS["text"]), (rect.x + 14, rect.y + 42))
+        if reloading:
+            bar = pygame.Rect(rect.x + 14, rect.y + 70, rect.width - 28, 6)
+            pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=3)
+            bar.width = int(bar.width * (1 - game.reload_frames_left / game.reload_frames_total))
+            if bar.width:
+                pygame.draw.rect(self.screen, COLORS["player"], bar, border_radius=3)
+        if game.cfg.limited_ammo and p.ammo == 0 and not game.game_over and not reloading and show_notice:
+            text = self.font_body.render("탄약 소진! [R] 재장전 (2.5초)", True, (255, 165, 100))
             self.screen.blit(text, text.get_rect(midtop=(W / 2, 218)))
 
         # 좌상단: 점수/처치/시간
@@ -657,9 +708,9 @@ class Renderer:
         self.screen.blit(self.font_label.render(txt, True, (0, 0, 0)), r.move(1, 1))
         self.screen.blit(self.font_label.render(txt, True, COLORS["white"]), r)
 
-        # 조작 안내: 시작 10초 동안과 일시정지 중에만
-        if secs < 10 or paused:
-            hint = "WASD: 이동   커서: 조준   좌클릭: 발사   L: 보상   P / ESC: 일시정지   R: 새 게임"
+        # 메뉴의 조작 안내 설정을 즉시 반영한다.
+        if show_controls:
+            hint = "WASD: 이동   커서: 조준   좌클릭: 발사   R: 재장전   L: 보상   ESC: 메뉴"
             surf = self.font_small.render(hint, True, COLORS["text"])
             self.screen.blit(surf, surf.get_rect(midbottom=(W / 2, by - 14)))
 
@@ -699,7 +750,7 @@ class Renderer:
         gap, margin = 18, 30
         width = (W - 2 * margin - 2 * gap) // 3
         accents = {"강화": (95, 205, 255), "능력치": (178, 150, 255),
-                   "회복": (100, 230, 165), "전직": (255, 205, 95), "보급": (255, 165, 100)}
+                   "회복": (100, 230, 165), "전직": (255, 205, 95)}
         for i, card in enumerate(game.reward_choices):
             rect = pygame.Rect(margin + i * (width + gap), H // 2 - 110, width, 240)
             self._panel(rect, 245, 16)
@@ -756,7 +807,7 @@ class Renderer:
 
     def _draw_game_over(self, game):
         secs = game.frame / self.cfg.fps
-        self._draw_card(["GAME OVER"], ["Press R to restart"],
+        self._draw_card(["GAME OVER"], ["Enter: 새 게임 · ESC: 메뉴"],
                         stats=[("SCORE", f"{game.score:,}"), ("KILLS", str(game.kills)),
                                ("TIME", f"{int(secs) // 60}:{int(secs) % 60:02d}")])
 

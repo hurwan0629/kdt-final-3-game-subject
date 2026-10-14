@@ -1,6 +1,6 @@
 """WASD 이동과 마우스 조준/발사로 플레이하는 진입점.
 
-WASD 이동 + 커서 조준 + 좌클릭 발사. P/ESC 일시정지.
+WASD 이동 + 커서 조준 + 좌클릭 발사. ESC 메뉴, R 재장전.
 게임은 1/60초 고정 간격으로 업데이트되고, 화면 그리기는 그와 별개로 돈다.
 
     python main.py                 # 랜덤 seed, 기본 맵
@@ -19,6 +19,7 @@ from config import GameConfig, ObsConfig
 from env import build_vector
 from game_core import GameCore, encode_action, move_from_vector
 from terrain import list_maps
+from menus import menu_buttons
 
 MAX_FRAMES_PER_TICK = 5  # 느린 PC에서 업데이트가 밀려 멈추는 것 방지
 
@@ -55,6 +56,152 @@ def debug_lines(game, obs_cfg, action):
     return lines
 
 
+class GameApplication:
+    """메뉴와 사람 입력을 관리한다. 열린 메뉴에서는 게임 시간을 진행하지 않는다."""
+    def __init__(self, game, renderer, seed=None):
+        self.game, self.renderer, self.seed = game, renderer, seed
+        self.cfg = game.cfg
+        self.mode = "main"
+        self.running = True
+        self.rewards_open = False
+        self.show_debug = False
+        self.show_controls = True
+        self.auto_pause = True
+        self.selected = 0
+        self.acc = 0.0
+        self.action = 0
+        self.click_requested = False
+        self.suppress_fire = True
+        self.map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
+
+    def buttons(self):
+        return menu_buttons(self.mode, self.cfg, self.show_debug, self.show_controls, self.auto_pause)
+
+    def activate(self, key):
+        self.click_requested = False
+        self.suppress_fire = True
+        self.acc = 0.0
+        if key in ("start", "restart"):
+            self.game.reset(self.seed)
+            self.mode, self.rewards_open, self.selected = "playing", False, 0
+        elif key == "resume":
+            self.mode = "playing"
+        elif key == "main":
+            self.mode, self.rewards_open, self.selected = "main", False, 0
+        elif key == "quit":
+            self.running = False
+        elif key == "zoom":
+            zooms = (0.45, 0.6, 0.75, 1.0)
+            current = min(range(len(zooms)), key=lambda i: abs(zooms[i] - self.cfg.camera_zoom))
+            self.renderer.set_zoom(zooms[(current + 1) % len(zooms)])
+        elif key == "controls":
+            self.show_controls = not self.show_controls
+        elif key == "debug":
+            self.show_debug = not self.show_debug
+        elif key == "auto_pause":
+            self.auto_pause = not self.auto_pause
+
+    def handle_event(self, ev):
+        if ev.type == pygame.QUIT:
+            self.running = False
+            return
+        if ev.type == pygame.WINDOWFOCUSLOST and self.auto_pause and self.mode == "playing":
+            self.mode, self.selected = "pause", 4
+            self.acc = 0.0
+            self.click_requested = False
+            self.suppress_fire = True
+            return
+        if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_ESCAPE, pygame.K_p):
+            if self.mode == "playing":
+                self.mode, self.selected = "pause", 4
+                self.acc = 0.0
+                self.click_requested = False
+                self.suppress_fire = True
+            elif self.mode == "pause":
+                self.activate("resume")
+            return
+        if self.mode in ("main", "pause"):
+            buttons = self.buttons()
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                for i, button in enumerate(buttons):
+                    if button.enabled and button.rect.collidepoint(ev.pos):
+                        self.selected = i
+                        self.activate(button.key)
+                        break
+            elif ev.type == pygame.KEYDOWN:
+                enabled = [i for i, button in enumerate(buttons) if button.enabled]
+                if ev.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_TAB):
+                    direction = -1 if ev.key == pygame.K_UP else 1
+                    index = enabled.index(self.selected) if self.selected in enabled else 0
+                    self.selected = enabled[(index + direction) % len(enabled)]
+                elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    self.activate(buttons[self.selected].key)
+                elif ev.key == pygame.K_q and self.mode == "pause":
+                    self.activate("quit")
+            return
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_l:
+                self.rewards_open = not self.rewards_open and bool(self.game.open_rewards())
+                self.acc = 0.0
+                self.click_requested = False
+                self.suppress_fire = True
+                return
+            if self.rewards_open:
+                choices = (pygame.K_1, pygame.K_2, pygame.K_3)
+                if ev.key in choices and self.game.choose_reward(choices.index(ev.key)):
+                    self.rewards_open = False
+                    self.suppress_fire = True
+                return
+            if ev.key == pygame.K_r:
+                self.game.request_reload()
+            elif ev.key == pygame.K_RETURN and self.game.game_over:
+                self.activate("restart")
+            elif ev.key == pygame.K_F1:
+                self.show_debug = not self.show_debug
+            elif ev.key == pygame.K_n:
+                tc = self.cfg.terrain
+                cur = ("empty", None) if not tc.enabled else ("random", None) if tc.random_map else ("map", tc.map_name)
+                kind, name = self.map_cycle[(self.map_cycle.index(cur) + 1) % len(self.map_cycle)] \
+                    if cur in self.map_cycle else self.map_cycle[0]
+                tc.enabled, tc.random_map = kind != "empty", kind == "random"
+                if name:
+                    tc.map_name = name
+                self.activate("restart")
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not self.rewards_open and not self.suppress_fire:
+            self.click_requested = True
+
+    def update(self, elapsed, keys, mouse_pos, buttons):
+        if not buttons[0]:
+            self.suppress_fire = False
+        if self.mode != "playing" or self.rewards_open or self.game.game_over:
+            self.acc = 0.0
+            self.click_requested = False
+            return
+        dt = 1.0 / self.cfg.fps
+        self.acc = min(self.acc + elapsed, dt * MAX_FRAMES_PER_TICK)
+        while self.acc >= dt:
+            self.renderer._update_camera(self.game.player)
+            self.action, target, want_fire = read_player_input(keys, self.renderer, mouse_pos, buttons)
+            fire = (want_fire or self.click_requested) and not self.suppress_fire
+            self.game.step(self.action, want_fire=fire, aim_position=target)
+            self.click_requested = False
+            self.game.pop_events()
+            self.acc -= dt
+            if self.game.game_over:
+                self.acc = 0.0
+                break
+
+    def draw(self, obs_cfg):
+        if self.mode == "main":
+            self.renderer.draw_main_menu(self.buttons(), self.selected)
+            return
+        lines = debug_lines(self.game, obs_cfg, self.action) if self.show_debug else None
+        self.renderer.draw(self.game, lines, self.mode == "pause", show_ai=self.show_debug,
+                           rewards_open=self.rewards_open and self.mode == "playing",
+                           show_controls=self.show_controls,
+                           menu=self.buttons() if self.mode == "pause" else None, selected=self.selected)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=None)
@@ -72,99 +219,23 @@ def main():
     tc.mud_enabled = tc.breakable_enabled = args.stage2
     if args.map:
         tc.map_name = args.map
-    # N 키로 순환할 맵 목록: 손으로 만든 맵들 + 랜덤 + 빈 경기장
-    map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
     obs_cfg = ObsConfig()
     from renderer import Renderer
     renderer = Renderer(cfg)
     game = GameCore(cfg, seed=args.seed)
-    renderer._update_camera(game.player)
-
-    dt = 1.0 / cfg.fps
-    acc = 0.0
-    show_debug = False
-    paused = False
-    rewards_open = False
-    action = 0
-    click_requested = False
-
-    while True:
+    app = GameApplication(game, renderer, args.seed)
+    while app.running:
         for ev in pygame.event.get():
-            if ev.type == pygame.QUIT:
-                pygame.quit()
-                return
-            if ev.type == pygame.WINDOWFOCUSLOST:
-                paused = True
-                acc = 0.0
-            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not paused and not rewards_open:
-                click_requested = True
-            if ev.type == pygame.KEYDOWN:
-                if ev.key == pygame.K_ESCAPE:
-                    if rewards_open:
-                        rewards_open = False
-                        acc = 0.0
-                        continue
-                    paused = not paused
-                    acc = 0.0
-                    continue
-                if ev.key == pygame.K_l:
-                    rewards_open = not rewards_open and bool(game.open_rewards())
-                    acc = 0.0
-                    continue
-                if rewards_open:
-                    choice_keys = (pygame.K_1, pygame.K_2, pygame.K_3)
-                    if ev.key in choice_keys and game.choose_reward(choice_keys.index(ev.key)):
-                        rewards_open = False
-                        acc = 0.0
-                    continue
-                if ev.key == pygame.K_r:
-                    game.reset(args.seed)
-                    paused = False
-                    rewards_open = False
-                    click_requested = False
-                    acc = 0.0
-                elif ev.key == pygame.K_F1:
-                    show_debug = not show_debug
-                elif ev.key == pygame.K_p:
-                    paused = not paused
-                    acc = 0.0
-                elif ev.key == pygame.K_q and paused:
-                    pygame.quit()
-                    return
-                elif ev.key == pygame.K_n:
-                    cur = ("empty", None) if not tc.enabled else ("random", None) if tc.random_map \
-                        else ("map", tc.map_name)
-                    kind, name = map_cycle[(map_cycle.index(cur) + 1) % len(map_cycle)] \
-                        if cur in map_cycle else map_cycle[0]
-                    tc.enabled = kind != "empty"
-                    tc.random_map = kind == "random"
-                    if name:
-                        tc.map_name = name
-                    game.reset(args.seed)
-                    paused = False
-                    rewards_open = False
-                    click_requested = False
-                    acc = 0.0
-
-        if paused or rewards_open:
-            click_requested = False
-        acc += renderer.clock.tick(cfg.fps) / 1000.0
-        acc = min(acc, dt * MAX_FRAMES_PER_TICK)
-        mouse_pos = pygame.mouse.get_pos()
-        buttons = pygame.mouse.get_pressed()
-        keys = pygame.key.get_pressed()
-        while acc >= dt:
-            if not paused and not rewards_open:
-                renderer._update_camera(game.player)
-                action, target, want_fire = read_player_input(keys, renderer, mouse_pos, buttons)
-                game.step(action, want_fire=want_fire or click_requested, aim_position=target)
-                click_requested = False
-                game.pop_events()  # 사람 플레이에서는 이벤트를 쓰지 않음
-            acc -= dt
-
-        lines = debug_lines(game, obs_cfg, action) if show_debug else None
-        renderer.draw(game, lines, paused, show_ai=show_debug, rewards_open=rewards_open)
+            app.handle_event(ev)
+            if not app.running:
+                break
+        if not app.running:
+            break
+        app.update(renderer.clock.tick(cfg.fps) / 1000.0, pygame.key.get_pressed(),
+                   pygame.mouse.get_pos(), pygame.mouse.get_pressed())
+        app.draw(obs_cfg)
         pygame.display.flip()
+    pygame.quit()
 
 
 if __name__ == "__main__":

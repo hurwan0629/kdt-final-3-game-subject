@@ -225,7 +225,8 @@ class TankEnv(_BaseEnv):
                 "frames": self.game.frame, "steps": self.steps, "events": events,
                 "level": self.game.level, "xp": self.game.xp,
                 "pending_rewards": self.game.pending_rewards, "job": self.game.player.job,
-                "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None}
+                "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None,
+                "reload_seconds_left": self.game.reload_frames_left / self.game_cfg.fps}
 
     def render(self):
         if self.render_mode != "human":

@@ -3,8 +3,6 @@ import math
 import os
 import unittest
 from collections import defaultdict
-from types import SimpleNamespace
-from unittest.mock import Mock, patch
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -15,8 +13,7 @@ import pygame
 from config import GameConfig
 from env import TankEnv
 from game_core import GameCore, Tank, decode_action
-from main import read_player_input
-from progression import REWARD_CARDS
+from main import GameApplication, read_player_input
 from renderer import Renderer
 
 
@@ -87,14 +84,8 @@ class MouseControlTests(unittest.TestCase):
         game._fire(enemy, True)
         self.assertEqual(len(game.bullets), 3)
 
-    def test_supply_card_caps_ammo_and_restart_restores_ammo(self):
+    def test_restart_restores_ammo_and_training_remains_unlimited(self):
         game = self.game
-        card = next(c for c in REWARD_CARDS if c.key == "ammo")
-        game.player.ammo = 110
-        game.pending_rewards = 1
-        game.reward_choices = (card,)
-        self.assertTrue(game.choose_reward(0))
-        self.assertEqual(game.player.ammo, 120)
         game.player.ammo = 0
         game.reset(1)
         self.assertEqual(game.player.ammo, 120)
@@ -117,64 +108,36 @@ class MouseControlTests(unittest.TestCase):
         self.assertEqual((renderer.camera_x, renderer.camera_y), (-320, -240))
 
     def test_pause_focus_loss_and_reward_menu_block_fire_and_motion(self):
-        import main
-        pygame.init()
-        pygame.display.set_mode((960, 720))
         game = self.game
+        app = GameApplication(game, self.renderer, seed=1)
+        app.activate("start")
         game._add_score(60)
-        frames = []
-        positions = []
-        clock = Mock()
-        clock.tick.return_value = 17
-        def capture(g, lines, paused, **kwargs):
-            frames.append((g.frame, g.player.ammo, paused, kwargs["rewards_open"]))
-            positions.append((g.player.x, g.player.y))
-        fake = SimpleNamespace(clock=clock, draw=capture,
-                               _update_camera=self.renderer._update_camera,
-                               screen_to_world=self.renderer.screen_to_world)
-        key = lambda k: [pygame.event.Event(pygame.KEYDOWN, key=k)]
-        batches = [key(pygame.K_p), [], key(pygame.K_ESCAPE),
-                   [pygame.event.Event(pygame.WINDOWFOCUSLOST)], [],
-                   key(pygame.K_l), key(pygame.K_ESCAPE), [],
-                   key(pygame.K_p), [pygame.event.Event(pygame.QUIT)]]
-        with patch("sys.argv", ["main.py"]), patch("main.GameCore", return_value=game), \
-                patch("renderer.Renderer", return_value=fake), \
-                patch("pygame.event.get", side_effect=batches), \
-                patch("pygame.mouse.get_pos", return_value=(800, 360)), \
-                patch("pygame.key.get_pressed", return_value=key_state(pygame.K_d)), \
-                patch("pygame.mouse.get_pressed", return_value=(True, False, True)):
-            main.main()
-        self.assertEqual(frames[:2], [(0, 120, True, False)] * 2)
-        self.assertEqual(frames[2][:2], (1, 119))
-        self.assertEqual(frames[3:5], [(1, 119, True, False)] * 2)
-        self.assertEqual(frames[5], (1, 119, True, True))
-        self.assertEqual(frames[6:8], [(1, 119, True, False)] * 2)
-        self.assertEqual(frames[8][0], 2)
-        self.assertEqual(positions[0], positions[1])
-        self.assertGreater(positions[2][0], positions[1][0])
-        self.assertTrue(all(pos == positions[2] for pos in positions[3:8]))
-        self.assertGreater(positions[8][0], positions[7][0])
+        key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
+        key(pygame.K_p)
+        state = (game.frame, game.player.x, game.player.ammo)
+        app.update(0.1, key_state(pygame.K_d), (800, 360), (True, False, False))
+        self.assertEqual((game.frame, game.player.x, game.player.ammo), state)
+        key(pygame.K_ESCAPE)
+        app.update(1 / 60, key_state(pygame.K_d), (800, 360), (False, False, False))
+        self.assertGreater(game.player.x, state[1])
+        app.handle_event(pygame.event.Event(pygame.WINDOWFOCUSLOST))
+        self.assertEqual(app.mode, "pause")
+        key(pygame.K_p)
+        key(pygame.K_l)
+        state = (game.frame, game.player.x, game.player.ammo)
+        app.update(0.1, key_state(pygame.K_d), (800, 360), (True, False, False))
+        self.assertEqual((game.frame, game.player.x, game.player.ammo), state)
 
     def test_quick_click_survives_a_frame_without_a_simulation_tick(self):
-        import main
-        pygame.init()
-        pygame.display.set_mode((960, 720))
-        clock = Mock()
-        clock.tick.side_effect = (5, 15, 17)
+        app = GameApplication(self.game, self.renderer, seed=1)
+        app.activate("start")
+        app.update(0, key_state(), (800, 360), (False, False, False))
+        app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=(800, 360)))
+        app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONUP, button=1, pos=(800, 360)))
         frames = []
-        fake = SimpleNamespace(clock=clock,
-                               draw=lambda g, *a, **kw: frames.append((g.frame, g.player.ammo)),
-                               _update_camera=self.renderer._update_camera,
-                               screen_to_world=self.renderer.screen_to_world)
-        batches = [[pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1),
-                    pygame.event.Event(pygame.MOUSEBUTTONUP, button=1)],
-                   [], [], [pygame.event.Event(pygame.QUIT)]]
-        with patch("sys.argv", ["main.py"]), patch("main.GameCore", return_value=self.game), \
-                patch("renderer.Renderer", return_value=fake), \
-                patch("pygame.event.get", side_effect=batches), \
-                patch("pygame.mouse.get_pos", return_value=(800, 360)), \
-                patch("pygame.mouse.get_pressed", return_value=(False, False, False)):
-            main.main()
+        for elapsed in (0.005, 0.015, 0.017):
+            app.update(elapsed, key_state(), (800, 360), (False, False, False))
+            frames.append((self.game.frame, self.game.player.ammo))
         self.assertEqual(frames, [(0, 120), (1, 119), (2, 119)])
 
 

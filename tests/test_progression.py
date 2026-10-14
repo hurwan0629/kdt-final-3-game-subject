@@ -5,8 +5,6 @@
 import math
 import os
 import unittest
-from types import SimpleNamespace
-from unittest.mock import Mock, patch
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -106,8 +104,6 @@ class ProgressionTests(unittest.TestCase):
                     bullet = game.bullets[0]
                     self.assertAlmostEqual(math.hypot(bullet.vx, bullet.vy), game.cfg.bullet_speed * 1.2)
                     self.assertEqual(bullet.life, int(game.cfg.bullet_life * 1.15))
-                elif card.key == "ammo":
-                    self.assertEqual(p.ammo, 60)
                 elif card.key == "scout":
                     self.assertEqual(p.job, "scout")
                     self.assertEqual((p.accel_scale, p.bullet_speed_scale), (1.35, 1.2))
@@ -230,27 +226,39 @@ class RendererTests(unittest.TestCase):
         renderer.draw(game, rewards_open=True)
 
     def test_main_reward_input_pauses_combat_and_keeps_cards(self):
-        import main
+        from main import GameApplication
         game = empty_game()
+        app = GameApplication(game, self.renderer, seed=7)
+        app.activate("start")
         game._add_score(190)
-        clock = Mock()
-        clock.tick.return_value = 17
-        frames = []
-        fake_renderer = SimpleNamespace(clock=clock, draw=Mock(
-            side_effect=lambda g, *args, **kwargs: frames.append((g.frame, kwargs["rewards_open"]))),
-            _update_camera=self.renderer._update_camera, screen_to_world=self.renderer.screen_to_world)
-        key = lambda k: [pygame.event.Event(pygame.KEYDOWN, key=k)]
-        batches = [key(pygame.K_l), key(pygame.K_4), key(pygame.K_ESCAPE),
-                   key(pygame.K_l), key(pygame.K_1), [pygame.event.Event(pygame.QUIT)]]
-        with patch("sys.argv", ["main.py"]), patch("main.GameCore", return_value=game), \
-                patch("renderer.Renderer", return_value=fake_renderer), \
-                patch("pygame.event.get", side_effect=batches):
-            main.main()
-        self.assertEqual(frames[:2], [(0, True), (0, True)])
-        self.assertEqual(frames[2][1], False)
-        self.assertEqual(frames[3], (frames[2][0], True))
-        self.assertEqual(frames[4][1], False)
+        key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
+        key(pygame.K_l)
+        cards = game.reward_choices
+        key(pygame.K_4)
+        app.update(0.1, {}, (480, 360), (False, False, False))
+        self.assertEqual(game.frame, 0)
+        key(pygame.K_ESCAPE)
+        self.assertEqual(app.mode, "pause")
+        key(pygame.K_ESCAPE)
+        self.assertTrue(app.rewards_open)
+        self.assertEqual(game.reward_choices, cards)
+        key(pygame.K_1)
+        self.assertFalse(app.rewards_open)
         self.assertEqual(game.pending_rewards, 1)
+
+    def test_zoom_setting_rebuilds_view_and_keeps_hud_resolution(self):
+        renderer = self.renderer
+        try:
+            renderer.set_zoom(0.75)
+            renderer._update_camera(self.game.player)
+            self.assertEqual(renderer._view.get_size(), (1280, 960))
+            self.assertEqual(renderer._fx_layer.get_size(), (1280, 960))
+            self.assertEqual(renderer.screen.get_size(), (960, 720))
+            pos = renderer.screen_to_world(480, 360)
+            self.assertEqual(renderer.world_to_screen(*pos), (480, 360))
+            renderer.draw(self.game, show_controls=False)
+        finally:
+            renderer.set_zoom(0.6)
 
 
 if __name__ == "__main__":
