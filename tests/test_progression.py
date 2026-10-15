@@ -51,10 +51,10 @@ class ProgressionTests(unittest.TestCase):
         game._add_score(1790)
         self.assertEqual((game.level, game.upgrade_points, game.special_reward_levels), (10, 8, [10]))
         cards = game.open_rewards()
-        self.assertEqual(len({card.key for card in cards}), 3)
+        self.assertEqual(len({card.key for card in cards}), 4)
         self.assertEqual(game.open_rewards(), cards)
         self.assertFalse(game.choose_reward(-1))
-        self.assertFalse(game.choose_reward(3))
+        self.assertFalse(game.choose_reward(4))
         self.assertEqual(game.pending_rewards, 9)
         self.assertTrue(game.choose_reward(0))
         self.assertEqual(game.pending_rewards, 8)
@@ -70,7 +70,7 @@ class ProgressionTests(unittest.TestCase):
         self.assertEqual(game.reward_choices, first)
         self.assertTrue(game.choose_reward(0))
         self.assertEqual(game.special_reward_levels, [20])
-        self.assertEqual(len(game.reward_choices), 3)
+        self.assertEqual(len(game.reward_choices), 2)
         self.assertEqual(game.upgrade_points, 16)
         self.assertTrue(game.choose_reward(0))
         self.assertEqual(game.special_reward_levels, [])
@@ -196,6 +196,7 @@ class RendererTests(unittest.TestCase):
     def setUpClass(cls):
         pygame.init()
         cls.game = empty_game()
+        cls.game.cfg.window_width, cls.game.cfg.window_height = 960, 720
         cls.renderer = Renderer(cls.game.cfg)
 
     @classmethod
@@ -232,8 +233,9 @@ class RendererTests(unittest.TestCase):
         game._add_score(1980)
         key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
         cards = game.reward_choices
-        key(pygame.K_4)
-        self.assertEqual(game.stat_levels["range"], 1)
+        choice = game.stat_choices[0].key
+        key(pygame.K_1)
+        self.assertEqual(game.stat_levels[choice], 1)
         app.update(0.1, defaultdict(bool), (480, 360), (False, False, False))
         self.assertGreater(game.frame, 0)
         key(pygame.K_ESCAPE)

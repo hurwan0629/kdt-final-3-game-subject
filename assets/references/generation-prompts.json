@@ -1,0 +1,278 @@
+{
+  "created": "2026-10-15",
+  "generator": "built-in image_gen",
+  "orientation": "ships and directional projectiles point up; +x right, +y down",
+  "backgrounds_repeat": "Requested repeat-friendly; seam verification pending",
+  "assets": [
+    {
+      "id": "ship_rookie",
+      "path": "ships/rookie.png",
+      "name": "기본 우주선",
+      "category": "ships",
+      "detail": "Starter scout: a simple compact silver and white arrowhead spacecraft, ONE short forward gun and two tiny cyan aft thrusters; modest unarmored silhouette.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Starter scout: a simple compact silver and white arrowhead spacecraft, ONE short forward gun and two tiny cyan aft thrusters; modest unarmored silhouette."
+    },
+    {
+      "id": "ship_twin",
+      "path": "ships/twin.png",
+      "name": "쌍포선",
+      "category": "ships",
+      "detail": "Level 10 TWIN GUNSHIP: symmetric white/silver central tapered hull, TWO parallel long forward barrels mounted left and right of the narrow blue cockpit, two cyan engine pods. Two clear muzzles pointing up. Cyan-blue family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 10 TWIN GUNSHIP: symmetric white/silver central tapered hull, TWO parallel long forward barrels mounted left and right of the narrow blue cockpit, two cyan engine pods. Two clear muzzles pointing up. Cyan-blue family."
+    },
+    {
+      "id": "ship_triple",
+      "path": "ships/triple.png",
+      "name": "삼연포선",
+      "category": "ships",
+      "detail": "Level 20 TRIPLE GUNSHIP evolved from a twin gunship: narrow silver central fuselage and exactly THREE distinguishable forward cannons: center vertical, left angled 20 degrees outward left, right angled 20 degrees outward right. Swept cyan nacelles and cyan engines. Cyan-blue family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 TRIPLE GUNSHIP evolved from a twin gunship: narrow silver central fuselage and exactly THREE distinguishable forward cannons: center vertical, left angled 20 degrees outward left, right angled 20 degrees outward right. Swept cyan nacelles and cyan engines. Cyan-blue family."
+    },
+    {
+      "id": "ship_cross",
+      "path": "ships/cross.png",
+      "name": "십자포선",
+      "category": "ships",
+      "detail": "Level 20 CROSS GUNSHIP: fourfold cross-shaped silver spacecraft, a blue central cockpit and exactly FOUR cannon barrels oriented north, south, east, west. Main prow north subtly marked by a longer top gun. Cyan-blue accents, maneuvering thrusters tucked between arms.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 CROSS GUNSHIP: fourfold cross-shaped silver spacecraft, a blue central cockpit and exactly FOUR cannon barrels oriented north, south, east, west. Main prow north subtly marked by a longer top gun. Cyan-blue accents, maneuvering thrusters tucked between arms."
+    },
+    {
+      "id": "ship_sniper",
+      "path": "ships/sniper.png",
+      "name": "저격선",
+      "category": "ships",
+      "detail": "Level 10 SNIPER: very slim elongated white/silver hull, ONE long forward precision rifle barrel with blue emitter at its tip, narrow cockpit, swept-back fins, two blue aft thrusters. Blue long-range family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 10 SNIPER: very slim elongated white/silver hull, ONE long forward precision rifle barrel with blue emitter at its tip, narrow cockpit, swept-back fins, two blue aft thrusters. Blue long-range family."
+    },
+    {
+      "id": "ship_railgun",
+      "path": "ships/railgun.png",
+      "name": "레일건선",
+      "category": "ships",
+      "detail": "Level 20 RAILGUN: elongated narrow silver-white sniper evolution with one exceptionally long forward twin-rail accelerator surrounding a SINGLE center firing channel, luminous blue capacitors along the rails, compact triangular aft wings and blue thrusters. Blue long-range family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 RAILGUN: elongated narrow silver-white sniper evolution with one exceptionally long forward twin-rail accelerator surrounding a SINGLE center firing channel, luminous blue capacitors along the rails, compact triangular aft wings and blue thrusters. Blue long-range family."
+    },
+    {
+      "id": "ship_minelayer",
+      "path": "ships/minelayer.png",
+      "name": "기뢰선",
+      "category": "ships",
+      "detail": "Level 20 MINELAYER: compact silver disk/octagonal engineering spacecraft, blue center cockpit, six SMALL closed dark mine-launch ports around armored rim, upper prow recognizable with a little nose; two rear blue thrusters. No loose orbiting mines, no big spheres outside the hull. Blue long-range family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 MINELAYER: compact silver disk/octagonal engineering spacecraft, blue center cockpit, six SMALL closed dark mine-launch ports around armored rim, upper prow recognizable with a little nose; two rear blue thrusters. No loose orbiting mines, no big spheres outside the hull. Blue long-range family."
+    },
+    {
+      "id": "ship_gatling",
+      "path": "ships/gatling.png",
+      "name": "개틀링선",
+      "category": "ships",
+      "detail": "Level 10 GATLING: broad silver-white attack ship, prominent clustered rotating gatling barrel assembly along the central forward axis, two orange side armor fins, orange engines and glowing ammunition feed slots. Orange assault family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 10 GATLING: broad silver-white attack ship, prominent clustered rotating gatling barrel assembly along the central forward axis, two orange side armor fins, orange engines and glowing ammunition feed slots. Orange assault family."
+    },
+    {
+      "id": "ship_shotgun",
+      "path": "ships/shotgun.png",
+      "name": "산탄선",
+      "category": "ships",
+      "detail": "Level 20 SHOTGUN: stout silver-white wedge-shaped assault spaceship with SIX short front cannon muzzles arranged as a shallow fan across its broad prow, armored orange shoulders and orange aft engines. Strong distinct wide-nose silhouette. Orange assault family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 SHOTGUN: stout silver-white wedge-shaped assault spaceship with SIX short front cannon muzzles arranged as a shallow fan across its broad prow, armored orange shoulders and orange aft engines. Strong distinct wide-nose silhouette. Orange assault family."
+    },
+    {
+      "id": "ship_homing",
+      "path": "ships/homing.png",
+      "name": "유도탄선",
+      "category": "ships",
+      "detail": "Level 20 HOMING MISSILE ship: silver-white narrow central cockpit and paired swept wing missile racks with three enclosed orange-tipped missiles each, fins angular and swept back, twin orange aft engines. Missiles remain mounted, none firing. Orange assault family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 HOMING MISSILE ship: silver-white narrow central cockpit and paired swept wing missile racks with three enclosed orange-tipped missiles each, fins angular and swept back, twin orange aft engines. Missiles remain mounted, none firing. Orange assault family."
+    },
+    {
+      "id": "ship_guardian",
+      "path": "ships/guardian.png",
+      "name": "수호선",
+      "category": "ships",
+      "detail": "Level 10 GUARDIAN: robust broad silver-white armored spacecraft, leaf-shaped swept armor wings and reinforced central prow, green shield-generator insets, small central forward cannon, twin green aft engines. NO enclosing shield bubble. Green defense family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 10 GUARDIAN: robust broad silver-white armored spacecraft, leaf-shaped swept armor wings and reinforced central prow, green shield-generator insets, small central forward cannon, twin green aft engines. NO enclosing shield bubble. Green defense family."
+    },
+    {
+      "id": "ship_booster",
+      "path": "ships/booster.png",
+      "name": "추진선",
+      "category": "ships",
+      "detail": "Level 20 BOOSTER: sleek reinforced silver-white spacecraft with two large aft-facing recoil gun nozzles beside powerful green engine units at its bottom/rear, streamlined green side armor and a small forward cockpit; backward guns point DOWN, main nose UP. Green defense family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 BOOSTER: sleek reinforced silver-white spacecraft with two large aft-facing recoil gun nozzles beside powerful green engine units at its bottom/rear, streamlined green side armor and a small forward cockpit; backward guns point DOWN, main nose UP. Green defense family."
+    },
+    {
+      "id": "ship_ram",
+      "path": "ships/ram.png",
+      "name": "돌격선",
+      "category": "ships",
+      "detail": "Level 20 RAMMER: chunky silver-white armored spacecraft with a heavy broad blunt wedge battering ram at the TOP/front, reinforced green side plating, large green aft thrusters, central cockpit recessed behind the ram. Absolutely NO gun barrels or cannon muzzles. Green defense family.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: Level 20 RAMMER: chunky silver-white armored spacecraft with a heavy broad blunt wedge battering ram at the TOP/front, reinforced green side plating, large green aft thrusters, central cockpit recessed behind the ram. Absolutely NO gun barrels or cannon muzzles. Green defense family."
+    },
+    {
+      "id": "background_deep",
+      "path": "backgrounds/deep_space.png",
+      "name": "심우주 배경",
+      "category": "backgrounds",
+      "detail": "Seamless tileable repeating deep-space starfield texture, dark navy nearly black, scattered tiny stars with occasional subdued blue light, extremely subtle purple distant nebula wisps. Even low contrast composition across all edges; no planet, horizon, grid, UI, spacecraft, asteroid or text. Flat overhead backdrop for a fast top-down shooter; keep gameplay very legible.",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG background, square 1024x1024. Style: dark polished sci-fi game artwork matching silver blue/orange/green spaceships. Primary request: Seamless tileable repeating deep-space starfield texture, dark navy nearly black, scattered tiny stars with occasional subdued blue light, extremely subtle purple distant nebula wisps. Even low contrast composition across all edges; no planet, horizon, grid, UI, spacecraft, asteroid or text. Flat overhead backdrop for a fast top-down shooter; keep gameplay very legible."
+    },
+    {
+      "id": "background_nebula",
+      "path": "backgrounds/nebula.png",
+      "name": "성운 배경",
+      "category": "backgrounds",
+      "detail": "Seamless tileable repeating deep-space background texture, very dark midnight navy with broad SUBDUED blue-purple gas clouds and sparse tiny white stars; rich but low contrast with generous dark space. Edge-to-edge repeat friendly, NO planet, horizon, grid, UI, spacecraft, asteroids, or text. Not a foreground gas object.",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG background, square 1024x1024. Style: dark polished sci-fi game artwork matching silver blue/orange/green spaceships. Primary request: Seamless tileable repeating deep-space background texture, very dark midnight navy with broad SUBDUED blue-purple gas clouds and sparse tiny white stars; rich but low contrast with generous dark space. Edge-to-edge repeat friendly, NO planet, horizon, grid, UI, spacecraft, asteroids, or text. Not a foreground gas object."
+    },
+    {
+      "id": "object_asteroid",
+      "path": "objects/asteroid_wall.png",
+      "name": "소행성 벽",
+      "category": "objects",
+      "detail": "ONE irregular compact dark blue slate asteroid boulder, faceted jagged perimeter, craters and metallic mineral seams with faint cool blue edge light. Top-down view, solid massive impassable rock. No fragments, no surrounding stars.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE irregular compact dark blue slate asteroid boulder, faceted jagged perimeter, craters and metallic mineral seams with faint cool blue edge light. Top-down view, solid massive impassable rock. No fragments, no surrounding stars."
+    },
+    {
+      "id": "object_breakable",
+      "path": "objects/breakable_asteroid.png",
+      "name": "파괴 가능한 소행성",
+      "category": "objects",
+      "detail": "ONE compact irregular asteroid boulder with clearly visible branching glowing orange cracks and fractured stone plates, navy-gray surface, warm amber mineral core barely visible in fissures. Top-down view. All fragments still together, no debris cloud.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE compact irregular asteroid boulder with clearly visible branching glowing orange cracks and fractured stone plates, navy-gray surface, warm amber mineral core barely visible in fissures. Top-down view. All fragments still together, no debris cloud."
+    },
+    {
+      "id": "object_gas",
+      "path": "objects/gas_cloud.png",
+      "name": "은폐 가스 구름",
+      "category": "objects",
+      "detail": "ONE softly bounded irregular overhead blue-violet interstellar gas cloud, three or four overlapping rounded wisps forming a compact hiding-zone object. Semi-transparent pale purple interior and smoky indigo edges fade naturally into true transparency. No stars, no rock, no ships, no square tile edge.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE softly bounded irregular overhead blue-violet interstellar gas cloud, three or four overlapping rounded wisps forming a compact hiding-zone object. Semi-transparent pale purple interior and smoky indigo edges fade naturally into true transparency. No stars, no rock, no ships, no square tile edge."
+    },
+    {
+      "id": "object_gravity",
+      "path": "objects/gravity_field.png",
+      "name": "감속 중력장",
+      "category": "objects",
+      "detail": "ONE compact overhead swirling turquoise and violet gravitational distortion, concentric incomplete wispy arcs around a dim center, reads as a slowing gravity-zone game object, subtle luminous streaks and transparent interior, outer edges fade to transparency. No black hole disk in perspective, no stars, no ship.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE compact overhead swirling turquoise and violet gravitational distortion, concentric incomplete wispy arcs around a dim center, reads as a slowing gravity-zone game object, subtle luminous streaks and transparent interior, outer edges fade to transparency. No black hole disk in perspective, no stars, no ship."
+    },
+    {
+      "id": "object_fragment",
+      "path": "objects/star_fragment.png",
+      "name": "별 조각",
+      "category": "objects",
+      "detail": "ONE small collectible-looking golden faceted star crystal chunk, four pointed asymmetric mineral silhouette, luminous amber core and crisp golden planes. Top-down game resource object, restrained glow close to edges. No sparkles floating away, no lettering, no background.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE small collectible-looking golden faceted star crystal chunk, four pointed asymmetric mineral silhouette, luminous amber core and crisp golden planes. Top-down game resource object, restrained glow close to edges. No sparkles floating away, no lettering, no background."
+    },
+    {
+      "id": "object_planet",
+      "path": "objects/rock_planet.png",
+      "name": "암석 행성",
+      "category": "objects",
+      "detail": "ONE small rust-orange rocky planetoid, round but slightly irregular, cratered ochre and dark orange surface with a few ridges, overhead sphere shading, no rings, no stars or separate objects.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE small rust-orange rocky planetoid, round but slightly irregular, cratered ochre and dark orange surface with a few ridges, overhead sphere shading, no rings, no stars or separate objects."
+    },
+    {
+      "id": "object_ring",
+      "path": "objects/ring_planet.png",
+      "name": "고리 행성",
+      "category": "objects",
+      "detail": "ONE violet rocky planetoid with a single thin icy-blue elliptical ring encircling it, compact game object viewed from above with enough ring tilt to read, softly shaded dark purple sphere and crisp rim. No stars, moons, background.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE violet rocky planetoid with a single thin icy-blue elliptical ring encircling it, compact game object viewed from above with enough ring tilt to read, softly shaded dark purple sphere and crisp rim. No stars, moons, background."
+    },
+    {
+      "id": "enemy_scout",
+      "path": "enemies/scout.png",
+      "name": "적 정찰선",
+      "category": "enemies",
+      "detail": "ONE enemy fast scout spacecraft: small narrow dark gunmetal arrowhead hull, sharp swept wings, red cockpit slit, one forward plasma gun, two restrained red aft thrusters. Menacing crimson faction, highly readable compact top-down silhouette.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE enemy fast scout spacecraft: small narrow dark gunmetal arrowhead hull, sharp swept wings, red cockpit slit, one forward plasma gun, two restrained red aft thrusters. Menacing crimson faction, highly readable compact top-down silhouette."
+    },
+    {
+      "id": "enemy_fighter",
+      "path": "enemies/fighter.png",
+      "name": "적 전투선",
+      "category": "enemies",
+      "detail": "ONE enemy fighter spacecraft: broad angular dark gunmetal body with forward swept armored wings, two forward gun pods, bright red cockpit slit and crimson aft engines. Menacing red enemy faction, distinct heavier silhouette than a scout.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE enemy fighter spacecraft: broad angular dark gunmetal body with forward swept armored wings, two forward gun pods, bright red cockpit slit and crimson aft engines. Menacing red enemy faction, distinct heavier silhouette than a scout."
+    },
+    {
+      "id": "enemy_heavy",
+      "path": "enemies/heavy.png",
+      "name": "적 중장갑선",
+      "category": "enemies",
+      "detail": "ONE enemy heavy armored spacecraft: bulky dark gunmetal octagonal hull, reinforced blocky side armor, massive short central forward cannon, deep red reactor insets, two large crimson aft engines. Menacing crimson faction, top-down compact symmetric shape.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE enemy heavy armored spacecraft: bulky dark gunmetal octagonal hull, reinforced blocky side armor, massive short central forward cannon, deep red reactor insets, two large crimson aft engines. Menacing crimson faction, top-down compact symmetric shape."
+    },
+    {
+      "id": "projectile_plasma",
+      "path": "projectiles/player_plasma.png",
+      "name": "플레이어 플라즈마 탄",
+      "category": "projectiles",
+      "detail": "ONE isolated narrow cyan plasma bolt pointing UP, brilliant white core and sharply tapered cyan tip with a SHORT pale blue energy tail downward. Tiny projectile sprite design, simple readable at 8-16 px, no sparkles or separate projectiles.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE isolated narrow cyan plasma bolt pointing UP, brilliant white core and sharply tapered cyan tip with a SHORT pale blue energy tail downward. Tiny projectile sprite design, simple readable at 8-16 px, no sparkles or separate projectiles."
+    },
+    {
+      "id": "projectile_enemy",
+      "path": "projectiles/enemy_plasma.png",
+      "name": "적 플라즈마 탄",
+      "category": "projectiles",
+      "detail": "ONE isolated narrow crimson-red plasma bolt pointing UP, brilliant warm-white core, red tapered tip and SHORT orange-red trail downward. Tiny projectile sprite, simple readable at 8-16 px, no sparkles or additional bolts.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE isolated narrow crimson-red plasma bolt pointing UP, brilliant warm-white core, red tapered tip and SHORT orange-red trail downward. Tiny projectile sprite, simple readable at 8-16 px, no sparkles or additional bolts."
+    },
+    {
+      "id": "projectile_shell",
+      "path": "projectiles/cannon_shell.png",
+      "name": "대포 탄",
+      "category": "projectiles",
+      "detail": "ONE isolated heavy sci-fi cannon shell pointing UP, a compact thick gunmetal projectile with an amber glowing pointed nose, metallic collar at its rear and very short orange exhaust below. Readable at 12-20 px, no gun or explosion.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE isolated heavy sci-fi cannon shell pointing UP, a compact thick gunmetal projectile with an amber glowing pointed nose, metallic collar at its rear and very short orange exhaust below. Readable at 12-20 px, no gun or explosion."
+    },
+    {
+      "id": "projectile_missile",
+      "path": "projectiles/homing_missile.png",
+      "name": "유도 미사일",
+      "category": "projectiles",
+      "detail": "ONE isolated sci-fi guided missile pointing UP, slim white/silver cylindrical body viewed straight from above, orange seeker nose, two small dark tail fins and short orange engine exhaust below. No motion curve, no launcher, no other missiles.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE isolated sci-fi guided missile pointing UP, slim white/silver cylindrical body viewed straight from above, orange seeker nose, two small dark tail fins and short orange engine exhaust below. No motion curve, no launcher, no other missiles."
+    },
+    {
+      "id": "projectile_mine",
+      "path": "projectiles/mine.png",
+      "name": "기뢰",
+      "category": "projectiles",
+      "detail": "ONE isolated compact futuristic space mine: dark steel blue round/octagonal casing, six short radial trigger studs, cyan-blue central arming light and restrained blue rim accents. Top-down, no thrust or tail, no ship, no explosion.",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production 2D top-down space shooter PNG sprite for Pygame, also used inside small square evolution cards. Style reference: the user's blue/orange/green spaceship evolution-tree poster; borrow its polished silver hulls, readable spacecraft silhouettes, luminous colored accents and restrained sci-fi game illustration style, NOT its infographic layout. Orthographic straight TOP-DOWN view with NO perspective, spacecraft nose pointing straight UP (12 o'clock), lit consistently from upper-left. One complete centered subject on a square 1024x1024 canvas, occupy about 70% of width/height, plenty of transparent safety padding around all protrusions. Crisp painted metal detail that remains legible when scaled down to 48-96px; clean silhouette; minimal bloom confined to engines. TRUE transparent alpha background, NO ground shadow, NO checkerboard drawn into pixels. Do not add labels, words, UI, borders, card frame, diagrams, background scenery, other ships, fired projectiles or detached decorative particles. Match related family across all assets. Primary request: ONE isolated compact futuristic space mine: dark steel blue round/octagonal casing, six short radial trigger studs, cyan-blue central arming light and restrained blue rim accents. Top-down, no thrust or tail, no ship, no explosion."
+    }
+  ]
+}

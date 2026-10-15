@@ -55,9 +55,9 @@ tags: [space-skirmish, dev, reinforcement-learning]
 
 사용자 지정 `GameConfig`를 전달하면 그 설정을 그대로 씁니다. 기존 조건으로 학습하려면 `progression_enabled=False, limited_ammo=False`를 명시합니다.
 
-성장을 켜면 `env.game.upgrade_stat(key)` / `choose_reward(index)`로 선택합니다. 전직 카드는 Lv.10·20…에 자동 생성됩니다. 탄약은 `request_reload()`, 스킬은 `request_bomb()` / `request_dash()` 또는 코어 step의 `want_bomb`, `want_dash`로 요청할 수 있습니다. 기본 27개 행동과 관찰에는 이 선택·스킬·성장 상태가 전부 포함되지는 않습니다. 같은 조건으로 학습하려면 행동·관찰 설계를 함께 확장해야 합니다.
+성장을 켜면 `env.game.upgrade_stat(key)` / `choose_reward(index)`로 선택합니다. Lv.10은 4계열, Lv.20은 계열 내 2진화, Lv.30은 고유 스킬 자동 해금입니다. 탄약은 `request_reload()`, 스킬은 `request_skill()` 또는 코어 step의 `want_skill`로 요청합니다. `want_dash`는 해금한 워프·램 차지의 별도 입력입니다. 기본 27개 행동과 관찰에는 이 선택·스킬·성장 상태가 전부 포함되지는 않습니다. 같은 조건으로 학습하려면 행동·관찰 설계를 함께 확장해야 합니다.
 
-`info`에는 기존 상태와 함께 `upgrade_points`, `special_reward_levels`, `stat_levels`, `special_levels`가 있습니다. `pending_rewards`는 일반 포인트와 전직 선택권을 합한 수입니다. 무제한 탄약일 때 `ammo`는 `None`입니다. 줌은 관찰값에 영향을 주지 않습니다.
+`info`에는 기존 상태와 함께 `upgrade_points`, `special_reward_levels`, `stat_levels`, `special_levels`가 있습니다. 계열·해금 스킬·쿨다운·현재 강화 선택지는 `family`, `active_skill`, `skill_cooldown_seconds`, `stat_choices`로 확인합니다. `pending_rewards`는 일반 포인트와 전직 선택권을 합한 수입니다. 무제한 탄약일 때 `ammo`는 `None`입니다. 줌은 관찰값에 영향을 주지 않습니다.
 
 맵·전투, 카드 추첨, 화면 연출은 난수 사용이 분리되어 있습니다. 같은 seed와 같은 행동·카드 선택을 사용하면 같은 코어 결과를 재현할 수 있습니다.
 

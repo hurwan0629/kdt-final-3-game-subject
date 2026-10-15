@@ -228,6 +228,10 @@ class TankEnv(_BaseEnv):
                 "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None,
                 "reload_seconds_left": self.game.reload_frames_left / self.game_cfg.fps,
                 "upgrade_points": self.game.upgrade_points,
+                "family": self.game.family,
+                "active_skill": self.game.active_skill.key if self.game.active_skill else None,
+                "skill_cooldown_seconds": self.game.skill_cooldown / self.game_cfg.fps,
+                "stat_choices": [card.key for card in self.game.stat_choices],
                 "special_reward_levels": list(self.game.special_reward_levels),
                 "stat_levels": dict(self.game.stat_levels), "special_levels": dict(self.game.special_levels)}
 

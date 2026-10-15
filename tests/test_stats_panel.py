@@ -22,6 +22,7 @@ class StatsPanelTests(unittest.TestCase):
     def setUpClass(cls):
         pygame.init()
         cfg = GameConfig(num_enemies=0, num_shapes=0)
+        cfg.window_width, cfg.window_height = 960, 720
         cfg.terrain.enabled = False
         cls.renderer = Renderer(cfg)
 
@@ -31,7 +32,7 @@ class StatsPanelTests(unittest.TestCase):
 
     def setUp(self):
         self.game = GameCore(self.renderer.cfg, seed=7)
-        self.app = GameApplication(self.game, self.renderer)
+        self.app = GameApplication(self.game, self.renderer, seed=7)
         self.app.activate("start")
         self.keys = defaultdict(bool)
 
@@ -82,11 +83,12 @@ class StatsPanelTests(unittest.TestCase):
         self.update(1 / 60, (True, False, False), pos)
         self.assertEqual(self.game.player.ammo, 119)
         self.game._add_score(60)
+        choice = self.game.stat_choices[0].key
         self.assertTrue(self.app.pointer_over_rewards(pos))
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
         self.update(1 / 60, (True, False, False), pos)
-        self.assertEqual(self.game.stat_levels["regen"], 1)
-        self.assertEqual(self.game.player.ammo, 119)
+        self.assertEqual(self.game.stat_levels[choice], 1)
+        self.assertEqual(self.game.player.ammo, 139 if choice == "magazine" else 119)
         self.assertFalse(self.app.pointer_over_rewards(pos))
 
     def test_tab_in_menus_still_navigates_and_never_shows_panel(self):
@@ -117,20 +119,19 @@ class StatsPanelTests(unittest.TestCase):
         self.assertEqual(stats["자가 수리"], "4.5 / 초")
         self.assertEqual(stats["탄창"], "140 / 140")
         self.assertEqual(stats["재장전 시간"], "2.25초")
-        for weapon in ("rookie", "gunner", "cannon", "laser"):
+        for weapon in ("rookie", "triple", "shotgun", "railgun"):
             with self.subTest(weapon=weapon):
                 game.player.job = weapon
-                game.player.projectiles = 3 if weapon == "gunner" else 1
                 game.special_levels[weapon] = 2
                 game.player.cooldown = 0
                 game.bullets.clear()
                 stats = dict(player_stat_summary(game))
                 with patch.object(game, "_fire_laser") as laser:
                     game._fire(game.player, True)
-                damage = laser.call_args.args[1] if weapon == "laser" else game.bullets[0].damage
+                damage = laser.call_args.args[1] if weapon == "railgun" else game.bullets[0].damage
                 self.assertEqual(stats["주무기 피해 · 1발"], f"{damage:.2f}")
                 self.assertEqual(stats["발사 간격"], f"{(game.player.cooldown + 1) / game.cfg.fps:.2f}초")
-                if weapon == "laser":
+                if weapon == "railgun":
                     self.assertEqual(stats["탄속"], "즉시 명중")
                 else:
                     bullet = game.bullets[0]

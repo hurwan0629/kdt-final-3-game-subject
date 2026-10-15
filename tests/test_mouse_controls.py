@@ -29,6 +29,7 @@ class MouseControlTests(unittest.TestCase):
         # 좌표 변환 검사는 실제 창/이미지 캐시 없이 실행한다.
         self.renderer = object.__new__(Renderer)
         self.renderer.cfg = cfg
+        self.renderer.screen = pygame.Surface((960, 720))
         self.renderer.view_width, self.renderer.view_height = 1600, 1200
         self.renderer._update_camera(self.game.player)
 
@@ -67,7 +68,7 @@ class MouseControlTests(unittest.TestCase):
     def test_ammo_exhaustion_cooldown_and_three_shot_partial_volley(self):
         game, p = self.game, self.game.player
         p.ammo = 2
-        p.projectiles = 3
+        p.job, p.projectiles = "triple", 3
         game._fire(p, True)
         self.assertEqual(len(game.bullets), 2)
         self.assertEqual(p.ammo, 0)
@@ -128,7 +129,7 @@ class MouseControlTests(unittest.TestCase):
         app.update(0.1, key_state(pygame.K_d), (800, 360), (True, False, False))
         self.assertGreater(game.frame, state[0])
         self.assertGreater(game.player.x, state[1])
-        self.assertEqual(game.stat_levels["regen"], 1)
+        self.assertEqual(sum(game.stat_levels.values()), 1)
 
     def test_quick_click_survives_a_frame_without_a_simulation_tick(self):
         app = GameApplication(self.game, self.renderer, seed=1)

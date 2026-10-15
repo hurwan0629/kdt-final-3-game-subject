@@ -1,0 +1,489 @@
+{
+  "created": "2026-10-15",
+  "generator": "built-in image_gen",
+  "square_images": true,
+  "direction": "ships and directional projectiles face up",
+  "categories": {
+    "ships": 13,
+    "backgrounds": 2,
+    "objects": 7,
+    "enemies": 3,
+    "projectiles": 5
+  },
+  "assets": [
+    {
+      "id": "ship_rookie",
+      "name": "기본 우주선",
+      "category": "ships",
+      "path": "ships/rookie.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 806179,
+      "sha256": "32ac434e0c4867362f64f6d877d113ce2634c31d48667a81bbfd76da91e52b8f"
+    },
+    {
+      "id": "ship_twin",
+      "name": "쌍포선",
+      "category": "ships",
+      "path": "ships/twin.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1151331,
+      "sha256": "2cd67abf3fe17cfcf6ba7c18e0f25080b72e32e8b1e7f95f442879d0e622fa0f"
+    },
+    {
+      "id": "ship_triple",
+      "name": "삼연포선",
+      "category": "ships",
+      "path": "ships/triple.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1238117,
+      "sha256": "af8a47d232341ccd8a351464a5c61e24355698272675bf056f0e453a43eb361e"
+    },
+    {
+      "id": "ship_cross",
+      "name": "십자포선",
+      "category": "ships",
+      "path": "ships/cross.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1072769,
+      "sha256": "fa9b2f888a4d011daf4513f5b7faab7e60872e13d9c3630362d7048100e236b1"
+    },
+    {
+      "id": "ship_sniper",
+      "name": "저격선",
+      "category": "ships",
+      "path": "ships/sniper.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 651601,
+      "sha256": "e7b3e70ea3030bb959228a61eea6404c4c9085e2878098a8041d90564c4bace6"
+    },
+    {
+      "id": "ship_railgun",
+      "name": "레일건선",
+      "category": "ships",
+      "path": "ships/railgun.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 773231,
+      "sha256": "681e2a7e5c75cd91fcbd2e0ab5430a42cc42c51c1dc04ae38db10c3596e72f39"
+    },
+    {
+      "id": "ship_minelayer",
+      "name": "기뢰선",
+      "category": "ships",
+      "path": "ships/minelayer.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1816512,
+      "sha256": "a8e5df197f25a50c4e5a6c9a4f744b645e6d907e8903220e4a83c3b3cebfc895"
+    },
+    {
+      "id": "ship_gatling",
+      "name": "개틀링선",
+      "category": "ships",
+      "path": "ships/gatling.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1529188,
+      "sha256": "cd3a848000db488e925477f6efe115c0955ef468b196402039c84df26237db34"
+    },
+    {
+      "id": "ship_shotgun",
+      "name": "산탄선",
+      "category": "ships",
+      "path": "ships/shotgun.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1633315,
+      "sha256": "d82b362274acd2ab9276887e8c6c9280000d242d8fe1b205fc573cf8263467dd"
+    },
+    {
+      "id": "ship_homing",
+      "name": "유도탄선",
+      "category": "ships",
+      "path": "ships/homing.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1330889,
+      "sha256": "fd61849a702515a8c4929345a8f37d356261cab33f6bb91722ac4bbb4ff1a9a3"
+    },
+    {
+      "id": "ship_guardian",
+      "name": "수호선",
+      "category": "ships",
+      "path": "ships/guardian.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1701366,
+      "sha256": "a92d47a6563f60dbc7d99bf602592f3e7f1cc9ec990c6ea63aec4acade264ac7"
+    },
+    {
+      "id": "ship_booster",
+      "name": "추진선",
+      "category": "ships",
+      "path": "ships/booster.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1551005,
+      "sha256": "78f5fdf0c8d395dc2ba8624dcc1aad258c9d4c4c6d1949a5a9aab3c772c533c7"
+    },
+    {
+      "id": "ship_ram",
+      "name": "돌격선",
+      "category": "ships",
+      "path": "ships/ram.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1787394,
+      "sha256": "cd146e7e555591e36971e71579a4b332572e4ca0c58091c6637f1c84c5b8def0"
+    },
+    {
+      "id": "background_deep",
+      "name": "심우주 배경",
+      "category": "backgrounds",
+      "path": "backgrounds/deep_space.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "transparent_background": false,
+      "alpha_extrema": null,
+      "bytes": 2379761,
+      "sha256": "6e9bfd39ee8d227f73310cfad4700777ddf9bef99d177c4bad293c52d4a47638"
+    },
+    {
+      "id": "background_nebula",
+      "name": "성운 배경",
+      "category": "backgrounds",
+      "path": "backgrounds/nebula.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "transparent_background": false,
+      "alpha_extrema": null,
+      "bytes": 2192131,
+      "sha256": "4327b5d9f184839554c5e86a9b9d836274ab1a6073e8b6c53b1b023839d5563b"
+    },
+    {
+      "id": "object_asteroid",
+      "name": "소행성 벽",
+      "category": "objects",
+      "path": "objects/asteroid_wall.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 2076097,
+      "sha256": "7a4c49be14cc49865f9500f06e13aec434f438fa59adfe06ad974b10e9551af6"
+    },
+    {
+      "id": "object_breakable",
+      "name": "파괴 가능한 소행성",
+      "category": "objects",
+      "path": "objects/breakable_asteroid.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1934669,
+      "sha256": "79816636a34164671cd9354b0273214d18be7bf12a9b9a0fc70586d811c3ab97"
+    },
+    {
+      "id": "object_gas",
+      "name": "은폐 가스 구름",
+      "category": "objects",
+      "path": "objects/gas_cloud.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        253
+      ],
+      "bytes": 1497770,
+      "sha256": "6172ce36904c6ebcd4ee470bebf9e51c9bf62f1aa9fb8e2ed06fc7208b4b938f"
+    },
+    {
+      "id": "object_gravity",
+      "name": "감속 중력장",
+      "category": "objects",
+      "path": "objects/gravity_field.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        253
+      ],
+      "bytes": 2028685,
+      "sha256": "312e9ebad7e02821c866d7b5e7fac0d31f8b0b5f64af4af91ade7728b4c591a2"
+    },
+    {
+      "id": "object_fragment",
+      "name": "별 조각",
+      "category": "objects",
+      "path": "objects/star_fragment.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 814614,
+      "sha256": "be8c1ca78b259101551c0edba24d5b77a9e767590ef8b8ba8fe2be5e6d6fdf2e"
+    },
+    {
+      "id": "object_planet",
+      "name": "암석 행성",
+      "category": "objects",
+      "path": "objects/rock_planet.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 2176894,
+      "sha256": "da4275d485555ea0f4849cb1ffdcdecbeed0d04e57121a64af709db4badbe8b9"
+    },
+    {
+      "id": "object_ring",
+      "name": "고리 행성",
+      "category": "objects",
+      "path": "objects/ring_planet.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1284247,
+      "sha256": "8b4fa866733177946eb3484177703a1931cc3ab509be9549ede84d3f26777bec"
+    },
+    {
+      "id": "enemy_scout",
+      "name": "적 정찰선",
+      "category": "enemies",
+      "path": "enemies/scout.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 928400,
+      "sha256": "c9b2059a7ec5d95deeb0314ae21c355ac262076e49429e1cc70a11bd81480f94"
+    },
+    {
+      "id": "enemy_fighter",
+      "name": "적 전투선",
+      "category": "enemies",
+      "path": "enemies/fighter.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1275923,
+      "sha256": "3b5c0a7fd691fea97f80efcda8a8dcc70638709b02701208cb25a29d16eea9d4"
+    },
+    {
+      "id": "enemy_heavy",
+      "name": "적 중장갑선",
+      "category": "enemies",
+      "path": "enemies/heavy.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1565164,
+      "sha256": "d6a1ae3c479b1036d991c42ccb42e3ea479b2c80a7acc58f25334b732cb3e176"
+    },
+    {
+      "id": "projectile_plasma",
+      "name": "플레이어 플라즈마 탄",
+      "category": "projectiles",
+      "path": "projectiles/player_plasma.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "bytes": 189115,
+      "sha256": "05e7f50b1d8c62568b097f3e0fae2c17fdb786a8f9591ec73dfec07aedffced1"
+    },
+    {
+      "id": "projectile_enemy",
+      "name": "적 플라즈마 탄",
+      "category": "projectiles",
+      "path": "projectiles/enemy_plasma.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 205754,
+      "sha256": "ef2a75b6173fb11009cdd147d503253d16e8b025c930fb4d1da5c13c75eaf643"
+    },
+    {
+      "id": "projectile_shell",
+      "name": "대포 탄",
+      "category": "projectiles",
+      "path": "projectiles/cannon_shell.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 716606,
+      "sha256": "214e7c6e605301f706cca797533c9685af4f48fbd6a6cc17c1e9cc8498bae4bd"
+    },
+    {
+      "id": "projectile_missile",
+      "name": "유도 미사일",
+      "category": "projectiles",
+      "path": "projectiles/homing_missile.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 343122,
+      "sha256": "53a542e07269647c80c08677307d10ddd77dc220756bb014c6ebcbfdffc18caa"
+    },
+    {
+      "id": "projectile_mine",
+      "name": "기뢰",
+      "category": "projectiles",
+      "path": "projectiles/mine.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1234587,
+      "sha256": "a44d4ad62dc2201031ec2cf953b93c2477b7e12985481d24a61f7a2c7f65992a"
+    }
+  ]
+}

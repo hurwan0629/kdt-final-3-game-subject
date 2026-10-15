@@ -15,10 +15,10 @@ tags: [space-skirmish, dev]
 | 기본 체력·피해량·탄창·재장전 | `GameConfig` | 코어의 `_fire()`, `_regen_player()`, `request_reload()`, HUD |
 | 이동감·관성 | `accel`, `friction`, `_apply_tank_control()` | 지형 감속, 속도 강화 카드 |
 | WASD·조준·단축키 | `read_player_input()`, `GameApplication.handle_event()` | 조작 안내, 입력 테스트 |
-| 강화·전직·스킬 추가 | `STAT_UPGRADES`, `SPECIAL_REWARDS`, `upgrade_stat()`, `choose_reward()` | Lv.10 단위 자격, HUD 클릭 영역, 효과·설명·테스트 |
-| 무기·스킬 동작 | `_fire()`, `_fire_laser()`, `_explode()`, `request_bomb()`, `request_dash()` | 탄약·벽 충돌·피해·스킬 쿨다운·연출 |
+| 강화·전직·스킬 추가 | `STAT_UPGRADES`, `SHIP_CLASSES`, `SKILLS`, `upgrade_stat()`, `choose_reward()` | Lv.10 단위 자격, HUD 클릭 영역, 효과·설명·테스트 |
+| 무기·스킬 동작 | `_fire()`, `_fire_laser()`, `_explode()`, `request_skill()`, `_tick_skill()` | 탄약·벽 충돌·피해·스킬 쿨다운·연출 |
 | 메인/설정 메뉴 | `menu_buttons()`, `activate()`, `_draw_menu()` | 버튼 영역과 클릭 판정, 설정 유지 여부 |
-| 줌·카메라 | `set_zoom()`, 좌표 변환, `_update_camera()` | 마우스 조준 역변환, 화면 가장자리, HUD 크기 |
+| 창·전체화면 | `Renderer.resize()`, `set_fullscreen()` | 맵 크기와 시뮬레이션 유지, 메뉴 클릭 좌표 |\n| 줌·카메라 | `set_zoom()`, 좌표 변환, `_update_camera()` | 마우스 조준 역변환, 화면 가장자리, HUD 크기 |
 | 새 맵 | `maps/*.txt` | 기본 20×15, P 한 개, 연결성, 3×3 반복 구역 연결 |
 | 새 지형 | `CHAR_TO_TILE`, `TileMap`, 코어 지형 처리 | 그림, 충돌, 시야, 관찰 채널, 맵 검증 |
 | 적 난이도 | `EnemyAIConfig`, `_enemy_ai()` | 기억·거리·조준·경로·재등장 |
@@ -35,7 +35,7 @@ python -m unittest discover -s tests -v
 python random_agent_test.py --steps 200
 ```
 
-현재 테스트는 메뉴·재장전, WASD와 마우스 입력, 카드 효과, 카메라, 맵 연결성, 기본 학습 환경을 확인합니다. 랜덤 에이전트 검사는 여러 맵에서 관찰·보상의 유효성, 벽에 끼는 상태, seed 재현성을 봅니다. 화면의 재미나 난이도 균형까지 판정하지는 않습니다.
+현재 테스트는 메뉴·재장전, 입력, 전직 트리·모든 스킬·탄환 충돌, PNG 연결·캐시, 창 크기·전체화면 복원, 맵 연결성·기본 학습 환경을 확인합니다. 랜덤 에이전트 검사는 여러 맵에서 관찰·보상의 유효성, 벽에 끼는 상태, seed 재현성을 봅니다. 화면의 재미나 난이도 균형까지 판정하지는 않습니다.
 
 맵·보상·카메라를 바꿀 때는 관련 테스트를 먼저 실행하면 됩니다. 문구만 바꿨다면 화면에서 잘리는지 확인하는 것이 더 유용합니다.
 
@@ -59,6 +59,6 @@ python main.py --seed 42
 python main.py --map belt --stage2
 ```
 
-PyInstaller 배포에서는 `config.resource_path()`가 실행 파일의 임시 리소스 경로를 지원합니다. 별도 게임 이미지 파일은 없지만 `maps/`는 함께 포함해야 합니다. 문서 PNG는 게임 실행에 필요하지 않습니다.
+PyInstaller 배포에서는 `config.resource_path()`가 실행 파일의 임시 리소스 경로를 지원합니다. 게임에 사용하는 `assets/`와 `maps/`를 함께 포함해야 합니다. PNG 로딩과 회전·크기 캐시는 `sprite_assets.py`가 담당합니다. 문서 PNG는 게임 실행에 필요하지 않습니다.
 
 다음: [강화학습 환경 →](03-rl-environment.md) · [목차](../README.md)

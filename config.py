@@ -67,11 +67,13 @@ class TerrainConfig:
 
 @dataclass
 class GameConfig:
-    # 화면 / 월드 / 시간 (기존 맵 템플릿을 world_scale만큼 반복 확장)
+    # 맵 원본 크기와 실제 창 크기를 분리한다.
     width: int = 960
     height: int = 720
+    window_width: int = 1280
+    window_height: int = 800
     world_scale: int = 3             # 2880x2160 월드, 60x45 타일
-    camera_zoom: float = 0.6         # 60% 줌: 화면에 1600x1200 월드 영역 표시
+    camera_zoom: float = 0.6         # 기본 창에서 약 2133x1333 월드 영역 표시
     progression_enabled: bool = True
     level_xp_base: int = 60
     level_xp_growth: int = 40
@@ -110,12 +112,7 @@ class GameConfig:
     bullet_life: int = 70
     bullet_damage: float = 7.0
     laser_range: float = 720.0
-    bomb_damage: float = 45.0
-    bomb_radius: float = 130.0
-    bomb_cooldown_seconds: float = 6.0
     dash_speed: float = 18.0
-    dash_seconds: float = 0.2
-    dash_cooldown_seconds: float = 4.0
 
     # 도형
     num_shapes: int = 72

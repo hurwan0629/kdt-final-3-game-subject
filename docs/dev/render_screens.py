@@ -21,7 +21,7 @@ from game_core import GameCore
 from main import GameApplication
 from renderer import Renderer
 from terrain import BUSH, list_maps
-from progression import SPECIAL_REWARDS
+from progression import SHIPS
 
 
 def main():
@@ -35,7 +35,7 @@ def main():
 
     def capture(name):
         app.draw(ObsConfig())
-        assert renderer.screen.get_size() == (cfg.width, cfg.height)
+        assert renderer.screen.get_size() == (cfg.window_width, cfg.window_height)
         pygame.image.save(renderer.screen, str(output / name))
 
     capture("01-main-menu.png")
@@ -80,37 +80,50 @@ def main():
     game.player.x, game.player.y = game.terrain.center(*bush)
     capture("08-hidden-player.png")
 
-    def grant(key):
-        game.special_reward_levels = [game.level]
-        game.reward_choices = (next(card for card in SPECIAL_REWARDS if card.key == key),)
-        game.choose_reward(0)
+    def evolve(key, unlock=False):
+        family = SHIPS[key].parent or key
+        game._add_score(1980 - game.score)
+        game.choose_reward(next(i for i, card in enumerate(game.reward_choices) if card.key == family))
+        if SHIPS[key].parent:
+            game._add_score(7980 - game.score)
+            game.choose_reward(next(i for i, card in enumerate(game.reward_choices) if card.key == key))
+        if unlock:
+            game._add_score(17980 - game.score)
 
     tc.map_name = "drift"
     game.reset(42)
-    game.level = 10
-    grant("laser")
+    evolve("railgun")
     game.player.angle = 0
     renderer.draw(game)
     game.frame = 30
     game._fire(game.player, True)
     capture("10-laser.png")
     game.reset(42)
-    game.level = 10
-    grant("cannon")
+    evolve("shotgun")
     game.frame = 30
-    game._explode(game.player.x + 160, game.player.y, 28, 90, "player")
+    game.player.angle = 0
+    game._fire(game.player, True)
     capture("11-cannon.png")
     game.reset(42)
-    game.level = 20
-    grant("bomb")
-    grant("dash")
+    evolve("booster", unlock=True)
     game.frame = 30
-    game.request_bomb()
-    game.request_dash(3)
+    game.request_skill(3)
     capture("12-skills.png")
 
+    game.reset(42)
+    evolve("twin")
+    game._add_score(7980 - game.score)
+    game.frame = 30
+    capture("14-evolution.png")
+    game.choose_reward(1)
+    game._add_score(17980 - game.score)
+    game.request_skill()
+    game.step(0, want_fire=False)
+    capture("15-unique-skill.png")
+
     # 맵 비교는 동일 배율로 렌더링한 확장 월드 전체를 사용한다.
-    overview_cfg = GameConfig(num_shapes=0, num_enemies=0, camera_zoom=1 / 3)
+    overview_cfg = GameConfig(num_shapes=0, num_enemies=0, camera_zoom=1 / 3,
+                              window_width=960, window_height=720)
     overview_cfg.terrain.mud_enabled = overview_cfg.terrain.breakable_enabled = True
     overview_renderer = Renderer(overview_cfg)
     for name in list_maps():

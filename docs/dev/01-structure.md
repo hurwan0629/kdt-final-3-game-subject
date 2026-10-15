@@ -17,11 +17,13 @@ tags: [space-skirmish, dev]
 | `game_core.py` / `GameCore`                | 이동, 발사, 충돌, 체력, 적 AI, 스폰, 경험치, 카드 적용, 재장전 | 실제 게임 규칙 변경      |
 | `terrain.py` / `TileMap`                   | 맵 읽기·검증·확장·생성, 지형 충돌, 시야선, 경로 탐색          | 새로운 지형 효과·맵 규칙   |
 | `renderer.py` / `Renderer`                 | 우주 그래픽, 카메라, 줌, HUD, 메뉴·카드 화면, 연출 캐시      | 색상·배치·카메라 표현 변경  |
-| `progression.py` / `RewardCard`            | 카드 ID·이름·분류·설명, 전직 표시 이름                  | 카드 문구 변경         |
+| `progression.py` / `RewardCard`            | 능력치·전직 트리·무기 수치·고유 스킬 정의                  | 카드 문구 변경         |
 | `menus.py` / `MenuButton`                  | 버튼 ID·문구·영역·활성 여부                         | 버튼 추가·위치 변경      |
 | `env.py` / `TankEnv`, `ObservationBuilder` | 코어를 학습용 인터페이스로 감싸고 관찰·보상·종료를 계산           | 학습 입력과 보상 변경     |
 | `maps/*.txt`                               | 맵 템플릿 데이터                                 | 성운·구름·시작 위치 배치   |
 | `tests/`, `random_agent_test.py`           | 입력·규칙·메뉴·맵·재현성 검증                         | 변경 후 회귀 확인       |
+
+PNG 로딩과 축소·회전 캐시는 `sprite_assets.py`의 `SpriteAssets`가 담당합니다. `assets/` 원본을 읽고 메모리에 변환 결과를 보관하며, 원본 PNG는 수정하지 않습니다. 창 크기·전체화면은 렌더러가 관리하므로 맵과 진행도에 영향을 주지 않습니다.
 
 **`GameCore`와 `TileMap`은 Pygame을 가져오지 않습니다.** 화면 없이 게임을 실행할 수 있는 이유입니다. `Renderer`는 게임 상태를 읽어 그리며, 그림을 그리다가 체력이나 점수를 변경하지 않습니다. 다만 `set_zoom()`은 공유 설정의 카메라 배율을 바꿉니다.
 
