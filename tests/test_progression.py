@@ -96,33 +96,47 @@ class ProgressionTests(unittest.TestCase):
                     self.assertAlmostEqual(p.vx, game.cfg.accel * 1.15)
                 elif card.key == "hull":
                     self.assertEqual((p.max_hp, p.hp), (125, 45))
-                elif card.key == "regen":
-                    game._regen_player()
-                    self.assertAlmostEqual(p.hp, 20 + game.cfg.regen_rate + 1.5 / game.cfg.fps)
                 elif card.key == "range":
                     game._fire(p, True)
                     bullet = game.bullets[0]
                     self.assertAlmostEqual(math.hypot(bullet.vx, bullet.vy), game.cfg.bullet_speed * 1.2)
                     self.assertEqual(bullet.life, int(game.cfg.bullet_life * 1.15))
-                elif card.key == "magazine":
-                    self.assertEqual((p.max_ammo, p.ammo), (140, 40))
-                elif card.key == "reload":
-                    self.assertEqual(game.reload_frames_total, 135)
 
     def test_health_and_fire_rate_limits(self):
         game = empty_game()
         game.upgrade_points = 100
         for _ in range(40):
             game.upgrade_stat("rapid")
-            game.upgrade_stat("reload")
         self.assertEqual(game.player.hp, game.player.max_hp)
         self.assertEqual(game.player.fire_cooldown_max, 4)
-        self.assertEqual(game.reload_frames_total, 45)
+        self.assertEqual(game.reload_frames_total, 150)
         points = game.upgrade_points
         self.assertFalse(game.upgrade_stat("rapid"))
         self.assertFalse(game.upgrade_stat("reload"))
         self.assertFalse(game.upgrade_stat("bogus"))
         self.assertEqual(game.upgrade_points, points)
+
+    def test_five_stats_and_unspent_points_survive_later_levels_and_evolution(self):
+        game = empty_game()
+        keys = ("hull", "damage", "range", "rapid", "speed")
+        self.assertEqual(tuple(card.key for card in game.open_stat_upgrades()), keys)
+        self.assertEqual(game.upgrade_points, 0)
+        game._add_score(1980)
+        self.assertEqual(game.upgrade_points, 8)
+        game.choose_reward(0)
+        game._add_score(7980 - game.score)
+        self.assertEqual(game.upgrade_points, 17)
+        self.assertEqual(tuple(card.key for card in game.open_stat_upgrades()), keys)
+        game.choose_reward(1)
+        self.assertEqual(game.upgrade_points, 17)
+        self.assertTrue(game.upgrade_stat("speed"))
+        self.assertEqual(game.upgrade_points, 16)
+        self.assertEqual(tuple(card.key for card in game.open_stat_upgrades()), keys)
+        for removed in ("regen", "magazine", "reload"):
+            self.assertFalse(game.upgrade_stat(removed))
+        game.reset(7)
+        self.assertEqual(game.upgrade_points, 0)
+        self.assertTrue(all(count == 0 for count in game.stat_levels.values()))
 
     def test_seed_reset_and_reward_rng_do_not_change_combat_rng(self):
         a, b = empty_game(), empty_game()
@@ -179,7 +193,7 @@ class WorldTests(unittest.TestCase):
         env = TankEnv()
         self.assertFalse(env.game_cfg.progression_enabled)
         obs, _ = env.reset(seed=1)
-        self.assertEqual(obs.shape, (363,))
+        self.assertEqual(obs.shape, (241,))
         env.game._add_score(1000)
         self.assertEqual(env.game.level, 1)
         env.game.player.x = env.game_cfg.world_width / 2
@@ -259,13 +273,25 @@ class RendererTests(unittest.TestCase):
             self.assertTrue(screen.contains(pygame.Rect(rect)))
         self.renderer.draw(game)
 
+    def test_wounded_enemies_render_without_removed_stealth_api(self):
+        cfg = GameConfig(num_enemies=1, num_shapes=0)
+        cfg.terrain.enabled = False
+        game = GameCore(cfg, seed=7)
+        enemy = game.enemies[0]
+        enemy.hp -= 1
+        enemy.x, enemy.y = game.player.x + 80, game.player.y
+        health = enemy.hp
+        self.renderer.draw(game)
+        self.assertEqual(enemy.hp, health)
+        self.assertTrue(enemy.alive)
+
     def test_zoom_setting_rebuilds_view_and_keeps_hud_resolution(self):
         renderer = self.renderer
         try:
             renderer.set_zoom(0.75)
             renderer._update_camera(self.game.player)
             self.assertEqual(renderer._view.get_size(), (1280, 960))
-            self.assertEqual(renderer._fx_layer.get_size(), (1280, 960))
+            self.assertAlmostEqual(renderer.effective_zoom, 0.75)
             self.assertEqual(renderer.screen.get_size(), (960, 720))
             pos = renderer.screen_to_world(480, 360)
             self.assertEqual(renderer.world_to_screen(*pos), (480, 360))

@@ -1,224 +1,16 @@
 {
   "created": "2026-10-15",
-  "generator": "built-in image_gen",
+  "generator": "user-supplied player ships; built-in image_gen for other existing assets",
   "square_images": true,
-  "direction": "ships and directional projectiles face up",
+  "direction": "player ships face right; enemies and directional projectiles face up",
   "categories": {
-    "ships": 13,
+    "ships": 21,
     "backgrounds": 2,
     "objects": 7,
     "enemies": 3,
     "projectiles": 5
   },
   "assets": [
-    {
-      "id": "ship_rookie",
-      "name": "기본 우주선",
-      "category": "ships",
-      "path": "ships/rookie.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 806179,
-      "sha256": "32ac434e0c4867362f64f6d877d113ce2634c31d48667a81bbfd76da91e52b8f"
-    },
-    {
-      "id": "ship_twin",
-      "name": "쌍포선",
-      "category": "ships",
-      "path": "ships/twin.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1151331,
-      "sha256": "2cd67abf3fe17cfcf6ba7c18e0f25080b72e32e8b1e7f95f442879d0e622fa0f"
-    },
-    {
-      "id": "ship_triple",
-      "name": "삼연포선",
-      "category": "ships",
-      "path": "ships/triple.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1238117,
-      "sha256": "af8a47d232341ccd8a351464a5c61e24355698272675bf056f0e453a43eb361e"
-    },
-    {
-      "id": "ship_cross",
-      "name": "십자포선",
-      "category": "ships",
-      "path": "ships/cross.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1072769,
-      "sha256": "fa9b2f888a4d011daf4513f5b7faab7e60872e13d9c3630362d7048100e236b1"
-    },
-    {
-      "id": "ship_sniper",
-      "name": "저격선",
-      "category": "ships",
-      "path": "ships/sniper.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 651601,
-      "sha256": "e7b3e70ea3030bb959228a61eea6404c4c9085e2878098a8041d90564c4bace6"
-    },
-    {
-      "id": "ship_railgun",
-      "name": "레일건선",
-      "category": "ships",
-      "path": "ships/railgun.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 773231,
-      "sha256": "681e2a7e5c75cd91fcbd2e0ab5430a42cc42c51c1dc04ae38db10c3596e72f39"
-    },
-    {
-      "id": "ship_minelayer",
-      "name": "기뢰선",
-      "category": "ships",
-      "path": "ships/minelayer.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1816512,
-      "sha256": "a8e5df197f25a50c4e5a6c9a4f744b645e6d907e8903220e4a83c3b3cebfc895"
-    },
-    {
-      "id": "ship_gatling",
-      "name": "개틀링선",
-      "category": "ships",
-      "path": "ships/gatling.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1529188,
-      "sha256": "cd3a848000db488e925477f6efe115c0955ef468b196402039c84df26237db34"
-    },
-    {
-      "id": "ship_shotgun",
-      "name": "산탄선",
-      "category": "ships",
-      "path": "ships/shotgun.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1633315,
-      "sha256": "d82b362274acd2ab9276887e8c6c9280000d242d8fe1b205fc573cf8263467dd"
-    },
-    {
-      "id": "ship_homing",
-      "name": "유도탄선",
-      "category": "ships",
-      "path": "ships/homing.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1330889,
-      "sha256": "fd61849a702515a8c4929345a8f37d356261cab33f6bb91722ac4bbb4ff1a9a3"
-    },
-    {
-      "id": "ship_guardian",
-      "name": "수호선",
-      "category": "ships",
-      "path": "ships/guardian.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1701366,
-      "sha256": "a92d47a6563f60dbc7d99bf602592f3e7f1cc9ec990c6ea63aec4acade264ac7"
-    },
-    {
-      "id": "ship_booster",
-      "name": "추진선",
-      "category": "ships",
-      "path": "ships/booster.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1551005,
-      "sha256": "78f5fdf0c8d395dc2ba8624dcc1aad258c9d4c4c6d1949a5a9aab3c772c533c7"
-    },
-    {
-      "id": "ship_ram",
-      "name": "돌격선",
-      "category": "ships",
-      "path": "ships/ram.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1787394,
-      "sha256": "cd146e7e555591e36971e71579a4b332572e4ca0c58091c6637f1c84c5b8def0"
-    },
     {
       "id": "background_deep",
       "name": "심우주 배경",
@@ -484,6 +276,963 @@
       ],
       "bytes": 1234587,
       "sha256": "a44d4ad62dc2201031ec2cf953b93c2477b7e12985481d24a61f7a2c7f65992a"
+    },
+    {
+      "id": "Lv10_가디언",
+      "name": "가디언",
+      "category": "ships",
+      "path": "ships/Lv10_가디언.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 15909,
+      "sha256": "bc9df5f158fe400cce5bbe7d3b598ab572127367a7ad02ad33c4d43a771fe920",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        155,
+        148,
+        364,
+        364
+      ],
+      "alpha_bounds": [
+        155,
+        148,
+        246,
+        216
+      ],
+      "center": [
+        259.5,
+        256.0
+      ],
+      "body_diameter": 216,
+      "forward_muzzles": [
+        {
+          "y": 256.0,
+          "x": 399,
+          "forward": 1.2917,
+          "lateral": 0.0
+        }
+      ]
+    },
+    {
+      "id": "Lv10_스나이퍼",
+      "name": "스나이퍼",
+      "category": "ships",
+      "path": "ships/Lv10_스나이퍼.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14482,
+      "sha256": "fe7ab6acee1a37f7aa4b8cd627dd41aff52dce405c57277ee9c1d10f29c515b2",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        189,
+        202,
+        356,
+        310
+      ],
+      "alpha_bounds": [
+        189,
+        201,
+        237,
+        110
+      ],
+      "center": [
+        272.5,
+        256.0
+      ],
+      "body_diameter": 167,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 424,
+          "forward": 1.8144,
+          "lateral": -0.006
+        }
+      ]
+    },
+    {
+      "id": "Lv10_트윈",
+      "name": "트윈",
+      "category": "ships",
+      "path": "ships/Lv10_트윈.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14303,
+      "sha256": "e38410d3e550c990c3fc348a76e0718ccc049ff23eea31905a74f448a989ef77",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        195,
+        188,
+        327,
+        324
+      ],
+      "alpha_bounds": [
+        195,
+        188,
+        181,
+        136
+      ],
+      "center": [
+        261.0,
+        256.0
+      ],
+      "body_diameter": 136,
+      "forward_muzzles": [
+        {
+          "y": 231.0,
+          "x": 374,
+          "forward": 1.6618,
+          "lateral": -0.3676
+        },
+        {
+          "y": 281.0,
+          "x": 374,
+          "forward": 1.6618,
+          "lateral": 0.3676
+        }
+      ]
+    },
+    {
+      "id": "Lv10_플랭크",
+      "name": "플랭크",
+      "category": "ships",
+      "path": "ships/Lv10_플랭크.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 13966,
+      "sha256": "96779607c38d0de98b042effe8425f840e528dcee0a2ba6ba130ff6614dac507",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        190,
+        193,
+        337,
+        319
+      ],
+      "alpha_bounds": [
+        151,
+        193,
+        230,
+        126
+      ],
+      "center": [
+        263.5,
+        256.0
+      ],
+      "body_diameter": 147,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 379,
+          "forward": 1.5714,
+          "lateral": -0.0068
+        }
+      ]
+    },
+    {
+      "id": "Lv1_베이직",
+      "name": "베이직",
+      "category": "ships",
+      "path": "ships/Lv1_베이직.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 11258,
+      "sha256": "a92e53e6e10f978fba848c795130470d1f3076c25b891fa323613f8548bfa11e",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        197,
+        194,
+        336,
+        318
+      ],
+      "alpha_bounds": [
+        196,
+        194,
+        185,
+        124
+      ],
+      "center": [
+        266.5,
+        256.0
+      ],
+      "body_diameter": 139,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 379,
+          "forward": 1.6187,
+          "lateral": -0.0072
+        }
+      ]
+    },
+    {
+      "id": "Lv20_듀얼 스트라이커",
+      "name": "듀얼 스트라이커",
+      "category": "ships",
+      "path": "ships/Lv20_듀얼 스트라이커.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14480,
+      "sha256": "95331d1ae7aab6dd9401d2719d294cccdb84a35fb520fb44cee00d5b78ba0498",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        188,
+        177,
+        327,
+        335
+      ],
+      "alpha_bounds": [
+        188,
+        177,
+        198,
+        158
+      ],
+      "center": [
+        257.5,
+        256.0
+      ],
+      "body_diameter": 158,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 384,
+          "forward": 1.6013,
+          "lateral": -0.0063
+        }
+      ]
+    },
+    {
+      "id": "Lv20_레일거너",
+      "name": "레일거너",
+      "category": "ships",
+      "path": "ships/Lv20_레일거너.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 16013,
+      "sha256": "cb3a50ad9d62b5ff53823fe1b1ee8777ad66fbb82374a1c92d4c0dc621c41dc2",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        181,
+        194,
+        371,
+        318
+      ],
+      "alpha_bounds": [
+        180,
+        194,
+        276,
+        124
+      ],
+      "center": [
+        276.0,
+        256.0
+      ],
+      "body_diameter": 190,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 455,
+          "forward": 1.8842,
+          "lateral": -0.0053
+        }
+      ]
+    },
+    {
+      "id": "Lv20_바스티온",
+      "name": "바스티온",
+      "category": "ships",
+      "path": "ships/Lv20_바스티온.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 17107,
+      "sha256": "083a3ac246630da5ce8b8ef8d07315e32a8e3cb63f807c41a030384f820ffad7",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        142,
+        135,
+        377,
+        377
+      ],
+      "alpha_bounds": [
+        142,
+        134,
+        274,
+        244
+      ],
+      "center": [
+        259.5,
+        256.0
+      ],
+      "body_diameter": 242,
+      "forward_muzzles": [
+        {
+          "y": 235.5,
+          "x": 414,
+          "forward": 1.2769,
+          "lateral": -0.1694
+        },
+        {
+          "y": 275.5,
+          "x": 414,
+          "forward": 1.2769,
+          "lateral": 0.1612
+        }
+      ]
+    },
+    {
+      "id": "Lv20_이지스",
+      "name": "이지스",
+      "category": "ships",
+      "path": "ships/Lv20_이지스.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 18798,
+      "sha256": "b0fdcfa2815fbcc6edfd4ce3dbc5e37572b7463eead98b9b0223cba2e28d54be",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        128,
+        127,
+        385,
+        385
+      ],
+      "alpha_bounds": [
+        127,
+        121,
+        294,
+        270
+      ],
+      "center": [
+        256.5,
+        256.0
+      ],
+      "body_diameter": 258,
+      "forward_muzzles": [
+        {
+          "y": 256.0,
+          "x": 419,
+          "forward": 1.2597,
+          "lateral": 0.0
+        }
+      ]
+    },
+    {
+      "id": "Lv20_쿼드 윙",
+      "name": "쿼드 윙",
+      "category": "ships",
+      "path": "ships/Lv20_쿼드 윙.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14391,
+      "sha256": "c3cc3911fbdcca13ea51b0546b60fc99b74601045691811aada0ecdcf27d136d",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        178,
+        186,
+        339,
+        326
+      ],
+      "alpha_bounds": [
+        141,
+        141,
+        240,
+        230
+      ],
+      "center": [
+        258.5,
+        256.0
+      ],
+      "body_diameter": 161,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 379,
+          "forward": 1.4969,
+          "lateral": -0.0062
+        }
+      ]
+    },
+    {
+      "id": "Lv20_트리플 윙",
+      "name": "트리플 윙",
+      "category": "ships",
+      "path": "ships/Lv20_트리플 윙.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 18624,
+      "sha256": "2ebc51fabc8bc07f553a93adac659a149a4015620f35bfb4c19cada18b56644a",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        193,
+        185,
+        329,
+        327
+      ],
+      "alpha_bounds": [
+        193,
+        180,
+        195,
+        152
+      ],
+      "center": [
+        261.0,
+        256.0
+      ],
+      "body_diameter": 142,
+      "forward_muzzles": [
+        {
+          "y": 205.5,
+          "x": 366,
+          "forward": 1.4789,
+          "lateral": -0.7113
+        },
+        {
+          "y": 255.5,
+          "x": 387,
+          "forward": 1.7746,
+          "lateral": -0.007
+        },
+        {
+          "y": 305.5,
+          "x": 366,
+          "forward": 1.4789,
+          "lateral": 0.6972
+        }
+      ]
+    },
+    {
+      "id": "Lv20_트윈 플랭크",
+      "name": "트윈 플랭크",
+      "category": "ships",
+      "path": "ships/Lv20_트윈 플랭크.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14462,
+      "sha256": "a4a13464b98882d6a4915b7381bfd34a9fa2c0446aae9ad85404452f955c5a56",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        187,
+        189,
+        341,
+        323
+      ],
+      "alpha_bounds": [
+        146,
+        189,
+        230,
+        134
+      ],
+      "center": [
+        264.0,
+        256.0
+      ],
+      "body_diameter": 154,
+      "forward_muzzles": [
+        {
+          "y": 233.0,
+          "x": 374,
+          "forward": 1.4286,
+          "lateral": -0.2987
+        },
+        {
+          "y": 278.0,
+          "x": 374,
+          "forward": 1.4286,
+          "lateral": 0.2857
+        }
+      ]
+    },
+    {
+      "id": "Lv20_헌터",
+      "name": "헌터",
+      "category": "ships",
+      "path": "ships/Lv20_헌터.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14686,
+      "sha256": "5fbfe776fba3257bd55443751ba10c53b531e46973fe40be2c9cbe847cbf7578",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        186,
+        199,
+        360,
+        313
+      ],
+      "alpha_bounds": [
+        186,
+        199,
+        250,
+        114
+      ],
+      "center": [
+        273.0,
+        256.0
+      ],
+      "body_diameter": 174,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 435,
+          "forward": 1.8621,
+          "lateral": -0.0057
+        }
+      ]
+    },
+    {
+      "id": "Lv30_개틀링 스톰",
+      "name": "개틀링 스톰",
+      "category": "ships",
+      "path": "ships/Lv30_개틀링 스톰.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 15158,
+      "sha256": "2ead1997e9a75007c6ddd0b2034c62df11270bce3858737871ae006fe7e3ff2d",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        183,
+        172,
+        332,
+        340
+      ],
+      "alpha_bounds": [
+        183,
+        172,
+        220,
+        168
+      ],
+      "center": [
+        257.5,
+        256.0
+      ],
+      "body_diameter": 168,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 402,
+          "forward": 1.7202,
+          "lateral": -0.006
+        }
+      ]
+    },
+    {
+      "id": "Lv30_시타델",
+      "name": "시타델",
+      "category": "ships",
+      "path": "ships/Lv30_시타델.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 20409,
+      "sha256": "a88baff380b383603693bc4de0fd9938ae6d0dcacdd63e471a2a04cda5b9b747",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        111,
+        111,
+        401,
+        401
+      ],
+      "alpha_bounds": [
+        81,
+        109,
+        362,
+        294
+      ],
+      "center": [
+        256.0,
+        256.0
+      ],
+      "body_diameter": 290,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 442,
+          "forward": 1.2828,
+          "lateral": -0.0034
+        }
+      ]
+    },
+    {
+      "id": "Lv30_옥타 스타",
+      "name": "옥타 스타",
+      "category": "ships",
+      "path": "ships/Lv30_옥타 스타.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 18485,
+      "sha256": "ed021d86dc31793da18476422ccb150061fac23006e6eced6e9148a7cc2ea6bf",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        173,
+        182,
+        345,
+        330
+      ],
+      "alpha_bounds": [
+        136,
+        136,
+        245,
+        240
+      ],
+      "center": [
+        259.0,
+        256.0
+      ],
+      "body_diameter": 172,
+      "forward_muzzles": [
+        {
+          "y": 187.5,
+          "x": 347,
+          "forward": 1.0233,
+          "lateral": -0.7965
+        },
+        {
+          "y": 256.0,
+          "x": 379,
+          "forward": 1.3953,
+          "lateral": 0.0
+        },
+        {
+          "y": 323.5,
+          "x": 347,
+          "forward": 1.0233,
+          "lateral": 0.7849
+        }
+      ]
+    },
+    {
+      "id": "Lv30_콜로서스",
+      "name": "콜로서스",
+      "category": "ships",
+      "path": "ships/Lv30_콜로서스.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 19261,
+      "sha256": "4c33d3e19c0209bb83b73d1d69128964111ad27740faa151c3150a405e058201",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        111,
+        106,
+        410,
+        406
+      ],
+      "alpha_bounds": [
+        111,
+        106,
+        345,
+        300
+      ],
+      "center": [
+        260.5,
+        256.0
+      ],
+      "body_diameter": 300,
+      "forward_muzzles": [
+        {
+          "y": 228.0,
+          "x": 439,
+          "forward": 1.19,
+          "lateral": -0.1867
+        },
+        {
+          "y": 255.5,
+          "x": 454,
+          "forward": 1.29,
+          "lateral": -0.0033
+        },
+        {
+          "y": 283.0,
+          "x": 439,
+          "forward": 1.19,
+          "lateral": 0.18
+        }
+      ]
+    },
+    {
+      "id": "Lv30_펜타 윙",
+      "name": "펜타 윙",
+      "category": "ships",
+      "path": "ships/Lv30_펜타 윙.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 21631,
+      "sha256": "5245495c7bc1284d7cfc7c5c8ea45a7d92355827af9d49d742a856431fb62cfa",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        189,
+        180,
+        335,
+        332
+      ],
+      "alpha_bounds": [
+        189,
+        162,
+        212,
+        188
+      ],
+      "center": [
+        262.0,
+        256.0
+      ],
+      "body_diameter": 152,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 399,
+          "forward": 1.8026,
+          "lateral": -0.0066
+        }
+      ]
+    },
+    {
+      "id": "Lv30_프레데터",
+      "name": "프레데터",
+      "category": "ships",
+      "path": "ships/Lv30_프레데터.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 15555,
+      "sha256": "078d929c0c09bff0ca5a4ec78084e3992d719c32a24360b45080d23f24778a34",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        182,
+        196,
+        367,
+        316
+      ],
+      "alpha_bounds": [
+        181,
+        195,
+        275,
+        122
+      ],
+      "center": [
+        274.5,
+        256.0
+      ],
+      "body_diameter": 185,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 455,
+          "forward": 1.9514,
+          "lateral": -0.0054
+        }
+      ]
+    },
+    {
+      "id": "Lv30_하이퍼 레일건",
+      "name": "하이퍼 레일건",
+      "category": "ships",
+      "path": "ships/Lv30_하이퍼 레일건.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 17868,
+      "sha256": "2300a23a5d5ff3d953c0125143b3c9c2bc7987894d411da90ac888da2cd9e26c",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        176,
+        190,
+        378,
+        322
+      ],
+      "alpha_bounds": [
+        176,
+        190,
+        305,
+        132
+      ],
+      "center": [
+        277.0,
+        256.0
+      ],
+      "body_diameter": 202,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 480,
+          "forward": 2.0099,
+          "lateral": -0.005
+        }
+      ]
+    },
+    {
+      "id": "Lv30_헥사 크루저",
+      "name": "헥사 크루저",
+      "category": "ships",
+      "path": "ships/Lv30_헥사 크루저.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 15252,
+      "sha256": "47b0721b6e43e9a85c7bd60c53800f28df6d35d0da6b44cde381180fd8f78fa7",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        182,
+        185,
+        347,
+        327
+      ],
+      "alpha_bounds": [
+        131,
+        185,
+        260,
+        142
+      ],
+      "center": [
+        264.5,
+        256.0
+      ],
+      "body_diameter": 165,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 389,
+          "forward": 1.5091,
+          "lateral": -0.0061
+        }
+      ]
     }
   ]
 }

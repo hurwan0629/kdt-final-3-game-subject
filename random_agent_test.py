@@ -5,7 +5,7 @@
 
 검사 항목
 - 맵 파일 로드/검증, 랜덤 맵 연결성 (BFS)
-- 맵별(손맵 3개, 2단계 기능, 랜덤 맵, 빈 경기장) 랜덤 행동 실행: 관찰/보상 유효성, 탱크·도형이 벽에 끼지 않는지
+- 맵별(전체 미로맵 4개, 2단계 기능, 랜덤 맵, 빈 경기장) 랜덤 행동 실행: 관찰/보상 유효성, 탱크·도형이 벽에 끼지 않는지
 - 같은 seed + 같은 행동 → 같은 결과 (새 env / 한 판 끝난 뒤 reset한 env 모두)
 """
 import argparse
@@ -15,7 +15,7 @@ import numpy as np
 
 from config import GameConfig, ObsConfig, TerrainConfig
 from env import TankEnv
-from terrain import list_maps, load_map, parse_map, generate_random_map, MapError
+from terrain import list_maps, load_map, parse_map, generate_random_map, expand_map, MapError
 
 
 def make_env(map_name="drift", stage2=False, random_map=False, terrain=True, obs_mode="flat"):
@@ -29,11 +29,11 @@ def make_env(map_name="drift", stage2=False, random_map=False, terrain=True, obs
 
 
 def check_not_stuck(game):
-    """어떤 탱크/도형의 중심도 벽 타일 안에 있으면 안 된다."""
+    """탱크와 경험치 천체의 전체 충돌 원이 벽/경계를 침범하지 않아야 한다."""
     tm = game.terrain
     objs = [game.player] + [e for e in game.enemies if e.alive] + game.shapes
     for o in objs:
-        assert not tm.is_solid_at(o.x, o.y), f"벽에 낌: {type(o).__name__} at ({o.x:.1f}, {o.y:.1f}) map={tm.name}"
+        assert tm.circle_fits(o.x, o.y, o.radius), f"벽에 낌: {type(o).__name__} at ({o.x:.1f}, {o.y:.1f}) radius={o.radius:.1f} map={tm.name}"
 
 
 def run_random(env, total_steps, seed):
@@ -96,8 +96,9 @@ def determinism_test(n_steps=1500):
 def map_tests():
     tc = TerrainConfig()
     for name in list_maps():
-        tm = load_map(name, tc, 20, 15)
-        assert tm.is_connected()
+        tm = load_map(name, tc, 60, 45)
+        assert tm.is_connected() and tm.is_connected(tc.navigation_radius)
+        assert tm.validate_navigation(tc.navigation_radius) is None
     print(f"[맵] 손맵 {len(list_maps())}개 로드/연결성 OK: {', '.join(list_maps())}")
 
     bad = "\n".join(["." * 20] * 15)  # P 없음
@@ -119,8 +120,8 @@ def map_tests():
     tc2 = TerrainConfig(mud_enabled=True, breakable_enabled=True)
     for s in range(100):
         tm = generate_random_map(np.random.default_rng(s), tc2, 20, 15)
-        assert tm.is_connected(), f"랜덤 맵 seed {s} 연결 안 됨"
-    print("[맵] 랜덤 맵 100개 생성, 모두 BFS 연결 OK")
+        assert tm.is_connected() and tm.is_connected(tc2.navigation_radius), f"랜덤 맵 seed {s} 최대 선체로 연결 안 됨"
+    print("[맵] 랜덤 맵 100개 생성, 모두 최대 선체 경로 연결 OK")
 
 
 def main():

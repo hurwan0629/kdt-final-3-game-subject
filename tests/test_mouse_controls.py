@@ -3,6 +3,7 @@ import math
 import os
 import unittest
 from collections import defaultdict
+from unittest.mock import patch
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -68,7 +69,7 @@ class MouseControlTests(unittest.TestCase):
     def test_ammo_exhaustion_cooldown_and_three_shot_partial_volley(self):
         game, p = self.game, self.game.player
         p.ammo = 2
-        p.job, p.projectiles = "triple", 3
+        p.job, p.projectiles = "triple_wing", 3
         game._fire(p, True)
         self.assertEqual(len(game.bullets), 2)
         self.assertEqual(p.ammo, 0)
@@ -142,6 +143,17 @@ class MouseControlTests(unittest.TestCase):
             app.update(elapsed, key_state(), (800, 360), (False, False, False))
             frames.append((self.game.frame, self.game.player.ammo))
         self.assertEqual(frames, [(0, 120), (1, 119), (2, 119)])
+
+    def test_q_and_space_do_not_activate_combat_actions(self):
+        app = GameApplication(self.game, self.renderer, seed=1)
+        app.activate("start")
+        with patch.object(self.game, "request_skill", wraps=self.game.request_skill) as skill:
+            for key in (pygame.K_q, pygame.K_SPACE):
+                app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
+            app.update(1 / 60, key_state(pygame.K_q, pygame.K_SPACE), (800, 360), (False, False, False))
+            skill.assert_not_called()
+        self.assertEqual(self.game.bullets, [])
+        self.assertEqual(self.game.frame, 1)
 
 
 if __name__ == "__main__":

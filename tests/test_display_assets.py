@@ -13,7 +13,7 @@ import pygame
 from config import GameConfig, ObsConfig
 from game_core import GameCore
 from main import GameApplication
-from progression import FAMILIES, SHIPS, stat_rows, special_cards
+from progression import FAMILIES, SHIPS, STAT_UPGRADES, stat_rows, special_cards
 from renderer import Renderer
 
 
@@ -82,60 +82,110 @@ class DisplayAssetsTests(unittest.TestCase):
         with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
             self.app.draw(ObsConfig())
             paths = {call.args[0] for call in image.call_args_list}
-            self.assertTrue({"ships/" + card.key for card in FAMILIES}.issubset(paths))
+            self.assertTrue({card.asset for card in FAMILIES}.issubset(paths))
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F5))
         self.assertEqual(self.game.player.job, "guardian")
         self.game._add_score(7980 - self.game.score)
-        self.assertEqual([c.key for c in self.game.reward_choices], ["booster", "ram"])
+        self.assertEqual([c.key for c in self.game.reward_choices], ["bastion", "aegis"])
         with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
             self.app.draw(ObsConfig())
             paths = {call.args[0] for call in image.call_args_list}
-            self.assertTrue({"ships/booster", "ships/ram"}.issubset(paths))
+            self.assertTrue({SHIPS["bastion"].asset, SHIPS["aegis"].asset}.issubset(paths))
         for coords in special_cards(*self.renderer.size):
             self.assertEqual(pygame.Rect(coords).size, (90, 90))
 
-    def test_stats_show_three_unique_choices_and_keep_them_until_spent(self):
-        self.game._add_score(190)
+    def test_stats_always_show_five_fixed_choices_and_all_number_keys_work(self):
         choices = self.game.stat_choices
-        self.assertEqual(len({c.key for c in choices}), 3)
+        self.assertEqual(choices, STAT_UPGRADES)
+        self.assertEqual([c.title for c in choices], ["체력", "공격력", "사거리 및 탄속도", "발사속도", "이동속도"])
         self.app.draw(ObsConfig())
+        self.game._add_score(1000)
+        points = self.game.upgrade_points
+        for i, key in enumerate((pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5)):
+            self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
+            self.assertEqual(self.game.stat_levels[choices[i].key], 1)
+        self.assertEqual(self.game.upgrade_points, points - 5)
+        self.assertEqual(self.game.stat_choices, choices)
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
         self.assertEqual(self.game.stat_choices, choices)
-        self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_2))
-        self.assertEqual(self.game.stat_levels[choices[1].key], 1)
-        self.assertEqual(self.game.upgrade_points, 1)
-        self.assertEqual(len(self.game.stat_choices), 3)
-        self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_1))
-        self.assertEqual(self.game.stat_choices, ())
+        for coords in (row[1] for row in stat_rows(960, 640)):
+            self.assertTrue(pygame.Rect(0, 0, 960, 640).contains(pygame.Rect(coords)))
 
     def test_all_ship_sprites_render_and_transform_cache_reuses_images(self):
         for key in SHIPS:
             with self.subTest(ship=key):
                 self.game.player.job = key
                 self.renderer.draw(self.game)
-                image = self.renderer.assets.image("ships/" + key, 62)
-                self.assertIs(image, self.renderer.assets.image("ships/" + key, 62))
+                image = self.renderer.assets.image(SHIPS[key].asset, 62)
+                self.assertIs(image, self.renderer.assets.image(SHIPS[key].asset, 62))
         self.renderer.resize((4000, 2400))
         self.assertLessEqual(self.renderer.view_width, self.cfg.world_width)
         self.assertLessEqual(self.renderer.view_height, self.cfg.world_height)
 
-    def test_no_empty_skill_panel_before_unlock_and_hidden_enemies_are_not_drawn(self):
-        with patch.object(self.renderer, "_panel", wraps=self.renderer._panel) as panel:
-            self.renderer._draw_skills(self.game)
-            panel.assert_not_called()
+    def test_player_sprite_faces_right_and_enemy_keeps_original_orientation(self):
+        import math
+        self.game.player.angle = math.pi / 2
+        with patch.object(self.renderer.assets, "ship_image", wraps=self.renderer.assets.ship_image) as image:
+            self.renderer._draw_ship(self.game.player, 100, is_player=True)
+            self.assertEqual(image.call_args.args[0], SHIPS["rookie"].asset)
+            self.assertAlmostEqual(image.call_args.args[2], -90)
         self.cfg.num_enemies = 1
         try:
             self.game.reset(7)
             enemy = self.game.enemies[0]
-            enemy.x, enemy.y = self.game.player.x + 100, self.game.player.y
-            original = self.game.is_hidden
-            with patch.object(self.game, "is_hidden", side_effect=lambda tank: tank is enemy or original(tank)), \
-                    patch.object(self.renderer, "_draw_ship", wraps=self.renderer._draw_ship) as ship:
-                self.renderer.draw(self.game)
-                self.assertFalse(any(call.args[0] is enemy for call in ship.call_args_list))
+            enemy.angle = math.pi / 2
+            with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+                self.renderer._draw_ship(enemy, 100)
+                self.assertAlmostEqual(image.call_args.args[2], -180)
         finally:
             self.cfg.num_enemies = 0
+
+    def test_21_original_transparent_sprites_fit_body_collision_diameter(self):
+        import numpy as np
+        self.assertEqual(len(SHIPS), 21)
+        for spec in SHIPS.values():
+            with self.subTest(ship=spec.key):
+                source = self.renderer.assets._source(spec.asset)
+                self.assertEqual(source.get_size(), (512, 512))
+                self.assertEqual(int(pygame.surfarray.array_alpha(source).min()), 0)
+                image = self.renderer.assets.ship_image(spec.asset, 60)
+                rgb = pygame.surfarray.array3d(image).astype(np.int16)
+                alpha = pygame.surfarray.array_alpha(image)
+                xs, ys = np.where((alpha > 100) & (rgb[:, :, 1] > rgb[:, :, 0] + 30)
+                                  & (rgb[:, :, 2] > rgb[:, :, 0] + 30))
+                self.assertAlmostEqual(max(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1), 60, delta=3)
+                self.assertAlmostEqual((xs.max() + xs.min()) / 2, image.get_width() / 2, delta=2)
+                self.assertAlmostEqual((ys.max() + ys.min()) / 2, image.get_height() / 2, delta=2)
+
+    def test_projectile_core_width_matches_physical_diameter_and_cache_reuses_images(self):
+        assets = self.renderer.assets
+        for path in ("projectiles/player_plasma", "projectiles/enemy_plasma", "projectiles/cannon_shell"):
+            with self.subTest(path=path):
+                source = assets._source(path)
+                self.assertEqual(source.get_size(), (1254, 1254))
+                base = assets._projectile_base(path)
+                core = assets._projectile_geometry(path)
+                self.assertLessEqual(base.get_width(), core.width * 2.5)
+                for diameter in (4, 12, 24):
+                    image = assets.projectile_image(path, diameter)
+                    visible = image.get_bounding_rect(min_alpha=100)
+                    self.assertAlmostEqual(visible.width, diameter, delta=2)
+                    self.assertAlmostEqual(visible.centerx, image.get_width() / 2, delta=1.5)
+                    self.assertAlmostEqual(visible.centery, image.get_height() / 2, delta=1.5)
+                    self.assertLessEqual(image.get_width(), diameter * 2.5 + 2)
+                    self.assertIs(image, assets.projectile_image(path, diameter))
+                    turned = assets.projectile_image(path, diameter, -90)
+                    self.assertAlmostEqual(turned.get_bounding_rect(min_alpha=100).height, diameter, delta=2)
+                    self.assertIs(turned, assets.projectile_image(path, diameter, -90))
+
+    def test_world_ship_render_size_tracks_doubled_radius_without_growing_cards(self):
+        p = self.game.player
+        self.assertEqual(p.radius, 44)
+        with patch.object(self.renderer.assets, "ship_image", wraps=self.renderer.assets.ship_image) as image:
+            self.renderer._draw_ship(p, 100, is_player=True)
+            self.assertEqual(image.call_args.args[1], 88)
+        self.assertEqual(self.renderer.assets.image(SHIPS["rookie"].asset, 62).get_size(), (62, 62))
 
 
 if __name__ == "__main__":

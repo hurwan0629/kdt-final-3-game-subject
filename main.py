@@ -38,8 +38,7 @@ def debug_lines(game, obs_cfg, action):
     f = lambda v: f"{v:+.2f}"
     lines = [f"vector obs {obs.size} (+ terrain grid)   action {action}   frame {game.frame}",
              "self x,y " + f(obs[0]) + " " + f(obs[1]) + "  v " + f(obs[2]) + " " + f(obs[3]),
-             "self hp " + f(obs[4]) + "  sin/cos " + f(obs[5]) + " " + f(obs[6]) + "  rl " + f(obs[7])
-             + f"  bush {obs[8]:.0f}",
+             "self hp " + f(obs[4]) + "  sin/cos " + f(obs[5]) + " " + f(obs[6]) + "  rl " + f(obs[7]),
              f"map {game.terrain.name}   enemies seeing you: {sum(e.alive and e.ai_can_see for e in game.enemies)}"]
     i = obs_cfg.SELF_DIM
     for n in range(obs_cfg.n_enemies):
@@ -72,7 +71,6 @@ class GameApplication:
         self.acc = 0.0
         self.action = 0
         self.click_requested = False
-        self.skill_requests = set()
         self.suppress_fire = True
         self.map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
 
@@ -87,7 +85,6 @@ class GameApplication:
     def activate(self, key):
         self.show_stats = False
         self.click_requested = False
-        self.skill_requests.clear()
         self.suppress_fire = True
         self.acc = 0.0
         if key in ("start", "restart"):
@@ -157,7 +154,7 @@ class GameApplication:
                     self.activate("quit")
             return
         if ev.type == pygame.KEYDOWN:
-            stats = (pygame.K_1, pygame.K_2, pygame.K_3)
+            stats = (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5)
             specials = (pygame.K_F2, pygame.K_F3, pygame.K_F4, pygame.K_F5)
             if ev.key in stats:
                 choices = self.game.open_stat_upgrades()
@@ -166,9 +163,6 @@ class GameApplication:
                 return
             if ev.key in specials:
                 self.game.choose_reward(specials.index(ev.key))
-                return
-            if ev.key in (pygame.K_q, pygame.K_SPACE):
-                self.skill_requests.add("skill" if ev.key == pygame.K_q else "dash")
                 return
             if ev.key == pygame.K_r:
                 self.game.request_reload()
@@ -186,6 +180,9 @@ class GameApplication:
                     tc.map_name = name
                 self.activate("restart")
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.pointer_over_minimap(ev.pos):
+                self.suppress_fire, self.click_requested = True, False
+                return
             if self.cfg.progression_enabled:
                 rows = stat_rows(*self.size, self.game.open_stat_upgrades()) if stat_upgrades_visible(self.game) else []
                 for card, rect in rows:
@@ -202,7 +199,13 @@ class GameApplication:
             if not self.suppress_fire:
                 self.click_requested = True
 
+    def pointer_over_minimap(self, pos):
+        get_rect = getattr(self.renderer, "minimap_rect", None)
+        return bool(get_rect is not None and get_rect().collidepoint(pos))
+
     def pointer_over_rewards(self, pos):
+        if self.pointer_over_minimap(pos):
+            return True
         if not self.cfg.progression_enabled:
             return False
         rects = ([rect for card, rect in stat_rows(*self.size, self.game.open_stat_upgrades())]
@@ -219,7 +222,6 @@ class GameApplication:
         if self.mode != "playing" or self.game.game_over:
             self.acc = 0.0
             self.click_requested = False
-            self.skill_requests.clear()
             return
         dt = 1.0 / self.cfg.fps
         self.acc = min(self.acc + elapsed, dt * MAX_FRAMES_PER_TICK)
@@ -227,11 +229,8 @@ class GameApplication:
             self.renderer._update_camera(self.game.player)
             self.action, target, want_fire = read_player_input(keys, self.renderer, mouse_pos, buttons)
             fire = (want_fire or self.click_requested) and not self.suppress_fire and not self.pointer_over_rewards(mouse_pos)
-            self.game.step(self.action, want_fire=fire, aim_position=target,
-                           want_skill="skill" in self.skill_requests or keys[pygame.K_q],
-                           want_dash="dash" in self.skill_requests or keys[pygame.K_SPACE])
+            self.game.step(self.action, want_fire=fire, aim_position=target)
             self.click_requested = False
-            self.skill_requests.clear()
             self.game.pop_events()
             self.acc -= dt
             if self.game.game_over:

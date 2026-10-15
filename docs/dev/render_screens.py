@@ -1,138 +1,128 @@
-"""문서용 화면을 실제 Renderer로 재현한다. 게임 파일은 수정하지 않는다.
-
-프로젝트 루트에서: python docs/dev/render_screens.py
-레벨업, 숨기, 사망 등은 설명용 상태를 설정해 촬영한다.
-"""
+"""실제 Renderer로 현재 게임/진화/맵 문서 화면을 생성한다."""
 import os
 import sys
-from collections import defaultdict
 from pathlib import Path
-
+from collections import defaultdict
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-
 import pygame
-
 from config import GameConfig, ObsConfig
 from game_core import GameCore
 from main import GameApplication
 from renderer import Renderer
-from terrain import BUSH, list_maps
 from progression import SHIPS
+from terrain import list_maps
+
+
+def gain_level(game, target):
+    while game.level < target:
+        game._add_score(game.xp_to_next_level - game.xp)
+
+
+def evolve(game, target):
+    chain = []
+    key = target
+    while key != "rookie":
+        chain.append(key)
+        key = SHIPS[key].parent or "rookie"
+    for key in reversed(chain):
+        gain_level(game, SHIPS[key].level)
+        game.choose_reward(next(i for i, c in enumerate(game.reward_choices) if c.key == key))
 
 
 def main():
-    output = ROOT / "docs" / "game" / "assets"
+    output = ROOT / "docs/game/assets"
     output.mkdir(parents=True, exist_ok=True)
     pygame.init()
     cfg = GameConfig()
     game = GameCore(cfg, seed=42)
     renderer = Renderer(cfg)
     app = GameApplication(game, renderer, seed=42)
-
     def capture(name):
         app.draw(ObsConfig())
-        assert renderer.screen.get_size() == (cfg.window_width, cfg.window_height)
         pygame.image.save(renderer.screen, str(output / name))
-
     capture("01-main-menu.png")
     app.activate("start")
     renderer.draw(game)
-    for _ in range(45):
+    for _ in range(20):
         game.step(0, want_fire=False)
         game.pop_events()
     capture("02-playing.png")
-    game._add_score(700)
-    for key in ("damage", "magazine", "speed"):
-        game.upgrade_stat(key)
+    gain_level(game, 8)
+    game.upgrade_stat("damage")
+    game.upgrade_stat("speed")
     capture("09-stats.png")
+    # 상태값은 GameApplication의 Tab 입력과 동일한 경로로 적용한다.
     keys = defaultdict(bool)
     keys[pygame.K_TAB] = True
-    app.update(0, keys, (480, 360), (False, False, False))
+    app.update(0, keys, (640, 400), (False, False, False))
     capture("13-stats-panel.png")
     keys[pygame.K_TAB] = False
-    app.update(0, keys, (480, 360), (False, False, False))
+    app.update(0, keys, (640, 400), (False, False, False))
     game.player.ammo = 15
-    app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r))
+    game.request_reload()
     capture("03-reloading.png")
-    game._add_score(1980 - game.score)
+    gain_level(game, 10)
     capture("04-rewards.png")
     app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
     capture("05-settings.png")
     app.activate("resume")
-    game._damage_tank(game.player, game.player.hp, by_player=False)
+    game._damage_tank(game.player, 100000, by_player=False)
     game.step(0, want_fire=False)
     capture("06-game-over.png")
-
-    # 같은 타일 크기에서 지형 기능을 켠 실제 화면.
-    tc = cfg.terrain
-    tc.map_name = "belt"
-    tc.mud_enabled = tc.breakable_enabled = True
+    cfg.terrain.map_name = "belt"
+    cfg.terrain.mud_enabled = cfg.terrain.breakable_enabled = True
     game.reset(42)
-    renderer.draw(game)
-    game.frame = 30
     capture("07-terrain-stage2.png")
-    bush = next((c, r) for c, r in game.terrain.free_tiles
-                if game.terrain.tiles[r][c] == BUSH and 20 <= c < 40 and 15 <= r < 30)
-    game.player.x, game.player.y = game.terrain.center(*bush)
-    capture("08-hidden-player.png")
-
-    def evolve(key, unlock=False):
-        family = SHIPS[key].parent or key
-        game._add_score(1980 - game.score)
-        game.choose_reward(next(i for i, card in enumerate(game.reward_choices) if card.key == family))
-        if SHIPS[key].parent:
-            game._add_score(7980 - game.score)
-            game.choose_reward(next(i for i, card in enumerate(game.reward_choices) if card.key == key))
-        if unlock:
-            game._add_score(17980 - game.score)
-
-    tc.map_name = "drift"
+    cfg.terrain.map_name = "drift"
     game.reset(42)
-    evolve("railgun")
-    game.player.angle = 0
+    evolve(game, "citadel")
     renderer.draw(game)
     game.frame = 30
-    game._fire(game.player, True)
-    capture("10-laser.png")
+    capture("08-wall-maze.png")
+    cfg.terrain.enabled = False
     game.reset(42)
-    evolve("shotgun")
-    game.frame = 30
+    evolve(game, "railgunner")
     game.player.angle = 0
-    game._fire(game.player, True)
-    capture("11-cannon.png")
+    renderer.draw(game)
+    for _ in range(8):
+        game.step(0, want_fire=True)
+    capture("10-sniper-line.png")
     game.reset(42)
-    evolve("booster", unlock=True)
-    game.frame = 30
-    game.request_skill(3)
-    capture("12-skills.png")
-
+    evolve(game, "penta_wing")
+    game.player.angle = 0
+    renderer.draw(game)
+    for _ in range(7):
+        game.step(0, want_fire=True)
+    capture("11-fan-fire.png")
     game.reset(42)
-    evolve("twin")
-    game._add_score(7980 - game.score)
-    game.frame = 30
+    evolve(game, "predator")
+    game.player.angle = 0
+    renderer.draw(game)
+    for _ in range(12):
+        game.step(0, want_fire=True)
+    capture("12-sniper.png")
+    game.reset(42)
+    evolve(game, "twin")
+    gain_level(game, 20)
     capture("14-evolution.png")
-    game.choose_reward(1)
-    game._add_score(17980 - game.score)
-    game.request_skill()
-    game.step(0, want_fire=False)
-    capture("15-unique-skill.png")
-
-    # 맵 비교는 동일 배율로 렌더링한 확장 월드 전체를 사용한다.
-    overview_cfg = GameConfig(num_shapes=0, num_enemies=0, camera_zoom=1 / 3,
+    game.choose_reward(0)
+    gain_level(game, 30)
+    capture("15-final-evolution.png")
+    overview_cfg = GameConfig(num_shapes=0, num_enemies=0, camera_zoom=1/3,
                               window_width=960, window_height=720)
     overview_cfg.terrain.mud_enabled = overview_cfg.terrain.breakable_enabled = True
     overview_renderer = Renderer(overview_cfg)
     for name in list_maps():
         overview_cfg.terrain.map_name = name
-        overview_game = GameCore(overview_cfg, seed=42)
-        overview_renderer.draw(overview_game, show_controls=False)
-        pygame.image.save(overview_renderer.screen, str(output / f"map-{name}.png"))
+        g = GameCore(overview_cfg, seed=42)
+        overview_renderer.draw(g, show_controls=False)
+        pygame.image.save(overview_renderer.screen, str(output / ("map-" + name + ".png")))
     pygame.quit()
-    print(f"Saved {len(list(output.glob('*.png')))} documentation images to {output}")
+    print("Saved current game documentation screenshots")
 
 
 if __name__ == "__main__":

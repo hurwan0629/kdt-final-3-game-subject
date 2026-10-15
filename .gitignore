@@ -134,3 +134,6 @@ $RECYCLE.BIN/
 # Intentionally tracked: maps/*.txt, assets, source notebooks,
 # requirements.txt, dependency lockfiles, training configs and .spec files.
 # No global *.zip / *.pkl / *.npy / *.npz rules: these can be source data.
+
+# Local backups created by the reviewed update installer
+/.codex-update-backups/

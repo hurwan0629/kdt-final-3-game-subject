@@ -1,41 +1,13 @@
----
-title: Space Skirmish 문서 시작점
-updated: 2026-10-15
-tags: [space-skirmish, docs]
----
+# Space Skirmish 문서
 
-# Space Skirmish 읽기 안내
+현재 구현 기준으로 조작·21종 진화·5종 스탯·벽 중심 맵을 설명합니다. 화면은 `python docs/dev/render_screens.py`로 다시 만들 수 있습니다.
 
-현재 코드를 읽고 정리한 문서입니다. **개발 구조는 `dev/`, 게임에서 경험하는 요소는 `game/`**에 나눴습니다. 제안과 현재 동작을 섞지 않고, 각 문서 끝에 수정할 때 생각해 볼 부분을 짧게 붙였습니다.
-
-## Obsidian에서 열기
-
-Obsidian에서 이 프로젝트 폴더를 보관함으로 열고 `docs/README.md`부터 읽으면 됩니다. 문서만 따로 보고 싶으면 `docs` 폴더를 보관함으로 열어도 됩니다. 상대 경로 링크와 Markdown 이미지를 사용했으므로 별도 플러그인이 필요하지 않습니다.
-
-이미지는 `game/assets/`에 함께 들어 있습니다. 다른 곳으로 옮길 때는 **`docs` 폴더 전체**를 같이 옮기세요. 문서에는 플러그인 문법이나 자동으로 실행되는 코드가 없습니다.
-
-## 한 번씩 읽는 순서
-
-| 순서 | 문서 | 읽고 판단할 내용 |
-|---|---|---|
-| 1 | [코드 구조와 책임 분리](dev/01-structure.md) | 누가 무엇을 담당하는지, 어떤 패턴에 가까운지 |
-| 2 | [조작과 사용자 흐름](game/01-controls-and-flow.md) | 시작부터 종료까지 실제 화면과 조작 |
-| 3 | [전투·체력·탄약·재장전](game/02-combat-and-reload.md) | 플레이어 기본 성능과 전투 규칙 |
-| 4 | [레벨업과 보상 카드](game/03-rewards.md) | 일반 강화 3개 제시, 4계열·8진화·고유 스킬 |
-| 5 | [맵과 상호작용](game/04-maps.md) | 4개 맵, 숨기·감속·벽 파괴 |
-| 6 | [적 AI와 월드 유지](game/05-enemies-and-world.md) | 적이 보고, 쫓고, 공격하고, 다시 등장하는 방식 |
-| 7 | [현재 제한과 수정 판단](game/06-review-points.md) | 아직 없는 기능과 결정이 필요한 부분 |
-| 8 | [수정 위치와 검증](dev/02-changing-and-testing.md) | 바꿀 내용을 실제 파일에 연결하는 방법 |
-| 9 | [강화학습 환경](dev/03-rl-environment.md) | 사람 플레이와 학습 환경의 차이 |
-
-한 문서 안에서는 설명 → 수치/규칙 → 수정 판단 순서로 읽으면 됩니다. 보상표나 맵표는 나중에 다시 찾아보기 쉽게 따로 모았습니다.
-
-## 이 문서의 기준
-
-- 확인일: **2026-10-15**. 최초 작성 기준 커밋은 `63daaa7`이며, 이후 PNG 에셋·전직 트리·작은 HUD·전체화면 개편을 작업 트리 기준으로 반영했습니다.
-- 기준은 `config.py`, `main.py`, `game_core.py`, `terrain.py`, `renderer.py`, `env.py`, `progression.py`, `menus.py`와 실제 맵 파일입니다.
-- 기본 사람 플레이 기준입니다. `--stage2`나 학습 환경처럼 다른 조건은 본문에서 별도로 표시했습니다.
-- 화면은 실제 `Renderer`로 만들었습니다. 레벨업·재장전·숨기·사망은 설명을 위해 상태를 재현한 장면이며, 한 번의 자연스러운 플레이 기록은 아닙니다.
-- 이미지 생성 방법은 [수정 위치와 검증](dev/02-changing-and-testing.md)에 있습니다. 문서는 게임 파일이나 설정을 변경하지 않습니다.
-
-먼저 읽기: [코드 구조와 책임 분리 →](dev/01-structure.md)
+1. [코드 구조](dev/01-structure.md)
+2. [조작과 흐름](game/01-controls-and-flow.md)
+3. [전투와 재장전](game/02-combat-and-reload.md)
+4. [성장과 진화](game/03-rewards.md)
+5. [맵과 지형](game/04-maps.md)
+6. [적과 월드](game/05-enemies-and-world.md)
+7. [검토 사항](game/06-review-points.md)
+8. [수정과 테스트](dev/02-changing-and-testing.md)
+9. [강화학습 환경](dev/03-rl-environment.md)

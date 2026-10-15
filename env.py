@@ -14,7 +14,7 @@ import numpy as np
 from config import (GameConfig, ObsConfig, RewardConfig, EnvConfig,
                     MAX_SHAPE_SCORE, MAX_SHAPE_RADIUS)
 from game_core import GameCore, N_ACTIONS, empty_events
-from terrain import grid_channels, WALL, BUSH, MUD, BREAKABLE
+from terrain import grid_channels, WALL, MUD, BREAKABLE
 
 try:
     import gymnasium as gym
@@ -52,20 +52,19 @@ def build_vector(game: GameCore, oc: ObsConfig) -> np.ndarray:
     p = game.player
     obs = np.zeros(oc.vector_size, dtype=np.float32)
 
-    # 내 탱크 (9)
-    obs[0:9] = (
+    # 내 탱크 (8): 은신 지형/관찰 항목은 사용하지 않는다.
+    obs[0:8] = (
         p.x / W, p.y / H, p.vx / vmax, p.vy / vmax, p.hp / p.max_hp,
         math.sin(p.angle), math.cos(p.angle),
         1.0 - p.cooldown / p.fire_cooldown_max,
-        1.0 if game.is_hidden(p) else 0.0,
     )
     i = oc.SELF_DIM
 
     def nearest(objs, k):
         return sorted(objs, key=lambda o: (o.x - p.x) ** 2 + (o.y - p.y) ** 2)[:k]
 
-    # 적 탱크 N × 8 (수풀에 숨은 적은 보이지 않음)
-    for e in nearest([e for e in game.enemies if e.alive and not game.is_hidden(e)], oc.n_enemies):
+    # 적 탱크 N × 8
+    for e in nearest([e for e in game.enemies if e.alive], oc.n_enemies):
         obs[i:i + 8] = (1.0, (e.x - p.x) / W, (e.y - p.y) / H, e.vx / vmax, e.vy / vmax,
                         e.hp / e.max_hp, math.sin(e.angle), math.cos(e.angle))
         i += oc.ENEMY_DIM
@@ -111,7 +110,7 @@ class ObservationBuilder:
         if key != self._key:
             h = self.oc.grid_size // 2
             arr = tm.as_array()
-            codes = {"wall": WALL, "bush": BUSH, "mud": MUD, "breakable": BREAKABLE}
+            codes = {"wall": WALL, "mud": MUD, "breakable": BREAKABLE}
             pad = np.zeros((len(self.channels), tm.rows + 2 * h, tm.cols + 2 * h), dtype=np.float32)
             for ci, name in enumerate(self.channels):
                 if name == "wall":
@@ -229,8 +228,6 @@ class TankEnv(_BaseEnv):
                 "reload_seconds_left": self.game.reload_frames_left / self.game_cfg.fps,
                 "upgrade_points": self.game.upgrade_points,
                 "family": self.game.family,
-                "active_skill": self.game.active_skill.key if self.game.active_skill else None,
-                "skill_cooldown_seconds": self.game.skill_cooldown / self.game_cfg.fps,
                 "stat_choices": [card.key for card in self.game.stat_choices],
                 "special_reward_levels": list(self.game.special_reward_levels),
                 "stat_levels": dict(self.game.stat_levels), "special_levels": dict(self.game.special_levels)}

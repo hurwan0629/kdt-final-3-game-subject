@@ -48,14 +48,18 @@ class EnemyAIConfig:
 
 @dataclass
 class TerrainConfig:
-    # 화면 표현: 벽=성운 띠, 수풀=가스 구름, 진흙=중력장, 부서지는 벽=소행성
+    # 큰 소행성 벽과 넓은 통로. 중력장/파괴 가능한 벽은 선택 기능이다.
     enabled: bool = True             # False면 벽 없는 빈 경기장
-    tile_size: int = 48              # 기본 맵 템플릿 960x720 → 20x15 타일
+    tile_size: int = 48              # 기본 전체 월드 2880x2160 → 60x45 타일
     map_name: str = "drift"          # maps/<map_name>.txt (drift / ring / belt)
     map_pool: tuple = ()             # 비어있지 않으면 reset마다 seed로 이 중 하나 선택
     random_map: bool = False         # (2단계) True면 reset마다 랜덤 맵 생성
-    random_wall_density: float = 0.06    # 성운
-    random_bush_density: float = 0.05    # 가스 구름
+    random_wall_density: float = 0.14    # 이전 설정 호환용: 미로 밀도는 통로/벽 두께로 결정
+    wall_thickness: int = 4
+    wall_min_length: int = 6
+    wall_max_length: int = 10
+    min_passage_tiles: int = 6          # 288px: 반지름 96px 선체와 작은 적이 통과
+    navigation_radius: float = 96.0     # 두 배 커진 최종 가디언의 실제 반지름
     random_mud_density: float = 0.03     # 중력장
     random_breakable_density: float = 0.03  # 소행성
     # 2단계 지형 (끄면 진흙은 빈칸, 부서지는 벽은 일반 벽으로 취급)
@@ -72,7 +76,7 @@ class GameConfig:
     height: int = 720
     window_width: int = 1280
     window_height: int = 800
-    world_scale: int = 3             # 2880x2160 월드, 60x45 타일
+    world_scale: int = 3             # 2880x2160 전체 미로, 60x45 타일 (반복 배치하지 않음)
     camera_zoom: float = 0.6         # 기본 창에서 약 2133x1333 월드 영역 표시
     progression_enabled: bool = True
     level_xp_base: int = 60
@@ -80,7 +84,7 @@ class GameConfig:
     fps: int = 60                    # 고정 업데이트 주기 (1프레임 = 1/fps 초)
 
     # 탱크 공통
-    tank_radius: float = 22.0
+    tank_radius: float = 44.0
     barrel_length: float = 38.0
     barrel_width: float = 16.0
     accel: float = 0.35              # px/frame^2
@@ -143,7 +147,7 @@ class ObsConfig:
     ray_max_dist: float = 480.0
     obs_mode: str = "flat"  # "flat": 1차원 배열 / "dict": {"vector", "grid"}
 
-    SELF_DIM = 9
+    SELF_DIM = 8
     ENEMY_DIM = 8
     SHAPE_DIM = 6
     BULLET_DIM = 5
