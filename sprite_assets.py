@@ -13,6 +13,7 @@ class SpriteAssets:
         self._source = lru_cache(maxsize=64)(self._source)
         self._ship_geometry = lru_cache(maxsize=32)(self._ship_geometry)
         self._ship_base = lru_cache(maxsize=32)(self._ship_base)
+        self._enemy_base = lru_cache(maxsize=4)(self._enemy_base)
         self._scaled = lru_cache(maxsize=192)(self._scaled)
         self._rotated = lru_cache(maxsize=512)(self._rotated)
         self._projectile_geometry = lru_cache(maxsize=8)(self._projectile_geometry)
@@ -51,7 +52,15 @@ class SpriteAssets:
 
     def _scaled(self, path, width, height):
         source = self._ship_base(path) if path.startswith("ships/") else self._source(path)
+        if path.startswith("enemies/"):
+            source = self._enemy_base(path)
         return pygame.transform.smoothscale(source, (width, height))
+
+    def _enemy_base(self, path):
+        # PNG 원본/투명도를 보존하고 적 선체만 런타임에서 파란 계열로 맞춘다.
+        image = pygame.transform.grayscale(self._source(path))
+        image.fill((100, 190, 255), special_flags=pygame.BLEND_RGB_MULT)
+        return image
 
     def _rotated(self, path, side, angle):
         return pygame.transform.rotate(self._scaled(path, side, side), angle)

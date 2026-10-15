@@ -15,6 +15,8 @@ from game_core import GameCore
 from main import GameApplication
 from progression import FAMILIES, SHIPS, STAT_UPGRADES, stat_rows, special_cards
 from renderer import Renderer
+from enemies import ENEMY_TYPES
+from game_core import Tank
 
 
 class DisplayAssetsTests(unittest.TestCase):
@@ -179,13 +181,43 @@ class DisplayAssetsTests(unittest.TestCase):
                     self.assertAlmostEqual(turned.get_bounding_rect(min_alpha=100).height, diameter, delta=2)
                     self.assertIs(turned, assets.projectile_image(path, diameter, -90))
 
-    def test_world_ship_render_size_tracks_doubled_radius_without_growing_cards(self):
+    def test_world_ship_render_size_is_reduced_30_percent_without_changing_cards(self):
         p = self.game.player
-        self.assertEqual(p.radius, 44)
+        self.assertAlmostEqual(p.radius, 44 * 0.7)
         with patch.object(self.renderer.assets, "ship_image", wraps=self.renderer.assets.ship_image) as image:
             self.renderer._draw_ship(p, 100, is_player=True)
-            self.assertEqual(image.call_args.args[1], 88)
+            self.assertAlmostEqual(image.call_args.args[1], 88 * 0.7)
         self.assertEqual(self.renderer.assets.image(SHIPS["rookie"].asset, 62).get_size(), (62, 62))
+
+    def test_enemy_roles_use_distinct_sprites_with_blue_tint_and_preserve_source(self):
+        import numpy as np
+        assets = self.renderer.assets
+        for kind, spec in ENEMY_TYPES.items():
+            enemy = Tank(100, "enemy", 600, 500, spec.hp, spec.hp,
+                         self.cfg.tank_radius * spec.radius_scale, spec.cooldown, enemy_kind=kind)
+            self.renderer._draw_ship(enemy, 100)
+            if spec.asset.startswith("enemies/"):
+                source = assets._source(spec.asset)
+                before = pygame.image.tobytes(source, "RGBA")
+                image = assets._enemy_base(spec.asset)
+                rgb = pygame.surfarray.array3d(image)
+                alpha = pygame.surfarray.array_alpha(image)
+                self.assertTrue(np.array_equal(alpha, pygame.surfarray.array_alpha(source)))
+                self.assertTrue(np.all(rgb[:, :, 2] >= rgb[:, :, 0]))
+                self.assertEqual(pygame.image.tobytes(source, "RGBA"), before)
+        self.assertEqual(len({spec.asset for spec in ENEMY_TYPES.values()}), 4)
+
+    def test_spawn_camera_matches_renderer_after_resize_zoom_and_boundary_clamp(self):
+        for size, zoom, position in (((1280, 800), 0.6, (100, 100)),
+                                      ((1920, 1080), 0.45, (2800, 2000)),
+                                      ((4000, 2400), 0.75, (1440, 1080))):
+            self.renderer.resize(size)
+            self.renderer.set_zoom(zoom)
+            self.game.viewport_size = self.renderer.size
+            self.game.player.x, self.game.player.y = position
+            self.renderer._update_camera(self.game.player)
+            self.assertEqual(self.game.camera_rect(), (self.renderer.camera_x, self.renderer.camera_y,
+                                                       self.renderer.view_width, self.renderer.view_height))
 
 
 if __name__ == "__main__":

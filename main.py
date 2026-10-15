@@ -88,6 +88,7 @@ class GameApplication:
         self.suppress_fire = True
         self.acc = 0.0
         if key in ("start", "restart"):
+            self.game.viewport_size = self.size
             self.game.reset(self.seed)
             self.mode, self.selected = "playing", 0
         elif key == "resume":
@@ -223,6 +224,7 @@ class GameApplication:
             self.acc = 0.0
             self.click_requested = False
             return
+        self.game.viewport_size = self.size
         dt = 1.0 / self.cfg.fps
         self.acc = min(self.acc + elapsed, dt * MAX_FRAMES_PER_TICK)
         while self.acc >= dt:

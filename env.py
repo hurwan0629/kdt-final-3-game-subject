@@ -203,6 +203,8 @@ class TankEnv(_BaseEnv):
         return obs, self._info(None)
 
     def step(self, action):
+        if self._renderer is not None:
+            self.game.viewport_size = self._renderer.size
         acc = empty_events()
         for _ in range(self.env_cfg.frame_skip):
             self.game.step(action)
@@ -222,6 +224,8 @@ class TankEnv(_BaseEnv):
     def _info(self, events):
         return {"score": self.game.score, "kills": self.game.kills, "map": self.game.terrain.name,
                 "frames": self.game.frame, "steps": self.steps, "events": events,
+                "difficulty_stage": self.game.difficulty_stage, "enemy_limit": self.game.enemy_limit,
+                "enemy_time_scales": self.game.enemy_time_scales,
                 "level": self.game.level, "xp": self.game.xp,
                 "pending_rewards": self.game.pending_rewards, "job": self.game.player.job,
                 "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None,

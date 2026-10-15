@@ -17,6 +17,7 @@ from config import GameConfig
 from terrain import WALL, MUD, BREAKABLE
 from progression import SHIPS, JOB_NAMES, stat_rows, special_cards, stat_upgrades_visible, player_stat_summary
 from sprite_assets import SpriteAssets
+from enemies import ENEMY_TYPES
 
 COLORS = {
     "space_top": (6, 8, 22),
@@ -448,8 +449,11 @@ class Renderer:
             path = SHIPS[t.job].asset
             image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))
         else:
-            path = "enemies/" + ("scout", "fighter", "heavy")[t.id % 3]
-            image = self.assets.image(path, t.radius * 3.4 * scale, -90 - math.degrees(t.angle))
+            path = ENEMY_TYPES[t.enemy_kind].asset
+            if path.startswith("ships/"):
+                image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))
+            else:
+                image = self.assets.image(path, t.radius * 3.4 * scale, -90 - math.degrees(t.angle))
         if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:
             image = image.copy()
             image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)

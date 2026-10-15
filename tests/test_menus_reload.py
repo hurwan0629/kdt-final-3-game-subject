@@ -140,6 +140,44 @@ class MenusReloadTests(unittest.TestCase):
         self.update()
         self.assertEqual(self.game.reload_frames_left, 143)
 
+    def test_empty_magazine_auto_reloads_and_firing_resumes(self):
+        game = self.game
+        game.player.ammo = 1
+        game._fire(game.player, True)
+        self.assertEqual((game.player.ammo, game.reload_frames_left, len(game.bullets)), (0, 150, 1))
+        for _ in range(149):
+            game.step(0, want_fire=False)
+        self.assertEqual((game.player.ammo, game.reload_frames_left), (0, 1))
+        game.step(0, want_fire=False)
+        self.assertEqual((game.player.ammo, game.reload_frames_left), (120, 0))
+        game.step(0, want_fire=True)
+        self.assertEqual(game.player.ammo, 119)
+
+    def test_delayed_last_bullet_and_empty_idle_magazine_auto_reload(self):
+        game = self.game
+        game.player.job, game.player.ammo = "twin", 2
+        game._fire(game.player, True)
+        self.assertEqual(game.reload_frames_left, 0)
+        for frame in range(1, 4):
+            game.frame = frame
+            game._fire(game.player, False)
+        self.assertEqual((game.player.ammo, game.reload_frames_left), (0, 150))
+        self.assertEqual(game.player.pending_shots, [])
+        game.reset(2)
+        game.player.ammo = 0
+        game.step(0, want_fire=False)
+        self.assertEqual(game.reload_frames_left, 149)
+
+    def test_pause_freezes_time_difficulty(self):
+        self.click("start")
+        self.game.frame = 120 * 60 - 1
+        self.key(pygame.K_ESCAPE)
+        self.update(100)
+        self.assertEqual((self.game.frame, self.game.difficulty_stage), (7199, 0))
+        self.key(pygame.K_ESCAPE)
+        self.update()
+        self.assertEqual((self.game.frame, self.game.difficulty_stage), (7200, 1))
+
     def test_reload_rejects_full_magazine_death_and_unlimited_mode(self):
         game = self.game
         self.assertFalse(game.request_reload())

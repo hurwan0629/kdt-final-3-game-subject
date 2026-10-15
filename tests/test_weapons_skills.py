@@ -387,7 +387,7 @@ class WeaponsSkillsTests(unittest.TestCase):
                 self.assertAlmostEqual(2 * bullet.radius, gun_width * 0.9)
                 self.assertLess(2 * bullet.radius, gun_width)
 
-    def test_basic_and_all_enemy_collision_radii_are_doubled(self):
+    def test_custom_collision_radius_is_respected(self):
         cfg = GameConfig(num_shapes=0, num_enemies=3, tank_radius=44)
         cfg.terrain.enabled = False
         game = GameCore(cfg, seed=7)
@@ -397,12 +397,13 @@ class WeaponsSkillsTests(unittest.TestCase):
             self.assertTrue(game.terrain.circle_fits(enemy.x, enemy.y, enemy.radius))
 
     def test_enemy_rounds_match_each_visible_enemy_gun(self):
-        for index, expected_forward, expected_lateral, expected_caliber in (
-                (0, 1.4831, 0.0, 0.0293), (1, 0.9408, -0.6182, 0.0342), (2, 1.5861, 0.0, 0.0549)):
-            with self.subTest(sprite=index):
+        for kind, expected_forward, expected_lateral, expected_caliber in (
+                ("assault", 1.4831, 0.0, 0.0293), ("basic", 0.9408, -0.6182, 0.0342),
+                ("guardian", 1.5861, 0.0, 0.0549), ("sniper", 1.8144, 0.0, 22/167*0.9)):
+            with self.subTest(kind=kind):
                 self.setUp()
                 enemy = self.enemy(800, 800)
-                enemy.id = 30 + index
+                enemy.enemy_kind = kind
                 self.game._fire(enemy, True)
                 self.assertEqual(len(self.game.bullets), 1)
                 bullet = self.game.bullets[0]

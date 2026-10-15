@@ -12,7 +12,8 @@ import numpy as np
 
 from config import GameConfig, SHAPE_TYPES, SHAPE_KINDS
 from terrain import TileMap, load_map, empty_map, generate_random_map, MUD, BREAKABLE
-from progression import STAT_UPGRADES, SHIPS, FAMILIES, ENEMY_SHOTS
+from progression import STAT_UPGRADES, SHIPS, FAMILIES
+from enemies import ENEMY_TYPES
 
 # --------------------------------------------------------------------------
 # 행동 정의: 이동 9 × 회전 3 = 27
@@ -84,6 +85,8 @@ class Tank:
     max_ammo: int = 0
     reload_scale: float = 1.0
     pending_shots: list = field(default_factory=list)
+    enemy_kind: str = "basic"
+    kill_score: int = 200
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -96,6 +99,11 @@ class Tank:
     ai_path_timer: int = 0
     ai_goal: tuple = None             # 현재 이동 목표 위치 (디버그 표시용)
     ai_strafe: float = 1.0            # 옆으로 돌 방향
+    ai_stuck_frames: int = 0
+    ai_recovery: tuple = None
+    ai_recovery_until: int = 0
+    ai_avoid_shape: int = -1
+    ai_avoid_until: int = 0
 
 
 @dataclass
@@ -176,6 +184,10 @@ class GameCore:
             raise ValueError("player_ammo는 0 이상의 정수여야 합니다.")
         if self.cfg.reload_seconds <= 0 or self.cfg.fps <= 0:
             raise ValueError("reload_seconds와 fps는 양수여야 합니다.")
+        if (self.cfg.enemy_difficulty_seconds <= 0 or self.cfg.enemy_spawn_retry_frames < 1
+                or not 0 <= self.cfg.num_enemies <= self.cfg.enemy_cap <= 18):
+            raise ValueError("적 수는 0~18, 난이도 주기와 생성 재시도 간격은 양수여야 합니다.")
+        self.viewport_size = (self.cfg.window_width, self.cfg.window_height)
         self.reset(seed)
 
     # ---------------- 초기화 ----------------
@@ -221,14 +233,11 @@ class GameCore:
             ammo=c.player_ammo, max_ammo=c.player_ammo,
             angle=float(self.rng.uniform(-math.pi, math.pi)),
         )
-        for _ in range(c.num_enemies):
-            e = Tank(id=self._new_id(), team="enemy", x=0.0, y=0.0,
-                     hp=c.enemy_hp, max_hp=c.enemy_hp, radius=c.tank_radius,
-                     fire_cooldown_max=c.enemy_ai.fire_cooldown)
-            self._respawn_enemy(e)
-            self.enemies.append(e)
         for _ in range(c.num_shapes):
             self.shapes.append(self._make_shape())
+        self._update_enemy_population()
+        for e in self.enemies:
+            self._respawn_enemy(e)
 
     def _new_id(self) -> int:
         self._next_id += 1
@@ -301,23 +310,74 @@ class GameCore:
                      angle=float(self.rng.uniform(0, 2 * math.pi)),
                      spin=float(self.rng.uniform(-0.01, 0.01)))
 
-    def _respawn_enemy(self, e: Tank):
-        tm = self.terrain
-        p = self.player
-        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선
-        others = [o for o in getattr(self, "enemies", []) if o.alive and o is not e]
-        starts = []
-        for s in tm.enemy_starts:
-            sx, sy = tm.center(*s)
-            if not tm.circle_fits(sx, sy, e.radius):
+    @property
+    def difficulty_stage(self):
+        return int(self.frame // (self.cfg.fps * self.cfg.enemy_difficulty_seconds))
+
+    @property
+    def enemy_limit(self):
+        return min(self.cfg.enemy_cap, self.cfg.num_enemies + self.difficulty_stage) if self.cfg.num_enemies else 0
+
+    @property
+    def enemy_time_scales(self):
+        return min(1.5, 1 + 0.05 * self.difficulty_stage), min(1.3, 1 + 0.03 * self.difficulty_stage)
+
+    def _update_enemy_population(self):
+        while len(self.enemies) < self.enemy_limit:
+            self.enemies.append(Tank(self._new_id(), "enemy", 0, 0, 0, 0,
+                                     self.cfg.tank_radius, self.cfg.enemy_ai.fire_cooldown, alive=False))
+
+    def camera_rect(self):
+        """화면 없는 실행도 같은 창 크기·줌·카메라 경계로 생성 위치를 정한다."""
+        c, p = self.cfg, self.player
+        width, height = self.viewport_size
+        zoom = max(c.camera_zoom, width / c.world_width, height / c.world_height)
+        vw, vh = round(width / zoom), round(height / zoom)
+        x = int(max(0, min(p.x - vw / 2, c.world_width - vw))) if c.world_width >= vw else (c.world_width - vw) // 2
+        y = int(max(0, min(p.y - vh / 2, c.world_height - vh))) if c.world_height >= vh else (c.world_height - vh) // 2
+        return x, y, vw, vh
+
+    def _enemy_spawn_position(self, e, radius):
+        p, tm = self.player, self.terrain
+        left, top, width, height = self.camera_rect()
+        others = [p] + [other for other in self.enemies if other is not e and other.alive] + self.shapes
+        candidates = []
+        for tile in tm.navigation_tiles(radius):
+            x, y = tm.center(*tile)
+            if not (x + radius <= left or x - radius >= left + width
+                    or y + radius <= top or y - radius >= top + height):
                 continue
-            if (sx - p.x) ** 2 + (sy - p.y) ** 2 >= 300.0 ** 2 and \
-                    all((sx - o.x) ** 2 + (sy - o.y) ** 2 >= (2 * e.radius) ** 2 for o in others):
-                starts.append((sx, sy))
-        if starts:
-            e.x, e.y = starts[int(self.rng.integers(len(starts)))]
-        else:
-            e.x, e.y = self._random_free_pos(e.radius, 300.0)
+            distance2 = (x - p.x) ** 2 + (y - p.y) ** 2
+            if self.cfg.enemy_spawn_distance ** 2 <= distance2 < self.cfg.enemy_relocate_distance ** 2:
+                candidates.append((x, y))
+        for i in self.rng.permutation(len(candidates)):
+            x, y = candidates[i]
+            if all((x - o.x) ** 2 + (y - o.y) ** 2 >= (radius + o.radius) ** 2 for o in others):
+                return x, y
+        return None
+
+    def _respawn_enemy(self, e: Tank):
+        c = self.cfg
+        unlocked = tuple(ENEMY_TYPES)[:min(4, self.difficulty_stage + 1)]
+        weights = np.array((6, 3, 2, 1)[:len(unlocked)], dtype=float)
+        kind = unlocked[int(self.rng.choice(len(unlocked), p=weights / weights.sum()))]
+        spec = ENEMY_TYPES[kind]
+        radius = c.tank_radius * spec.radius_scale
+        position = self._enemy_spawn_position(e, radius)
+        if position is None:
+            e.alive = False
+            e.pending_shots.clear()
+            e.respawn_timer = c.enemy_spawn_retry_frames
+            return False
+        hp_scale, damage_scale = self.enemy_time_scales
+        e.enemy_kind, e.radius = kind, radius
+        e.max_hp = spec.hp * c.enemy_hp / 60 * hp_scale
+        e.damage_scale = spec.damage / 7 * damage_scale
+        e.accel_scale = spec.move_speed * c.enemy_ai.move_speed_scale / 0.8
+        e.fire_cooldown_max = round(spec.cooldown * c.enemy_ai.fire_cooldown / 36)
+        e.bullet_speed_scale, e.bullet_life_scale = spec.bullet_speed, spec.bullet_life
+        e.kill_score = round(spec.score * c.enemy_kill_score / 200)
+        e.x, e.y = position
         e.vx = e.vy = 0.0
         e.hp = e.max_hp
         e.alive = True
@@ -331,6 +391,12 @@ class GameCore:
         e.ai_path = []
         e.ai_path_timer = 0
         e.ai_goal = None
+        e.ai_stuck_frames = 0
+        e.ai_recovery = None
+        e.ai_recovery_until = 0
+        e.ai_avoid_shape, e.ai_avoid_until = -1, 0
+        e.respawn_timer = 0
+        return True
 
     # ---------------- 외부 API ----------------
     @property
@@ -537,9 +603,15 @@ class GameCore:
             if dx * dx + dy * dy > 1e-6:
                 self.player.angle = math.atan2(dy, dx)
 
+        self._update_enemy_population()
         for e in self.enemies:
             if e.alive:
-                self._enemy_ai(e)
+                if math.hypot(e.x - self.player.x, e.y - self.player.y) >= self.cfg.enemy_relocate_distance:
+                    e.alive = False
+                    e.pending_shots.clear()
+                    self._respawn_enemy(e)
+                else:
+                    self._enemy_ai(e)
             else:
                 e.respawn_timer -= 1
                 if e.respawn_timer <= 0:
@@ -612,6 +684,8 @@ class GameCore:
                         break
                     t.ammo -= 1
                 self._emit_shot(t, shot, damage, speed, life)
+        if player and self.cfg.limited_ammo and t.ammo <= 0:
+            self.request_reload()
         if t.cooldown > 0:
             t.cooldown -= 1
             return
@@ -621,7 +695,7 @@ class GameCore:
             return
         spec, damage, cooldown, speed, life = self.weapon_values(t)
         delays = self._shot_delays(t, spec)
-        shots = spec.shots if player else (ENEMY_SHOTS[t.id % len(ENEMY_SHOTS)],)
+        shots = spec.shots if player else (ENEMY_TYPES[t.enemy_kind].shot,)
         for shot in shots:
             if shot.delay:
                 t.pending_shots.append((self.frame + delays[shot.delay], shot, damage, speed, life))
@@ -632,46 +706,69 @@ class GameCore:
                     t.ammo -= 1
                 self._emit_shot(t, shot, damage, speed, life)
         t.cooldown = cooldown
+        if player and self.cfg.limited_ammo and t.ammo <= 0:
+            self.request_reload()
 
     # ---------------- 적 AI ----------------
+    def _enemy_path(self, e, tx, ty):
+        tm = self.terrain
+        safe = tm.navigation_tiles(e.radius)
+        if not safe:
+            return []
+        start = tm.tile_of(e.x, e.y)
+        if not tm.circle_fits(*tm.center(*start), e.radius):
+            # 실제 중심은 안전해도 현재 타일 중심이 벽과 겹칠 수 있다.
+            nearby = sorted(safe, key=lambda tile: (tm.center(*tile)[0] - e.x) ** 2 + (tm.center(*tile)[1] - e.y) ** 2)
+            start = next((tile for tile in nearby if tm.segment_fits(e.x, e.y, *tm.center(*tile), e.radius)), None)
+            if start is None:
+                return []
+        goal = tm.tile_of(tx, ty)
+        if not tm.circle_fits(*tm.center(*goal), e.radius):
+            goal = min(safe, key=lambda tile: (tm.center(*tile)[0] - tx) ** 2 + (tm.center(*tile)[1] - ty) ** 2)
+        path = tm.astar(start, goal, radius=e.radius)
+        if start != goal and not path:
+            return []
+        if not path or not tm.segment_fits(e.x, e.y, *tm.center(*path[0]), e.radius):
+            path.insert(0, start)
+        return path
+
     def _enemy_ai(self, e: Tank):
         c = self.cfg
         ai = c.enemy_ai
         p = self.player
         tm = self.terrain
+        role = ENEMY_TYPES[e.enemy_kind]
 
         # 1) 감지: 사거리 안 + 시야선이 트였을 때 플레이어를 본다
         e.ai_can_see = (p.alive
                         and (p.x - e.x) ** 2 + (p.y - e.y) ** 2 <= ai.sight_range ** 2
                         and tm.line_of_sight(e.x, e.y, p.x, p.y))
-        chasing_player = e.ai_target is not None and e.ai_target[0] in ("player", "point")
-        if e.ai_can_see and chasing_player:   # 플레이어를 쫓는 중일 때만 위치를 기억
+        old_target = e.ai_target
+        if e.ai_can_see:
             e.ai_last_seen = (p.x, p.y)
             e.ai_last_seen_frame = self.frame
-        elif e.ai_last_seen is not None and self.frame - e.ai_last_seen_frame > ai.memory_frames:
+        elif e.ai_last_seen is not None and self.frame - e.ai_last_seen_frame >= ai.memory_frames:
             e.ai_last_seen = None
 
-        # 2) 목표 선택 (reaction_frames마다): 기억한 위치 추적 중이면 계속, 아니면 플레이어/도형 가중 거리 비교
+        # 보이는 플레이어는 천체보다 항상 우선한다. 조준 오차만 반응 주기로 갱신한다.
         e.ai_timer -= 1
+        if e.ai_can_see:
+            e.ai_target = ("player", p.id)
+        elif e.ai_last_seen is not None:
+            e.ai_target = ("point", e.ai_last_seen)
+        elif e.ai_timer <= 0 or e.ai_target is None or e.ai_target[0] in ("player", "point"):
+            shapes = [s for s in self.shapes if s.hp > 0 and not
+                      (s.id == e.ai_avoid_shape and self.frame < e.ai_avoid_until)]
+            target = min(shapes, key=lambda s: (s.x - e.x) ** 2 + (s.y - e.y) ** 2, default=None)
+            e.ai_target = ("shape", target.id) if target else None
+        if e.ai_target != old_target:
+            e.ai_path_timer = 0
         if e.ai_timer <= 0:
             e.ai_timer = ai.reaction_frames
-            if e.ai_last_seen is not None and not e.ai_can_see:
-                target = ("point", e.ai_last_seen)
-            else:
-                # 보이는 플레이어와 가장 가까운 도형을 가중 거리로 비교 (player_priority)
-                target, best_d = None, float("inf")
-                if e.ai_can_see:
-                    target, best_d = ("player", p.id), math.hypot(p.x - e.x, p.y - e.y) / ai.player_priority
-                for s in self.shapes:
-                    d = math.hypot(s.x - e.x, s.y - e.y)
-                    if d < best_d:
-                        target, best_d = ("shape", s.id), d
-            if target != e.ai_target:
-                e.ai_path_timer = 0          # 목표가 바뀌면 경로 즉시 재계산
-            e.ai_target = target
-            e.ai_aim_offset = float(self.rng.normal(0.0, math.radians(ai.aim_noise_deg)))
+            noise = role.aim_noise * ai.aim_noise_deg / 12
+            e.ai_aim_offset = float(self.rng.normal(0.0, math.radians(noise)))
             e.ai_strafe = 1.0 if self.rng.random() < 0.5 else -1.0
-            if target is None:
+            if e.ai_target is None:
                 e.ai_move = int(self.rng.integers(0, N_MOVES))
 
         tgt = self._target_pos(e)
@@ -685,14 +782,27 @@ class GameCore:
         if tgt is not None:
             tx, ty = tgt
             kind = e.ai_target[0]
-            direct = kind != "point" and tm.segment_fits(e.x, e.y, tx, ty, e.radius)
+            recovering = e.ai_recovery is not None and self.frame < e.ai_recovery_until
+            if recovering:
+                tx, ty = e.ai_recovery
+                if math.hypot(tx - e.x, ty - e.y) < ai.waypoint_reach:
+                    e.ai_recovery = None
+                    recovering = False
+                    tx, ty = tgt
+            direct = tm.segment_fits(e.x, e.y, tx, ty, e.radius)
             if direct:
                 # 직접 보이면: 적정 거리 유지 + 옆으로 돌기
                 e.ai_path = []
                 dx, dy = tx - e.x, ty - e.y
                 d = math.hypot(dx, dy) + 1e-6
-                keep = ai.keep_distance if kind == "player" else 140.0
-                if d > keep + 40:
+                keep = role.keep_distance * ai.keep_distance / 230 if kind == "player" else 140.0
+                if recovering or kind == "point":
+                    vx, vy = (dx / d, dy / d) if d >= ai.waypoint_reach else (0.0, 0.0)
+                    if kind == "point" and not recovering and d < ai.waypoint_reach:
+                        e.ai_last_seen = None
+                        e.ai_target = None
+                        e.ai_timer = 0
+                elif d > keep + 40:
                     vx, vy = dx / d, dy / d
                 elif d < keep - 40:
                     vx, vy = -dx / d, -dy / d
@@ -703,11 +813,7 @@ class GameCore:
                 e.ai_path_timer -= 1
                 if e.ai_path_timer <= 0:
                     e.ai_path_timer = ai.path_recompute_frames
-                    target_tile = tm.tile_of(tx, ty)
-                    if not tm.circle_fits(*tm.center(*target_tile), e.radius):
-                        safe = tm.navigation_tiles(e.radius)
-                        target_tile = min(safe, key=lambda tile: (tm.center(*tile)[0] - tx) ** 2 + (tm.center(*tile)[1] - ty) ** 2) if safe else target_tile
-                    e.ai_path = tm.astar(tm.tile_of(e.x, e.y), target_tile, radius=e.radius)
+                    e.ai_path = self._enemy_path(e, tx, ty)
                 while e.ai_path:
                     wx, wy = tm.center(*e.ai_path[0])
                     if (wx - e.x) ** 2 + (wy - e.y) ** 2 < ai.waypoint_reach ** 2:
@@ -737,9 +843,29 @@ class GameCore:
                 rot = 1
             aligned = abs(diff) <= math.radians(ai.fire_angle_tol_deg)
         kind = e.ai_target[0] if e.ai_target else None
-        can_fire = (kind == "player" and e.ai_can_see) or (kind == "shape" and direct)
+        _, _, _, bullet_speed, bullet_life = self.weapon_values(e)
+        weapon_range = bullet_speed * bullet_life
+        in_range = tgt is not None and math.hypot(tgt[0] - e.x, tgt[1] - e.y) <= weapon_range
+        can_fire = in_range and ((kind == "player" and e.ai_can_see)
+                                or (kind == "shape" and tm.line_of_sight(e.x, e.y, *tgt)))
 
-        self._apply_tank_control(e, move, rot, ai.move_speed_scale, ai.turn_speed_scale)
+        before = e.x, e.y
+        self._apply_tank_control(e, move, rot, e.accel_scale, ai.turn_speed_scale)
+        trying_to_move = move or (tgt is not None and not direct and math.hypot(tgt[0] - e.x, tgt[1] - e.y) > ai.waypoint_reach)
+        e.ai_stuck_frames = e.ai_stuck_frames + 1 if trying_to_move and math.hypot(e.x - before[0], e.y - before[1]) < 0.1 else 0
+        if e.ai_stuck_frames >= max(1, c.fps // 2):
+            e.ai_path_timer = 0
+            e.ai_stuck_frames = 0
+            escapes = [tm.center(*tile) for tile in tm.navigation_tiles(e.radius)
+                       if tm.tile <= math.hypot(tm.center(*tile)[0] - e.x, tm.center(*tile)[1] - e.y) <= tm.tile * 3
+                       and tm.segment_fits(e.x, e.y, *tm.center(*tile), e.radius)]
+            if escapes:
+                e.ai_recovery = escapes[int(self.rng.integers(len(escapes)))]
+                e.ai_recovery_until = self.frame + c.fps
+            if kind == "shape":
+                e.ai_avoid_shape = e.ai_target[1]
+                e.ai_avoid_until = self.frame + ai.memory_frames
+                e.ai_target, e.ai_timer = None, 0
         self._fire(e, aligned and can_fire)
 
     def _target_pos(self, e: Tank):
@@ -844,7 +970,7 @@ class GameCore:
             if by_player:
                 self.events["enemies_killed"] += 1
                 self.kills += 1
-                self._add_score(self.cfg.enemy_kill_score)
+                self._add_score(t.kill_score)
 
     def _damage_shape(self, s: Shape, dmg: float, by_player: bool):
         dealt = min(dmg, s.hp)

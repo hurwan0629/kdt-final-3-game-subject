@@ -37,7 +37,6 @@ class EnemyAIConfig:
     move_speed_scale: float = 0.8    # 플레이어 가속도 대비 배율
     fire_cooldown: int = 36          # 발사 간격 (프레임)
     fire_angle_tol_deg: float = 15.0 # 조준 오차가 이 값 이내일 때만 발사
-    player_priority: float = 1.6     # 플레이어까지 거리를 이 값으로 나눠서 비교 (클수록 플레이어 우선)
     sight_range: float = 450.0       # 이 거리 밖의 플레이어는 무시
     keep_distance: float = 230.0     # 플레이어와 유지하려는 거리
     respawn_frames: int = 300        # 사망 후 재등장까지 프레임 (5초)
@@ -59,7 +58,7 @@ class TerrainConfig:
     wall_min_length: int = 6
     wall_max_length: int = 10
     min_passage_tiles: int = 6          # 288px: 반지름 96px 선체와 작은 적이 통과
-    navigation_radius: float = 96.0     # 두 배 커진 최종 가디언의 실제 반지름
+    navigation_radius: float = 96.0     # 현재 최대 선체(67.2px)보다 여유 있게 검사
     random_mud_density: float = 0.03     # 중력장
     random_breakable_density: float = 0.03  # 소행성
     # 2단계 지형 (끄면 진흙은 빈칸, 부서지는 벽은 일반 벽으로 취급)
@@ -84,7 +83,7 @@ class GameConfig:
     fps: int = 60                    # 고정 업데이트 주기 (1프레임 = 1/fps 초)
 
     # 탱크 공통
-    tank_radius: float = 44.0
+    tank_radius: float = 30.8         # 기존 44px에서 선체·충돌 크기 30% 축소
     barrel_length: float = 38.0
     barrel_width: float = 16.0
     accel: float = 0.35              # px/frame^2
@@ -106,6 +105,11 @@ class GameConfig:
     enemy_hp: float = 60.0
     enemy_ai: EnemyAIConfig = field(default_factory=EnemyAIConfig)
     enemy_kill_score: int = 200
+    enemy_cap: int = 18
+    enemy_difficulty_seconds: float = 120.0
+    enemy_spawn_distance: float = 500.0
+    enemy_relocate_distance: float = 1500.0
+    enemy_spawn_retry_frames: int = 30
 
     # 지형
     terrain: TerrainConfig = field(default_factory=TerrainConfig)
