@@ -141,8 +141,9 @@ class WeaponsSkillsTests(unittest.TestCase):
         shots = self.burst(33, hold=True)
         frames = [frame for frame, b in shots]
         self.assertEqual(frames[:6], [0, 2, 4, 6, 8, 10])
-        self.assertGreaterEqual(len(frames), 18)
-        self.assertLessEqual(max(b - a for a, b in zip(frames, frames[1:])), 2)
+        # 묶음 안은 2프레임 간격, 묶음 사이에는 낮춘 발사 속도만큼 짧게 쉰다.
+        self.assertGreaterEqual(len(frames), 12)
+        self.assertLessEqual(max(b - a for a, b in zip(frames, frames[1:])), 6)
         self.assertTrue(all(b.vy == 0 and b.vx > 0 for _, b in shots))
 
     def test_fire_rate_upgrade_also_accelerates_gatling_burst(self):
@@ -150,7 +151,8 @@ class WeaponsSkillsTests(unittest.TestCase):
         baseline = len(self.burst(33, hold=True))
         self.setUp()
         self.evolve("gatling_storm")
-        self.assertTrue(self.game.upgrade_stat("rapid"))
+        for _ in range(4):   # 1단계당 -5%라 몇 단계 올려야 차이가 보인다
+            self.assertTrue(self.game.upgrade_stat("rapid"))
         boosted = len(self.burst(33, hold=True))
         self.assertGreater(boosted, baseline)
 
@@ -172,19 +174,24 @@ class WeaponsSkillsTests(unittest.TestCase):
             with self.subTest(job=job):
                 self.setUp()
                 self.evolve(job)
-                shots = self.burst(4)
+                shots = self.burst(6)   # 헥사 크루저는 2프레임 간격 3쌍 순차 사격
                 self.assertEqual(len(shots), count)
                 vectors = [(round(b.vx, 4), round(b.vy, 4)) for _, b in shots]
                 self.assertTrue(any(vx > 0 and vy == 0 for vx, vy in vectors))
                 self.assertTrue(any(vx < 0 and vy == 0 for vx, vy in vectors))
-                if job in ("quad_wing", "octa_star", "hexa_cruiser"):
+                if job in ("quad_wing", "octa_star"):
                     self.assertTrue(any(vx == 0 and vy > 0 for vx, vy in vectors))
                     self.assertTrue(any(vx == 0 and vy < 0 for vx, vy in vectors))
                 if job == "octa_star":
                     self.assertEqual(len(set(vectors)), 8)
                 if job in ("twin_flank", "hexa_cruiser"):
                     front = [b for _, b in shots if b.vx > 0 and abs(b.vy) < 1e-7]
-                    self.assertEqual(len({round(b.y, 3) for b in front}), 2)
+                    back = [b for _, b in shots if b.vx < 0 and abs(b.vy) < 1e-7]
+                    barrels = 3 if job == "hexa_cruiser" else 2
+                    self.assertEqual(len({round(b.y, 3) for b in front}), barrels)
+                    self.assertEqual(len({round(b.y, 3) for b in back}), barrels)
+                if job == "hexa_cruiser":  # 이미지에 측면 포신이 없으므로 앞/뒤로만 쏜다
+                    self.assertTrue(all(abs(b.vy) < 1e-7 for _, b in shots))
 
     def test_hunter_and_predator_are_single_shot_snipers(self):
         values = []
@@ -286,7 +293,7 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.assertEqual(self.game.bullets, [])
 
     def test_large_guardians_have_real_radius_health_and_small_guns(self):
-        for job, radius, hp, count in (("guardian", 64, 200, 1), ("bastion", 80, 320, 2),
+        for job, radius, hp, count in (("guardian", 52, 200, 1), ("bastion", 80, 320, 2),
                                       ("aegis", 80, 300, 2), ("colossus", 92, 500, 3), ("citadel", 96, 540, 4)):
             with self.subTest(job=job):
                 self.setUp()
@@ -298,7 +305,9 @@ class WeaponsSkillsTests(unittest.TestCase):
                 self.assertAlmostEqual(p.hp, hp - 10 * SHIPS[job].damage_taken)
                 self.game._fire(p, True)
                 self.assertEqual(len(self.game.bullets), count)
-                self.assertTrue(all(b.radius < self.game.cfg.bullet_radius and b.damage < self.game.cfg.bullet_damage for b in self.game.bullets))
+                self.assertTrue(all(b.damage < self.game.cfg.bullet_damage for b in self.game.bullets))
+                if job != "guardian":  # 가디언은 대구경 포신으로 바꿨다
+                    self.assertTrue(all(b.radius < self.game.cfg.bullet_radius for b in self.game.bullets))
                 self.assertTrue(all(math.hypot(b.x - p.x, b.y - p.y) > p.radius for b in self.game.bullets))
 
     def test_guardian_growth_preserves_hull_upgrades_and_damage(self):
@@ -377,7 +386,7 @@ class WeaponsSkillsTests(unittest.TestCase):
     def test_projectile_collision_width_matches_measured_gun_opening(self):
         # 원본 512px PNG 포신 안쪽의 밝은 회색 부분을 실측한 픽셀 폭이다.
         for job, hull, opening in (("rookie", 139, 26), ("twin", 136, 22),
-                                   ("hunter", 174, 19), ("guardian", 216, 12), ("citadel", 290, 10)):
+                                   ("hunter", 174, 19), ("citadel", 290, 10)):
             with self.subTest(job=job):
                 self.setUp()
                 self.evolve(job)
@@ -396,20 +405,21 @@ class WeaponsSkillsTests(unittest.TestCase):
         for enemy in game.enemies:
             self.assertTrue(game.terrain.circle_fits(enemy.x, enemy.y, enemy.radius))
 
-    def test_enemy_rounds_match_each_visible_enemy_gun(self):
-        for index, expected_forward, expected_lateral, expected_caliber in (
-                (0, 1.4831, 0.0, 0.0293), (1, 0.9408, -0.6182, 0.0342), (2, 1.5861, 0.0, 0.0549)):
-            with self.subTest(sprite=index):
+    def test_enemy_rounds_match_their_ship_guns(self):
+        # 적도 플레이어와 같은 진화 우주선을 쓰므로 그 우주선의 포구에서 탄이 나간다.
+        for job in ("rookie", "sniper", "triple_wing", "hexa_cruiser"):
+            with self.subTest(job=job):
                 self.setUp()
                 enemy = self.enemy(800, 800)
-                enemy.id = 30 + index
-                self.game._fire(enemy, True)
-                self.assertEqual(len(self.game.bullets), 1)
-                bullet = self.game.bullets[0]
-                self.assertEqual(bullet.team, "enemy")
-                self.assertAlmostEqual(bullet.x, 800 + enemy.radius * expected_forward)
-                self.assertAlmostEqual(bullet.y, 800 + enemy.radius * expected_lateral)
-                self.assertAlmostEqual(bullet.radius, enemy.radius * expected_caliber)
+                enemy.job = job
+                spec = SHIPS[job]
+                for _ in range(10):
+                    self.game._fire(enemy, True)
+                    self.game.frame += 1
+                self.assertEqual(len(self.game.bullets), len(spec.shots))
+                for bullet in self.game.bullets:
+                    self.assertEqual(bullet.team, "enemy")
+                    self.assertTrue(any(abs(bullet.radius - enemy.radius * shot.caliber) < 1e-9 for shot in spec.shots))
 
     def test_q_and_space_no_longer_activate_skills_or_dash(self):
         self.evolve("citadel")

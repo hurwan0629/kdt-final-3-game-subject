@@ -12,7 +12,7 @@ import numpy as np
 
 from config import GameConfig, SHAPE_TYPES, SHAPE_KINDS
 from terrain import TileMap, load_map, empty_map, generate_random_map, MUD, BREAKABLE
-from progression import STAT_UPGRADES, SHIPS, FAMILIES, ENEMY_SHOTS
+from progression import STAT_UPGRADES, STAT_MAX_LEVEL, SHIPS, SHIPS_BY_LEVEL, FAMILIES
 
 # --------------------------------------------------------------------------
 # 행동 정의: 이동 9 × 회전 3 = 27
@@ -47,6 +47,9 @@ def move_from_vector(dx: float, dy: float) -> int:
     ang = math.atan2(dy, dx)                       # 0=→, +π/2=↓
     sector = int(round(ang / (math.pi / 4))) % 8   # 0=→,1=↘,2=↓,3=↙,4=←,5=↖,6=↑,7=↗
     return (3, 4, 5, 6, 7, 8, 1, 2)[sector]
+
+
+SCORE_POPUP_FRAMES = 60   # 점수 연출을 기억하는 시간 (1초)
 
 
 def wrap_angle(a: float) -> float:
@@ -84,6 +87,7 @@ class Tank:
     max_ammo: int = 0
     reload_scale: float = 1.0
     pending_shots: list = field(default_factory=list)
+    elite: bool = False              # 엘리트 적: 체력/공격력 강화, 처치 시 플레이어 회복
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -207,9 +211,14 @@ class GameCore:
         self.dash_frames_left = 0
         self.beams = []
         self.explosions = []
+        # 화면 연출용: 플레이어가 얻은 점수 (id, frame, x, y, 점수, 종류). 게임 규칙에는 쓰지 않는다.
+        self.score_popups = []
+        self._popup_id = 0
+        self.player_shot_frame = -10**9
         self.bullets = []
         self.shapes = []
         self.enemies = []   # 스폰 위치 계산이 이전 판의 적을 참조하지 않도록 먼저 비움
+        self.enemy_scale_tier = 0
 
         c = self.cfg
         self.terrain = self._make_terrain()
@@ -276,8 +285,11 @@ class GameCore:
         return best[1], best[2]
 
     def _fit_player_after_evolution(self):
-        """반지름이 커져 벽과 겹쳤을 때 가장 가까운 넓은 칸으로 옮긴다."""
-        p, tm = self.player, self.terrain
+        self._fit_tank(self.player)
+
+    def _fit_tank(self, p):
+        """반지름이 커져 벽과 겹쳤을 때 가장 가까운 넓은 칸으로 옮긴다 (천체에도 쓴다)."""
+        tm = self.terrain
         if tm.circle_fits(p.x, p.y, p.radius):
             return
         candidates = tm.navigation_tiles(p.radius)
@@ -287,12 +299,33 @@ class GameCore:
         p.x, p.y = tm.center(col, row)
         p.vx = p.vy = 0.0
 
+    def _shape_spawn_pos(self, radius):
+        """여러 후보 중 다른 천체와 가장 멀리 떨어진 곳을 골라 고르게 퍼뜨린다.
+
+        판 도중에는 플레이어 눈앞이 아닌 먼 곳만 후보로 쓴다. 겹치는 후보는 쓰지 않는다.
+        """
+        c, p = self.cfg, self.player
+        best, valid = None, 0
+        for _ in range(c.shape_spawn_candidates * 6):
+            x, y = self._random_free_pos(radius, c.spawn_min_dist_from_tanks)
+            clearance = min((math.hypot(s.x - x, s.y - y) - s.radius - radius for s in self.shapes), default=math.inf)
+            far = self.frame == 0 or math.hypot(x - p.x, y - p.y) >= c.shape_respawn_dist_from_player
+            ok = far and clearance >= c.shape_spawn_gap
+            valid += ok
+            # 우선순위: 조건 모두 만족 > 겹치지 않음 > 플레이어와 멂 > 다른 천체와 멂
+            score = (ok, clearance >= 0, far, clearance)
+            if best is None or score > best[0]:
+                best = score, x, y
+            if valid >= c.shape_spawn_candidates:
+                break
+        return best[1], best[2]
+
     def _make_shape(self) -> Shape:
         c = self.cfg
         weights = np.array([SHAPE_TYPES[k]["weight"] for k in SHAPE_KINDS])
         kind = SHAPE_KINDS[int(self.rng.choice(len(SHAPE_KINDS), p=weights / weights.sum()))]
         t = SHAPE_TYPES[kind]
-        x, y = self._random_free_pos(t["radius"], c.spawn_min_dist_from_tanks)
+        x, y = self._shape_spawn_pos(t["radius"])
         ang = float(self.rng.uniform(-math.pi, math.pi))
         spd = float(self.rng.uniform(0, c.shape_drift))
         return Shape(id=self._new_id(), kind=kind, x=x, y=y,
@@ -304,6 +337,9 @@ class GameCore:
     def _respawn_enemy(self, e: Tank):
         tm = self.terrain
         p = self.player
+        e.job = self._random_enemy_job()
+        e.elite = bool(self.rng.random() < self.cfg.enemy_ai.elite_chance)
+        self._apply_enemy_strength(e)
         # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선
         others = [o for o in getattr(self, "enemies", []) if o.alive and o is not e]
         starts = []
@@ -331,6 +367,45 @@ class GameCore:
         e.ai_path = []
         e.ai_path_timer = 0
         e.ai_goal = None
+
+    # ---------------- 적 성장 ----------------
+    def _random_enemy_job(self):
+        """플레이어와 같은 진화 단계(Lv.1 / 10 / 20 / 30)의 우주선 중 하나."""
+        jobs = SHIPS_BY_LEVEL[SHIPS[self.player.job].level]
+        return jobs[int(self.rng.integers(len(jobs)))]
+
+    def _apply_enemy_strength(self, e: Tank):
+        """시간 단계와 우주선 종류에 맞춰 적 능력치를 다시 계산한다. 현재 체력 비율은 유지."""
+        c, ai, spec = self.cfg, self.cfg.enemy_ai, SHIPS[e.job]
+        tier = self.enemy_scale_tier
+        ratio = e.hp / e.max_hp if e.max_hp > 0 else 1.0
+        # 대형 선체의 체력 보너스는 플레이어의 절반만 받는다.
+        elite_hp, elite_damage = (ai.elite_hp_scale, ai.elite_damage_scale) if e.elite else (1.0, 1.0)
+        e.max_hp = (c.enemy_hp + spec.hp_bonus * 0.5) * (1 + ai.hp_growth * tier) * elite_hp
+        e.hp = e.max_hp * ratio
+        e.radius = c.tank_radius * spec.radius_scale
+        e.damage_scale = (1 + ai.damage_growth * tier) * elite_damage
+        e.fire_cooldown_max = max(ai.min_fire_cooldown, round(ai.fire_cooldown / (1 + ai.fire_rate_growth * tier)))
+        e.accel_scale = 1 + ai.speed_growth * tier
+        e.projectiles = len(spec.shots)
+
+    def _update_enemy_scaling(self):
+        ai = self.cfg.enemy_ai
+        tier = min(ai.max_scale_tier, int(self.frame / (ai.scale_interval_seconds * self.cfg.fps)))
+        if tier != self.enemy_scale_tier:
+            self.enemy_scale_tier = tier
+            for e in self.enemies:
+                self._apply_enemy_strength(e)
+
+    def _promote_enemies(self):
+        """플레이어가 진화하면 모든 적도 같은 단계의 랜덤 우주선으로 진화한다."""
+        for e in self.enemies:
+            e.job = self._random_enemy_job()
+            self._apply_enemy_strength(e)
+            e.pending_shots.clear()
+            e.cooldown = min(e.cooldown, e.fire_cooldown_max)
+            if e.alive:
+                self._fit_tank(e)
 
     # ---------------- 외부 API ----------------
     @property
@@ -386,11 +461,14 @@ class GameCore:
         p.max_hp += hp_delta
         p.hp = min(p.max_hp, p.hp + hp_delta)
         p.radius = self.cfg.tank_radius * card.radius_scale
+        promoted = card.level != previous.level
         p.job = card.key
         p.projectiles = len(card.shots)
         p.cooldown = 0
         p.pending_shots.clear()
         self._fit_player_after_evolution()
+        if promoted:
+            self._promote_enemies()
         self.special_levels[card.key] += 1
         self.special_reward_levels.pop(0)
         self.reward_choices = ()
@@ -406,7 +484,8 @@ class GameCore:
 
     def can_upgrade_stat(self, key):
         return (key in self.stat_levels and self.upgrade_points > 0 and not self.game_over
-                and self.player.alive and not (key == "rapid" and self.player.fire_cooldown_max <= 4))
+                and self.player.alive and self.stat_levels[key] < STAT_MAX_LEVEL
+                and not (key == "rapid" and self.player.fire_cooldown_max <= 4))
 
     def upgrade_stat(self, key):
         if not self.can_upgrade_stat(key):
@@ -416,10 +495,10 @@ class GameCore:
             p.damage_scale *= 1.25
         elif key == "rapid":
             old_cooldown = p.fire_cooldown_max
-            p.fire_cooldown_max = max(4, int(p.fire_cooldown_max * 0.85))
+            p.fire_cooldown_max = max(4, round(p.fire_cooldown_max * 0.95))
             p.cooldown = math.ceil(p.cooldown * p.fire_cooldown_max / old_cooldown)
         elif key == "speed":
-            p.accel_scale *= 1.15
+            p.accel_scale *= 1.07
         elif key == "hull":
             p.max_hp += 25
             p.hp = min(p.max_hp, p.hp + 25)
@@ -463,7 +542,7 @@ class GameCore:
         return delays
 
     def weapon_values(self, tank):
-        spec = SHIPS[tank.job] if tank.team == "player" else SHIPS["rookie"]
+        spec = SHIPS[tank.job]
         mastery = 1 + 0.2 * max(0, self.special_levels.get(tank.job, 0) - 1) if tank.team == "player" else 1
         damage = self.cfg.bullet_damage * tank.damage_scale * spec.damage * mastery
         burst_end = max(self._shot_delays(tank, spec).values())
@@ -529,6 +608,7 @@ class GameCore:
             return
         move, rot = decode_action(action)
         self._tick_effects()
+        self._update_enemy_scaling()
         if aim_position is not None:
             self.player.angle = math.atan2(aim_position[1] - self.player.y, aim_position[0] - self.player.x)
         self._apply_tank_control(self.player, move, rot, self.player.accel_scale, 1.0)
@@ -556,6 +636,8 @@ class GameCore:
             self.shapes.append(self._make_shape())
 
         self.frame += 1
+        if self.score_popups and self.frame - self.score_popups[0][1] > SCORE_POPUP_FRAMES:
+            self.score_popups = [pop for pop in self.score_popups if self.frame - pop[1] <= SCORE_POPUP_FRAMES]
         if self.reload_frames_left:
             self.reload_frames_left -= 1
             if self.reload_frames_left == 0 and self.player.hp > 0:
@@ -621,8 +703,7 @@ class GameCore:
             return
         spec, damage, cooldown, speed, life = self.weapon_values(t)
         delays = self._shot_delays(t, spec)
-        shots = spec.shots if player else (ENEMY_SHOTS[t.id % len(ENEMY_SHOTS)],)
-        for shot in shots:
+        for shot in spec.shots:
             if shot.delay:
                 t.pending_shots.append((self.frame + delays[shot.delay], shot, damage, speed, life))
             else:
@@ -631,6 +712,8 @@ class GameCore:
                         break
                     t.ammo -= 1
                 self._emit_shot(t, shot, damage, speed, life)
+        if player:
+            self.player_shot_frame = self.frame
         t.cooldown = cooldown
 
     # ---------------- 적 AI ----------------
@@ -640,28 +723,43 @@ class GameCore:
         p = self.player
         tm = self.terrain
 
-        # 1) 감지: 사거리 안 + 시야선이 트였을 때 플레이어를 본다
-        e.ai_can_see = (p.alive
-                        and (p.x - e.x) ** 2 + (p.y - e.y) ** 2 <= ai.sight_range ** 2
-                        and tm.line_of_sight(e.x, e.y, p.x, p.y))
-        chasing_player = e.ai_target is not None and e.ai_target[0] in ("player", "point")
-        if e.ai_can_see and chasing_player:   # 플레이어를 쫓는 중일 때만 위치를 기억
+        # 1) 감지: 시야선이 트였으면 멀리서도 보고, 가까우면 벽 너머도 알아채고,
+        #    플레이어가 쏘면 소리로 위치를 안다. 알게 된 위치는 항상 기억한다.
+        dist = math.hypot(p.x - e.x, p.y - e.y)
+        e.ai_can_see = p.alive and dist <= ai.sight_range and tm.line_of_sight(e.x, e.y, p.x, p.y)
+        heard = self.frame - self.player_shot_frame <= ai.hearing_frames and dist <= ai.hearing_range
+        sensed = p.alive and (dist <= ai.sense_range or heard)
+        knew = e.ai_last_seen is not None
+        if e.ai_can_see or sensed:
             e.ai_last_seen = (p.x, p.y)
             e.ai_last_seen_frame = self.frame
-        elif e.ai_last_seen is not None and self.frame - e.ai_last_seen_frame > ai.memory_frames:
-            e.ai_last_seen = None
+        elif knew and self.frame - e.ai_last_seen_frame > ai.memory_frames:
+            # 벽을 돌아 마지막 위치로 가는 중이면 도착할 때까지 잊지 않는다 (도착하면 포기).
+            following = e.ai_target is not None and e.ai_target[0] == "point" and e.ai_path
+            if not following:
+                e.ai_last_seen = None
+        # 본 적이 근처 동료에게 위치를 알린다. 초반에는 혼자 싸우고 일정 시간 뒤부터 부른다.
+        if e.ai_can_see and self.frame >= ai.alert_start_seconds * c.fps:
+            for ally in self.enemies:
+                if (ally is not e and ally.alive and not ally.ai_can_see
+                        and math.hypot(ally.x - e.x, ally.y - e.y) <= ai.alert_range):
+                    ally.ai_last_seen = (p.x, p.y)
+                    ally.ai_last_seen_frame = self.frame
+        # 플레이어를 새로 알아챘거나 눈앞에 보이는데 다른 걸 쫓고 있으면 바로 목표를 바꾼다.
+        hunting = e.ai_target is not None and e.ai_target[0] in ("player", "point")
+        if (e.ai_last_seen is not None and not hunting) or (e.ai_can_see and (e.ai_target or ("",))[0] != "player"):
+            e.ai_timer = 0
 
-        # 2) 목표 선택 (reaction_frames마다): 기억한 위치 추적 중이면 계속, 아니면 플레이어/도형 가중 거리 비교
+        # 2) 목표 선택 (reaction_frames마다): 플레이어를 알고 있으면 무조건 사냥, 모를 때만 천체를 깬다
         e.ai_timer -= 1
         if e.ai_timer <= 0:
             e.ai_timer = ai.reaction_frames
-            if e.ai_last_seen is not None and not e.ai_can_see:
+            if e.ai_can_see:
+                target = ("player", p.id)
+            elif e.ai_last_seen is not None:
                 target = ("point", e.ai_last_seen)
             else:
-                # 보이는 플레이어와 가장 가까운 도형을 가중 거리로 비교 (player_priority)
                 target, best_d = None, float("inf")
-                if e.ai_can_see:
-                    target, best_d = ("player", p.id), math.hypot(p.x - e.x, p.y - e.y) / ai.player_priority
                 for s in self.shapes:
                     d = math.hypot(s.x - e.x, s.y - e.y)
                     if d < best_d:
@@ -669,7 +767,8 @@ class GameCore:
             if target != e.ai_target:
                 e.ai_path_timer = 0          # 목표가 바뀌면 경로 즉시 재계산
             e.ai_target = target
-            e.ai_aim_offset = float(self.rng.normal(0.0, math.radians(ai.aim_noise_deg)))
+            noise = ai.aim_noise_deg * max(0.4, 1 - ai.aim_noise_decay * self.enemy_scale_tier)
+            e.ai_aim_offset = float(self.rng.normal(0.0, math.radians(noise)))
             e.ai_strafe = 1.0 if self.rng.random() < 0.5 else -1.0
             if target is None:
                 e.ai_move = int(self.rng.integers(0, N_MOVES))
@@ -728,7 +827,13 @@ class GameCore:
         rot = 0
         aligned = False
         if tgt is not None:
-            desired = math.atan2(tgt[1] - e.y, tgt[0] - e.x) + e.ai_aim_offset
+            aim_x, aim_y = tgt
+            if e.ai_target[0] == "player" and e.ai_can_see and ai.lead_aim:
+                # 탄이 날아가는 동안 플레이어가 움직일 위치를 예측해 쏜다.
+                speed = self.weapon_values(e)[3] * SHIPS[e.job].shots[0].speed
+                lead = min(60.0, math.hypot(p.x - e.x, p.y - e.y) / max(1e-6, speed)) * ai.lead_aim
+                aim_x, aim_y = p.x + p.vx * lead, p.y + p.vy * lead
+            desired = math.atan2(aim_y - e.y, aim_x - e.x) + e.ai_aim_offset
             diff = wrap_angle(desired - e.angle)
             step = c.turn_speed * ai.turn_speed_scale
             if diff > step:
@@ -739,7 +844,7 @@ class GameCore:
         kind = e.ai_target[0] if e.ai_target else None
         can_fire = (kind == "player" and e.ai_can_see) or (kind == "shape" and direct)
 
-        self._apply_tank_control(e, move, rot, ai.move_speed_scale, ai.turn_speed_scale)
+        self._apply_tank_control(e, move, rot, ai.move_speed_scale * e.accel_scale, ai.turn_speed_scale)
         self._fire(e, aligned and can_fire)
 
     def _target_pos(self, e: Tank):
@@ -753,7 +858,7 @@ class GameCore:
                 return None
             return (self.player.x, self.player.y) if e.ai_can_see else e.ai_last_seen
         if kind == "point":
-            return val
+            return e.ai_last_seen or val
         for s in self.shapes:
             if s.id == val:
                 return (s.x, s.y)
@@ -826,8 +931,7 @@ class GameCore:
         return True
 
     def _damage_tank(self, t: Tank, dmg: float, by_player: bool):
-        if t.team == "player":
-            dmg *= SHIPS[t.job].damage_taken
+        dmg *= SHIPS[t.job].damage_taken
         dealt = min(dmg, t.hp)
         if dealt <= 0:
             return
@@ -844,7 +948,17 @@ class GameCore:
             if by_player:
                 self.events["enemies_killed"] += 1
                 self.kills += 1
-                self._add_score(self.cfg.enemy_kill_score)
+                ai, p = self.cfg.enemy_ai, self.player
+                if t.elite:
+                    p.hp = min(p.max_hp, p.hp + p.max_hp * ai.elite_heal_ratio)
+                    self._reward_notice("엘리트 처치 보상 (체력 회복)")
+                amount = round(self.cfg.enemy_kill_score * (ai.elite_score_scale if t.elite else 1))
+                self._score_popup(t.x, t.y, amount, "elite" if t.elite else "enemy")
+                self._add_score(amount)
+
+    def _score_popup(self, x, y, amount, kind):
+        self._popup_id += 1
+        self.score_popups.append((self._popup_id, self.frame, x, y, amount, kind))
 
     def _damage_shape(self, s: Shape, dmg: float, by_player: bool):
         dealt = min(dmg, s.hp)
@@ -856,6 +970,7 @@ class GameCore:
             if s.hp <= 0:
                 self.events["shape_destroyed_score"] += s.score
                 self.events["shapes_destroyed"] += 1
+                self._score_popup(s.x, s.y, s.score, s.kind)
                 self._add_score(s.score)
 
     # ---------------- 몸체 충돌 ----------------
@@ -880,10 +995,12 @@ class GameCore:
                 if a.alive and b.alive and _overlap(a, b):
                     _push_apart(a, b, 0.5)
         self.shapes = [s for s in self.shapes if s.hp > 0]
-        # 서로 밀어내다 벽에 들어간 경우 다시 밖으로
+        # 서로 밀어내다 벽에 들어간 경우 다시 밖으로. 부서진 벽의 좁은 홈에
+        # 끼어 밀어내도 빠지지 않으면 가장 가까운 넓은 칸으로 옮긴다.
         for o in tanks + self.shapes:
             self.terrain.resolve_circle(o)
             self._clamp_to_arena(o)
+            self._fit_tank(o)
 
     def _regen_player(self):
         p = self.player

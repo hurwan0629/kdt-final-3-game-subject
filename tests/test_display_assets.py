@@ -135,9 +135,13 @@ class DisplayAssetsTests(unittest.TestCase):
             self.game.reset(7)
             enemy = self.game.enemies[0]
             enemy.angle = math.pi / 2
-            with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
-                self.renderer._draw_ship(enemy, 100)
-                self.assertAlmostEqual(image.call_args.args[2], -180)
+            # 적도 같은 진화 그림(일반은 붉은색, 엘리트는 금색)을 쓰므로 플레이어와 같은 방향 규칙을 따른다.
+            for elite, suffix in ((False, "@enemy"), (True, "@elite")):
+                enemy.elite = elite
+                with patch.object(self.renderer.assets, "ship_image", wraps=self.renderer.assets.ship_image) as image:
+                    self.renderer._draw_ship(enemy, 100)
+                    self.assertEqual(image.call_args.args[0], SHIPS[enemy.job].asset + suffix)
+                    self.assertAlmostEqual(image.call_args.args[2], -90)
         finally:
             self.cfg.num_enemies = 0
 

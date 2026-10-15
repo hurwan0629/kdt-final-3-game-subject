@@ -16,7 +16,7 @@ import pygame
 from config import GameConfig, ObsConfig
 from env import TankEnv, build_vector
 from game_core import Bullet, GameCore, encode_action
-from progression import STAT_UPGRADES, SPECIAL_REWARDS, special_cards, stat_rows
+from progression import STAT_MAX_LEVEL, STAT_UPGRADES, SPECIAL_REWARDS, special_cards, stat_rows
 from renderer import Renderer
 from terrain import list_maps
 
@@ -90,10 +90,10 @@ class ProgressionTests(unittest.TestCase):
                     game._fire(p, True)
                     self.assertEqual(game.bullets[0].damage, game.cfg.bullet_damage * 1.25)
                 elif card.key == "rapid":
-                    self.assertEqual(p.fire_cooldown_max, 17)
+                    self.assertEqual(p.fire_cooldown_max, 27)
                 elif card.key == "speed":
                     game._apply_tank_control(p, 3, 0, p.accel_scale, 1)
-                    self.assertAlmostEqual(p.vx, game.cfg.accel * 1.15)
+                    self.assertAlmostEqual(p.vx, game.cfg.accel * 1.07)
                 elif card.key == "hull":
                     self.assertEqual((p.max_hp, p.hp), (125, 45))
                 elif card.key == "range":
@@ -108,7 +108,9 @@ class ProgressionTests(unittest.TestCase):
         for _ in range(40):
             game.upgrade_stat("rapid")
         self.assertEqual(game.player.hp, game.player.max_hp)
-        self.assertEqual(game.player.fire_cooldown_max, 4)
+        # 능력치마다 최대 7단계: 28 → 27 → 26 → 25 → 24 → 23 → 22 → 21
+        self.assertEqual(game.stat_levels["rapid"], STAT_MAX_LEVEL)
+        self.assertEqual(game.player.fire_cooldown_max, 21)
         self.assertEqual(game.reload_frames_total, 150)
         points = game.upgrade_points
         self.assertFalse(game.upgrade_stat("rapid"))

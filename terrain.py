@@ -645,8 +645,133 @@ def _generate_maze(rng, tcfg: TerrainConfig, cols, rows, name="random") -> TileM
 
 
 def generate_random_map(rng, tcfg: TerrainConfig, cols, rows, max_attempts=50) -> TileMap:
-    """기존 호출 규약으로 전체 월드를 가로지르는 연결 미로를 생성한다."""
-    return _generate_maze(rng, tcfg, cols, rows)
+    """diep.io 미로 모드 같은 블록 지형.
+
+    월드를 큰 정사각 블록(block_tiles칸) 격자로 나누고, 짝수 칸을 방으로 삼아 DFS 미로를 판다.
+    그다음 막힌 벽의 일부(extra_openings)와 벽 기둥(pillar_removal)을 없애 순환 통로와
+    넓은 공간을 만든다. 미로처럼 길은 있지만 막다른 길과 갑갑함이 적다.
+    통로 폭이 한 블록이라 가장 큰 선체도 지나간다.
+    """
+    minimum = max(1, 2 * math.ceil(tcfg.navigation_radius / tcfg.tile_size) + 1)
+    block = max(minimum, tcfg.block_tiles)
+    bw, bh = cols // block, rows // block
+    if bw < 1 or bh < 1:
+        raise MapError(f"[random] {cols}x{rows} 월드는 {block}칸 블록 지형을 만들기에 너무 작습니다.")
+    rooms = [(x, y) for y in range(0, bh, 2) for x in range(0, bw, 2)]
+    tm = None
+    for _ in range(max_attempts):
+        # 1) 방(짝수, 짝수)은 바닥, 그 사이 연결 블록과 기둥(홀수, 홀수)은 벽으로 시작
+        grid = [[(x % 2 == 0 and y % 2 == 0) for x in range(bw)] for y in range(bh)]
+
+        # 2) 가운데 방에서 DFS로 모든 방을 잇는다
+        root = min(rooms, key=lambda r: (r[0] - bw // 2) ** 2 + (r[1] - bh // 2) ** 2)
+        seen, stack = {root}, [root]
+        while stack:
+            x, y = stack[-1]
+            nxt = [(x + dx, y + dy) for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2))
+                   if 0 <= x + dx < bw and 0 <= y + dy < bh and (x + dx, y + dy) not in seen]
+            if not nxt:
+                stack.pop()
+                continue
+            nx, ny = nxt[int(rng.integers(len(nxt)))]
+            grid[(y + ny) // 2][(x + nx) // 2] = True
+            seen.add((nx, ny))
+            stack.append((nx, ny))
+
+        def touches_floor(x, y):
+            return any(0 <= x + dx < bw and 0 <= y + dy < bh and grid[y + dy][x + dx]
+                       for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+
+        # 3) 순환 통로: 남은 연결 벽 일부를 뚫는다 (가장자리 줄도 포함)
+        for y in range(bh):
+            for x in range(bw):
+                if grid[y][x] or (x % 2 == 1 and y % 2 == 1):
+                    continue
+                if rng.random() < tcfg.extra_openings:
+                    grid[y][x] = True
+        # 4) 넓은 공간: 기둥 일부를 없앤다. 주변 바닥과 이어진 기둥만 없애 고립된 바닥을 막는다.
+        for y in range(1, bh, 2):
+            for x in range(1, bw, 2):
+                if rng.random() < tcfg.pillar_removal and touches_floor(x, y):
+                    grid[y][x] = True
+        # 가장자리 남는 줄(블록 수가 짝수일 때)의 고립된 바닥은 벽으로 되돌린다
+        for y in range(bh):
+            for x in range(bw):
+                if grid[y][x] and not touches_floor(x, y) and (x, y) not in seen:
+                    grid[y][x] = False
+
+        # 5) 벽 덩어리: 벽 옆 바닥 블록 일부를 메워 크기가 제각각인 큰 벽을 만든다.
+        #    전체 바닥이 여전히 이어질 때만 메운다.
+        def floor_connected():
+            floor = {(x, y) for y in range(bh) for x in range(bw) if grid[y][x]}
+            start = next(iter(floor))
+            reach, todo = {start}, [start]
+            while todo:
+                x, y = todo.pop()
+                for nxt in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if nxt in floor and nxt not in reach:
+                        reach.add(nxt)
+                        todo.append(nxt)
+            return len(reach) == len(floor)
+
+        candidates = [(x, y) for y in range(bh) for x in range(bw)
+                      if grid[y][x] and (x, y) != root and abs(x - root[0]) + abs(y - root[1]) > 1
+                      and any(0 <= x + dx < bw and 0 <= y + dy < bh and not grid[y + dy][x + dx]
+                              for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+        for index in rng.permutation(len(candidates)):
+            if rng.random() >= tcfg.wall_merge:
+                continue
+            x, y = candidates[int(index)]
+            grid[y][x] = False
+            if not floor_connected():
+                grid[y][x] = True
+
+        tiles = [[WALL] * cols for _ in range(rows)]
+        off_c, off_r = (cols - bw * block) // 2, (rows - bh * block) // 2
+        for y in range(bh):
+            for x in range(bw):
+                if grid[y][x]:
+                    for r in range(off_r + y * block, off_r + (y + 1) * block):
+                        for c in range(off_c + x * block, off_c + (x + 1) * block):
+                            tiles[r][c] = EMPTY
+        # 블록 격자에 들어가지 않는 가장자리 자투리는 바깥 벽과 이어 둔다
+
+        def block_center(x, y):
+            return off_c + x * block + block // 2, off_r + y * block + block // 2
+
+        if tcfg.breakable_enabled and tcfg.random_breakable_density > 0:
+            links = [(x, y) for y in range(bh) for x in range(bw)
+                     if not grid[y][x] and (x % 2) != (y % 2)]
+            count = min(len(links), max(1, int(tcfg.random_breakable_density * len(links) * 4)))
+            for index in (rng.choice(len(links), size=count, replace=False) if links else ()):
+                x, y = links[int(index)]
+                for r in range(off_r + y * block, off_r + (y + 1) * block):
+                    for c in range(off_c + x * block, off_c + (x + 1) * block):
+                        tiles[r][c] = BREAKABLE
+        if tcfg.mud_enabled and tcfg.random_mud_density > 0:
+            floor_rooms = [r for r in rooms if r != root]
+            count = min(len(floor_rooms), max(1, int(tcfg.random_mud_density * len(floor_rooms) * 3)))
+            for index in (rng.choice(len(floor_rooms), size=count, replace=False) if floor_rooms else ()):
+                c, r = block_center(*floor_rooms[int(index)])
+                for rr in range(r - 1, r + 2):
+                    for cc in range(c - 1, c + 2):
+                        tiles[rr][cc] = MUD
+
+        player = block_center(*root)
+        tm = TileMap(tiles, tcfg.tile_size, player, [], "random", tcfg)
+        if tm.is_connected() and tm.is_connected(tcfg.navigation_radius):
+            break
+    else:
+        raise MapError("[random] 연결된 랜덤 지형을 만들지 못했습니다.")
+
+    # 적 시작점: 플레이어 방에서 먼 바닥 블록의 중앙
+    floors = [(x, y) for y in range(bh) for x in range(bw) if grid[y][x]]
+    far = sorted(floors, key=lambda b: -((b[0] - root[0]) ** 2 + (b[1] - root[1]) ** 2))
+    far = [b for b in far if abs(b[0] - root[0]) + abs(b[1] - root[1]) >= 3] or far[:-1]
+    picks = rng.choice(len(far), size=min(12, len(far)), replace=False) if far else ()
+    tm.enemy_starts = sorted(block_center(*far[int(i)]) for i in picks)
+    tm.validate_navigation(tcfg.navigation_radius)
+    return tm
 
 
 def map_to_text(tm: TileMap) -> str:

@@ -15,8 +15,9 @@ import pygame.gfxdraw
 
 from config import GameConfig
 from terrain import WALL, MUD, BREAKABLE
-from progression import SHIPS, JOB_NAMES, stat_rows, special_cards, stat_upgrades_visible, player_stat_summary
-from sprite_assets import SpriteAssets
+from progression import (SHIPS, JOB_NAMES, STAT_MAX_LEVEL, stat_rows, special_cards, stat_upgrades_visible,
+                         player_stat_summary, stat_collapsed_rect)
+from sprite_assets import SpriteAssets, ENEMY_SUFFIX, ELITE_SUFFIX
 
 COLORS = {
     "space_top": (6, 8, 22),
@@ -25,6 +26,7 @@ COLORS = {
     "player_dark": (18, 84, 140),
     "enemy": (255, 92, 112),
     "enemy_dark": (130, 28, 56),
+    "elite": (255, 200, 70),
     "player_shot": (90, 220, 255),
     "enemy_shot": (255, 96, 160),
     "square": (255, 220, 110),      # 별 조각
@@ -46,6 +48,8 @@ COLORS = {
     "minimap_player": (20, 29, 38),
 }
 SPAWN_FRAMES = 14   # 등장 애니메이션 길이
+SHAPE_FADE_FRAMES = 60  # 천체는 1초 동안 서서히 떠오른다
+SCORE_TEXT_FRAMES = 50  # "+점수" 글자가 떠오르는 시간
 DEATH_FRAMES = 22   # 파괴/폭발 애니메이션 길이
 FLASH_FRAMES = 5    # 피격 깜빡임 길이
 
@@ -80,6 +84,8 @@ class Renderer:
         self.font_card = pygame.font.SysFont(sans, 24, bold=True)
         self.font_body = pygame.font.SysFont(sans, 17)
         self.font_mono = pygame.font.SysFont("consolas,couriernew,monospace", 13)
+        self.font_score = pygame.font.SysFont(sans, 22, bold=True)
+        self.font_score_big = pygame.font.SysFont(sans, 30, bold=True)
 
         self._rand = random.Random(2024)   # 렌더러 전용 (배경 별 배치 등)
         self._glow_cache = {}
@@ -103,6 +109,9 @@ class Renderer:
         self._prev_shapes = {}  # id -> 이전 프레임 도형 (사라짐 감지)
         self._prev_alive = {}   # 적 id -> 이전 alive
         self._ghosts = []       # 파괴 애니메이션: dict(kind, x, y, r, angle, color, age)
+        self._sparks = []       # 점수 획득 불꽃: [x, y, vx, vy, age, life, color]
+        self._popups_seen = set()
+        self._xp_flash_frame = -999
 
     # ------------------------------------------------------------------
     # 빛 번짐 스프라이트 (BLEND_ADD로 더해서 발광 효과)
@@ -205,6 +214,7 @@ class Renderer:
         if f < self._last_frame:  # 재시작
             self._first_seen.clear(); self._prev_hp.clear(); self._hit_frame.clear()
             self._prev_shapes.clear(); self._prev_alive.clear(); self._ghosts.clear()
+            self._sparks.clear(); self._popups_seen.clear()
         # 파괴 애니메이션 진행량: 게임 프레임 기준, 단 게임오버로 멈춘 동안에도 끝까지 재생
         delta = f - self._last_frame if f > self._last_frame else (1 if game.game_over else 0)
         for g in self._ghosts:
@@ -217,7 +227,8 @@ class Renderer:
                 self._ghosts.append(dict(kind=s.kind, x=s.x, y=s.y, r=s.radius, angle=s.angle,
                                          color=COLORS[s.kind], age=0))
         for s in game.shapes:
-            self._first_seen.setdefault(s.id, f)
+            # 판을 시작할 때 이미 있던 천체는 바로 보이고, 도중에 생긴 것만 서서히 나타난다.
+            self._first_seen.setdefault(s.id, f if f > 0 else -10**6)
             if s.hp < self._prev_hp.get(s.id, s.hp):
                 self._hit_frame[s.id] = f
             self._prev_hp[s.id] = s.hp
@@ -239,6 +250,29 @@ class Renderer:
         self._prev_alive[p.id] = p.alive
 
         self._ghosts = [g for g in self._ghosts if g["age"] < DEATH_FRAMES]
+        # 점수를 얻은 자리에서 불꽃이 튀고 EXP 바가 반짝인다.
+        for spark in self._sparks:
+            for _ in range(delta):
+                spark[0] += spark[2]
+                spark[1] += spark[3]
+                spark[2] *= 0.9
+                spark[3] *= 0.9
+            spark[4] += delta
+        self._sparks = [spark for spark in self._sparks if spark[4] < spark[5]]
+        for pid, frame, x, y, amount, kind in game.score_popups:
+            if pid in self._popups_seen:
+                continue
+            self._popups_seen.add(pid)
+            self._xp_flash_frame = frame
+            color = COLORS.get(kind, COLORS["elite"])
+            count = 10 if amount < 50 else 18 if amount < 200 else 26
+            for _ in range(count):
+                angle = self._rand.uniform(0, math.tau)
+                speed = self._rand.uniform(2.0, 5.5) * (1.3 if amount >= 100 else 1.0)
+                self._sparks.append([x, y, math.cos(angle) * speed, math.sin(angle) * speed, 0,
+                                     self._rand.randint(18, 32), _mix(color, (255, 255, 255), 0.35)])
+        if len(self._popups_seen) > 500:
+            self._popups_seen = {pop[0] for pop in game.score_popups}
         # 오래된 id 정리
         if len(self._first_seen) > 400:
             live = set(cur) | {e.id for e in game.enemies} | {p.id}
@@ -315,7 +349,7 @@ class Renderer:
         return -margin <= sx <= self.view_width + margin and -margin <= sy <= self.view_height + margin
 
     def draw(self, game, debug_lines=None, paused=False, show_ai=False,
-             show_controls=True, menu=None, selected=-1, show_stats=False):
+             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):
         self._tick += 1
         self._update_camera(game.player)
         self._track(game)
@@ -341,6 +375,7 @@ class Renderer:
             if self._visible(b.x, b.y):
                 self._draw_bullet(b)
         self._draw_combat_effects(game)
+        self._draw_score_effects(game)
         for g in self._ghosts:
             if self._visible(g["x"], g["y"]):
                 self._draw_ghost(g)
@@ -358,8 +393,9 @@ class Renderer:
 
         self.screen = display
         pygame.transform.smoothscale(scr, self.size, display)
+        self._draw_score_text(game)
         self._draw_hud(game, paused, show_notice=menu is None,
-                       show_controls=show_controls)
+                       show_controls=show_controls, stats_collapsed=stats_collapsed)
         if debug_lines:
             self._draw_debug(debug_lines)
         if show_stats and not paused and menu is None and not game.game_over:
@@ -370,6 +406,39 @@ class Renderer:
             self._draw_game_over(game)
         elif paused:
             self._draw_card(["일시정지"], ["P / ESC: 계속"])
+
+    def _draw_score_effects(self, game):
+        for x, y, _, _, age, life, color in self._sparks:
+            if not self._visible(x, y):
+                continue
+            k = 1 - age / life
+            sx, sy = self.world_to_view(x, y)
+            self._blit_glow(self.screen, sx, sy, 5 + 9 * k, color, round(k * 4) / 4)
+            pygame.draw.circle(self.screen, color, (round(sx), round(sy)), max(1, round(4.5 * k)))
+
+    def _draw_score_text(self, game):
+        """줌과 관계없이 읽히도록 "+점수"는 화면 좌표에 고정 크기로 그린다."""
+        for _, frame, x, y, amount, kind in game.score_popups:
+            age = game.frame - frame
+            if age > SCORE_TEXT_FRAMES or not self._visible(x, y):
+                continue
+            t = age / SCORE_TEXT_FRAMES
+            # 처음엔 살짝 커졌다가 위로 떠오르며 사라진다.
+            pop = 1 + 0.35 * max(0.0, 1 - age / 8)
+            font = self.font_score_big if amount >= 100 else self.font_score
+            color = (255, 230, 120) if kind != "elite" else (255, 190, 60)
+            text = font.render(f"+{amount}", True, color)
+            shadow = font.render(f"+{amount}", True, (40, 25, 0))
+            if pop > 1:
+                size = (round(text.get_width() * pop), round(text.get_height() * pop))
+                text, shadow = pygame.transform.smoothscale(text, size), pygame.transform.smoothscale(shadow, size)
+            alpha = 255 if t < 0.55 else round(255 * (1 - (t - 0.55) / 0.45))
+            text.set_alpha(alpha)
+            shadow.set_alpha(alpha // 2)
+            sx, sy = self.world_to_screen(x, y)
+            sy -= 14 + 40 * (1 - (1 - t) ** 2)
+            self.screen.blit(shadow, shadow.get_rect(center=(round(sx) + 2, round(sy) + 2)))
+            self.screen.blit(text, text.get_rect(center=(round(sx), round(sy))))
 
     def _draw_combat_effects(self, game):
         for beam in game.beams:
@@ -421,10 +490,14 @@ class Renderer:
     def _draw_shape(self, s, f):
         sprite, flash = self._shape_sprites[s.kind]
         img = flash if self._flash_on and f - self._hit_frame.get(s.id, -999) < FLASH_FRAMES else sprite
-        scale = self._spawn_scale(s.id, f)
-        if scale < 0.08:
+        # 투명한 상태에서 살짝 작게 시작해 천천히 선명해진다 (갑자기 튀어나오지 않게).
+        t = min(1.0, max(0.0, (f - self._first_seen.get(s.id, -999)) / SHAPE_FADE_FRAMES))
+        ease = t * t * (3 - 2 * t)
+        if ease <= 0.02:
             return
-        img = pygame.transform.rotozoom(img, -math.degrees(s.angle), scale)
+        img = pygame.transform.rotozoom(img, -math.degrees(s.angle), 0.85 + 0.15 * ease)
+        if ease < 1:
+            img.set_alpha(round(255 * ease))
         x, y = self.world_to_view(s.x, s.y)
         self.screen.blit(img, img.get_rect(center=(int(x), int(y))))
 
@@ -444,19 +517,19 @@ class Renderer:
         scale = self._spawn_scale(t.id, f)
         if scale < 0.08:
             return
-        if is_player:
-            path = SHIPS[t.job].asset
-            image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))
-        else:
-            path = "enemies/" + ("scout", "fighter", "heavy")[t.id % 3]
-            image = self.assets.image(path, t.radius * 3.4 * scale, -90 - math.degrees(t.angle))
+        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.
+        suffix = "" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX
+        path = SHIPS[t.job].asset + suffix
+        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))
         if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:
             image = image.copy()
             image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        if t.elite:
+            self._blit_glow(self.screen, x, y, t.radius * 1.6 * scale, (255, 190, 60), 0.5)
         self.screen.blit(image, image.get_rect(center=(round(x), round(y))))
-        if is_player:
-            pygame.gfxdraw.aacircle(self.screen, round(x), round(y), round(t.radius + 3), (70, 200, 255, 100))
-            label = self.font_label.render("YOU", True, COLORS["white"])
+        if is_player or t.elite:
+            text, color = ("YOU", COLORS["white"]) if is_player else ("ELITE", COLORS["elite"])
+            label = self.font_label.render(text, True, color)
             self.screen.blit(label, label.get_rect(center=(x, y - t.radius - 20)))
 
     def _draw_ghost(self, g):
@@ -510,7 +583,7 @@ class Renderer:
         pygame.draw.rect(surf, (*COLORS["panel_edge"], 150), surf.get_rect(), 1, border_radius=radius)
         self.screen.blit(surf, rect.topleft)
 
-    def _draw_hud(self, game, paused, show_notice=True, show_controls=True):
+    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):
         p = game.player
         W, H = self.size
         secs = game.frame / self.cfg.fps
@@ -548,7 +621,7 @@ class Renderer:
             x += lab.get_width() + val.get_width() + 18
 
         if game.cfg.progression_enabled:
-            self._draw_progression(game, show_notice)
+            self._draw_progression(game, show_notice, stats_collapsed)
 
         # 하단 중앙: 선체 내구도
         w, h = 320, 18
@@ -625,7 +698,7 @@ class Renderer:
         pygame.draw.polygon(self.screen, COLORS["minimap_player"], marker)
         self.screen.set_clip(clip)
 
-    def _draw_progression(self, game, show_notice):
+    def _draw_progression(self, game, show_notice, stats_collapsed=False):
         p = game.player
         W, H = self.size
         panel = pygame.Rect(W // 2 - 166, H - 100, 332, 84)
@@ -639,10 +712,19 @@ class Renderer:
         fill.width = int(bar.width * game.xp / game.xp_to_next_level)
         if fill.width:
             pygame.draw.rect(self.screen, COLORS["player"], fill, border_radius=9)
+        flash = 1 - (game.frame - self._xp_flash_frame) / 15
+        if 0 < flash <= 1:  # 점수를 얻으면 EXP 바가 잠깐 밝게 빛난다
+            glow = pygame.Surface(bar.size, pygame.SRCALPHA)
+            pygame.draw.rect(glow, (255, 240, 170, round(150 * flash)), glow.get_rect(), border_radius=9)
+            self.screen.blit(glow, bar.topleft)
+            pygame.draw.rect(self.screen, (255, 230, 140), bar.inflate(4, 4), 2, border_radius=11)
         xp = self.font_label.render(f"EXP  {game.xp} / {game.xp_to_next_level}", True, COLORS["white"])
         self.screen.blit(xp, xp.get_rect(center=bar.center))
         if stat_upgrades_visible(game):
-            self._draw_stat_upgrades(game)
+            if stats_collapsed:
+                self._draw_stat_collapsed(game)
+            else:
+                self._draw_stat_upgrades(game)
         self._draw_rewards(game)
         if game.frame < game.reward_message_until and show_notice:
             text = self.font_small.render(f"{game.last_reward} 적용 완료", True, (160, 240, 220))
@@ -683,8 +765,9 @@ class Renderer:
             text = self.font_small.render(f"{i + 1}  {card.title}", True,
                                           COLORS["white"] if enabled else COLORS["label"])
             self.screen.blit(text, (rect.x + 5, rect.y + 2))
-            at_limit = card.key == "rapid" and game.player.fire_cooldown_max <= 4
-            rank = self.font_label.render("MAX" if at_limit else str(game.stat_levels[card.key]), True, COLORS["player"])
+            level = game.stat_levels[card.key]
+            at_limit = level >= STAT_MAX_LEVEL or (card.key == "rapid" and game.player.fire_cooldown_max <= 4)
+            rank = self.font_label.render("MAX" if at_limit else f"{level}/{STAT_MAX_LEVEL}", True, COLORS["player"])
             self.screen.blit(rank, rank.get_rect(topright=(rect.right - 30, rect.y + 3)))
             plus = pygame.Rect(rect.right - 24, rect.y + 1, 23, 20)
             pygame.draw.rect(self.screen, (80, 185, 215) if enabled else (45, 60, 77), plus, border_radius=7)
@@ -692,6 +775,17 @@ class Renderer:
             self.screen.blit(label, label.get_rect(center=plus.center))
             if rect.collidepoint(pygame.mouse.get_pos()):
                 self._tooltip(card.description, (14, top - 42), 300)
+
+    def _draw_stat_collapsed(self, game):
+        rect = pygame.Rect(stat_collapsed_rect(*self.size))
+        hover = rect.collidepoint(pygame.mouse.get_pos())
+        self._panel(rect, 215 if hover else 185, 10)
+        badge = pygame.Rect(rect.x + 8, rect.y + 8, 22, 22)
+        pygame.draw.rect(self.screen, (80, 185, 215), badge, border_radius=7)
+        plus = self.font_body.render("+", True, (10, 25, 35))
+        self.screen.blit(plus, plus.get_rect(center=badge.center))
+        text = self.font_small.render(f"남은 스탯 {game.upgrade_points}P · 펼치기", True, COLORS["white"])
+        self.screen.blit(text, text.get_rect(midleft=(badge.right + 9, rect.centery)))
 
     def _tooltip(self, lines, pos, width):
         wrapped = [line for text in lines for line in self._wrapped_text(text, width - 20)]

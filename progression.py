@@ -15,9 +15,10 @@ STAT_UPGRADES = (
     RewardCard("hull", "체력", "능력치", ("최대 / 현재 체력 +25",)),
     RewardCard("damage", "공격력", "능력치", ("공격 피해 +25%",)),
     RewardCard("range", "사거리 및 탄속도", "능력치", ("탄속 +20%, 수명 +15%",)),
-    RewardCard("rapid", "발사속도", "능력치", ("발사 대기 -15%, 최소 4프레임",)),
-    RewardCard("speed", "이동속도", "능력치", ("이동 가속도 +15%",)),
+    RewardCard("rapid", "발사속도", "능력치", ("발사 대기 -5%",)),
+    RewardCard("speed", "이동속도", "능력치", ("이동 가속도 +7%",)),
 )
+STAT_MAX_LEVEL = 7   # 능력치마다 올릴 수 있는 최대 단계
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,10 @@ def _muzzle(angle, x, y, **kwargs):
                     lateral=-x * math.sin(angle) + y * math.cos(angle), **kwargs)
 
 
+# 가디언 대구경 포신: (포구 전방 거리, 안쪽 폭 / 선체 지름). 원본 소형 포신 대신 그린다.
+GUARDIAN_BARREL = (1.45, 0.2)
+BARREL_OVERRIDES = {"ships/Lv10_가디언": GUARDIAN_BARREL}
+
 _CARDINAL = (
     ShotSpec(forward=1.4969, caliber=24/161*0.9), ShotSpec(angle=math.pi/2, forward=1.3913, lateral=0.0373, caliber=24/161*0.9),
     ShotSpec(angle=math.pi, forward=1.4224, caliber=24/161*0.9), ShotSpec(angle=-math.pi/2, forward=1.3913, lateral=-0.0373, caliber=24/161*0.9),
@@ -74,13 +79,13 @@ SHIP_CLASSES = (
               asset="ships/Lv10_트윈", shots=(ShotSpec(lateral=-0.3676, forward=1.6618, caliber=22/136*0.9), ShotSpec(lateral=0.3676, forward=1.6618, delay=3, caliber=22/136*0.9)),
               damage=0.8, cooldown=0.8),
     ShipClass("sniper", "스나이퍼", "전직", ("장거리 고속 단발 저격",), level=10,
-              asset="ships/Lv10_스나이퍼", shots=(ShotSpec(forward=1.8144, caliber=22/167*0.9),),
+              asset="ships/Lv10_스나이퍼", shots=(ShotSpec(forward=1.8144, caliber=22/167*0.9*2),),
               damage=2.5, cooldown=1.7, speed=1.8, life=1.4),
     ShipClass("flank", "플랭크", "전직", ("전후방 2방향 동시 사격",), level=10,
               asset="ships/Lv10_플랭크", shots=(ShotSpec(forward=1.5714, caliber=26/147*0.9), ShotSpec(angle=math.pi, forward=1.5170, caliber=24/147*0.9)), damage=0.85),
-    ShipClass("guardian", "가디언", "전직", ("대형 장갑 선체 · 전방 소형포", "체력 +100 · 받는 피해 -20%"), level=10,
-              asset="ships/Lv10_가디언", shots=(ShotSpec(forward=1.2917, caliber=12/216*0.9),),
-              damage=0.55, cooldown=1.0, hp_bonus=100, radius_scale=32/22, damage_taken=0.8),
+    ShipClass("guardian", "가디언", "전직", ("장갑 선체 · 전방 대구경포", "체력 +100 · 받는 피해 -20%"), level=10,
+              asset="ships/Lv10_가디언", shots=(ShotSpec(forward=GUARDIAN_BARREL[0], caliber=GUARDIAN_BARREL[1] * 0.9),),
+              damage=0.4, cooldown=1.0, hp_bonus=100, radius_scale=26/22, damage_taken=0.8),
     ShipClass("dual_striker", "듀얼 스트라이커", "전직", ("중앙 쌍포 + 날개 부포", "전방 포구 4곳에서 순차 사격"),
               parent="twin", level=20, asset="ships/Lv20_듀얼 스트라이커",
               shots=(ShotSpec(lateral=-0.19, forward=1.36, caliber=22/158*0.9), ShotSpec(lateral=0.19, forward=1.36, delay=2, caliber=22/158*0.9),
@@ -131,11 +136,11 @@ SHIP_CLASSES = (
     ShipClass("octa_star", "옥타 스타", "전직", ("45도 간격 8방향 전방위 사격",),
               parent="quad_wing", level=30, asset="ships/Lv30_옥타 스타",
               shots=tuple(ShotSpec(angle=i*math.pi/4, forward=1.3953, caliber=(22 if i%2 == 0 else 19)/172*0.9) for i in range(8)), damage=0.85),
-    ShipClass("hexa_cruiser", "헥사 크루저", "전직", ("전후방 쌍포 연사 + 양 측면 방어포",),
+    ShipClass("hexa_cruiser", "헥사 크루저", "전직", ("전후방 3연장포 6문 순차 사격",),
               parent="twin_flank", level=30, asset="ships/Lv30_헥사 크루저",
-              shots=(ShotSpec(lateral=-0.43, forward=1.29, caliber=18/165*0.9), ShotSpec(angle=math.pi, lateral=-0.43, forward=1.37, caliber=18/165*0.9),
-                     ShotSpec(angle=math.pi/2, forward=1.0, caliber=18/165*0.9), ShotSpec(angle=-math.pi/2, forward=1.0, caliber=18/165*0.9),
-                     ShotSpec(lateral=0.43, forward=1.29, delay=3, caliber=18/165*0.9), ShotSpec(angle=math.pi, lateral=0.43, forward=1.37, delay=3, caliber=18/165*0.9)),
+              shots=(ShotSpec(lateral=-0.364, forward=1.29, caliber=18/165*0.9), ShotSpec(angle=math.pi, lateral=0.364, forward=1.37, caliber=18/165*0.9),
+                     ShotSpec(forward=1.47, delay=2, caliber=21/165*0.9), ShotSpec(angle=math.pi, forward=1.55, delay=2, caliber=21/165*0.9),
+                     ShotSpec(lateral=0.364, forward=1.29, delay=4, caliber=18/165*0.9), ShotSpec(angle=math.pi, lateral=-0.364, forward=1.37, delay=4, caliber=18/165*0.9)),
               damage=0.8, cooldown=0.8),
     ShipClass("colossus", "콜로서스", "전직", ("초거대 중장갑 선체 · 소형 3연장포", "체력 +400 · 받는 피해 -40%"),
               parent="bastion", level=30, asset="ships/Lv30_콜로서스",
@@ -147,14 +152,9 @@ SHIP_CLASSES = (
               shots=tuple(ShotSpec(angle=i*math.pi/2, forward=1.2828, caliber=10/290*0.9) for i in range(4)),
               damage=0.55, hp_bonus=440, radius_scale=48/22, damage_taken=0.55),
 )
-# 원본 이미지의 포신 수와 기능 명세가 다른 후방·측면포는 같은 기체의 대응 포신 내경을 쓴다.
-# 적 이미지는 원본 캔버스가 선체 반지름의 3.4배로 표시되는 기존 규칙을 따른다.
-ENEMY_SHOTS = (
-    ShotSpec(forward=1.4831, caliber=0.0293),
-    ShotSpec(forward=0.9408, lateral=-0.6182, caliber=0.0342),
-    ShotSpec(forward=1.5861, caliber=0.0549),
-)
 SHIPS = {ship.key: ship for ship in SHIP_CLASSES}
+# 적은 플레이어와 같은 진화 단계(Lv.1 / 10 / 20 / 30)의 우주선 중 하나를 쓴다.
+SHIPS_BY_LEVEL = {level: tuple(ship.key for ship in SHIP_CLASSES if ship.level == level) for level in (1, 10, 20, 30)}
 SPECIAL_REWARDS = SHIP_CLASSES[1:]
 REWARD_CARDS = STAT_UPGRADES + SPECIAL_REWARDS
 JOB_NAMES = {key: ship.title for key, ship in SHIPS.items()}
@@ -170,6 +170,21 @@ def stat_rows(width, height, cards=STAT_UPGRADES):
 
 def special_cards(width, height, count=4):
     return [(14 + i * 98, 82, 90, 90) for i in range(count)]
+
+
+def stat_panel_rect(width, height, cards=STAT_UPGRADES):
+    rows = stat_rows(width, height, cards)
+    top = rows[0][1][1] - 30
+    bottom = rows[-1][1][1] + rows[-1][1][3] + 8
+    return (14, top, 272, bottom - top)
+
+
+def stat_collapsed_rect(width, height):
+    """한동안 건드리지 않아 접힌 스탯 창 (클릭 / 마우스를 올리면 다시 펼침)."""
+    return (14, height - 54, 196, 38)
+
+
+STAT_PANEL_IDLE_SECONDS = 4.0   # 이 시간 동안 건드리지 않으면 스탯 창을 접는다
 
 
 def stat_upgrades_visible(game):

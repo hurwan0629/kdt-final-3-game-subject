@@ -91,7 +91,8 @@ class LargeWallLayoutTests(unittest.TestCase):
                 with self.assertRaises(MapError):
                     load_map("drift", cfg, 20, 15)
 
-    def test_random_maps_have_connected_floor_and_thick_walls_before_destruction(self):
+    def test_random_maps_are_open_block_mazes(self):
+        # 기본 랜덤 지형은 diep.io 미로 모드처럼 큰 블록 미로에 통로를 더 뚫은 형태다.
         cfg = TerrainConfig(mud_enabled=True, breakable_enabled=True)
         for cols, rows, seeds in ((20, 15, range(50)), (60, 45, range(10))):
             for seed in seeds:
@@ -101,8 +102,12 @@ class LargeWallLayoutTests(unittest.TestCase):
                     self.assertTrue(tm.is_connected(96))
                     self.assertTrue(tm.circle_fits(*tm.center(*tm.player_start), 96))
                     self.assert_thick_walls(tm, 4 if cols == 60 else 2)
-                    self.assert_connected_walls(tm)
                     self.assertNotIn("*", map_to_text(tm))
+                    solid = sum(tm.solid[r][c] for r in range(rows) for c in range(cols))
+                    self.assertLess(solid / (cols * rows), 0.35)      # 너무 갑갑하지 않게
+                    if cols == 60:
+                        self.assertGreater(solid / (cols * rows), 0.1)  # 벽이 아예 없지는 않게
+                        self.assertGreaterEqual(len(tm.enemy_starts), 8)
         a = generate_random_map(np.random.default_rng(12), cfg, 60, 45)
         b = generate_random_map(np.random.default_rng(12), cfg, 60, 45)
         self.assertEqual(map_to_text(a), map_to_text(b))

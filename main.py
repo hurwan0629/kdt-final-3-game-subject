@@ -3,10 +3,9 @@
 WASD 이동 + 커서 조준 + 좌클릭 발사. ESC 메뉴, R 재장전.
 게임은 1/60초 고정 간격으로 업데이트되고, 화면 그리기는 그와 별개로 돈다.
 
-    python main.py                 # 랜덤 seed, 기본 맵
+    python main.py                 # 랜덤 seed, 랜덤 지형 (흩어진 벽 덩어리)
     python main.py --seed 42       # 고정 seed
-    python main.py --map belt      # maps/belt.txt
-    python main.py --random-map    # 랜덤 맵 생성
+    python main.py --map belt      # maps/belt.txt 미로
     python main.py --no-terrain    # 빈 경기장
     python main.py --stage2        # 진흙/부서지는 벽 켜기
 """
@@ -20,7 +19,8 @@ from env import build_vector
 from game_core import GameCore, encode_action, move_from_vector
 from terrain import list_maps
 from menus import menu_buttons
-from progression import stat_rows, special_cards, stat_upgrades_visible
+from progression import (stat_rows, special_cards, stat_upgrades_visible, stat_panel_rect,
+                         stat_collapsed_rect, STAT_PANEL_IDLE_SECONDS)
 
 MAX_FRAMES_PER_TICK = 5  # 느린 PC에서 업데이트가 밀려 멈추는 것 방지
 
@@ -72,6 +72,8 @@ class GameApplication:
         self.action = 0
         self.click_requested = False
         self.suppress_fire = True
+        self.stat_touch_frame = 0      # 스탯 창을 마지막으로 건드린 게임 프레임
+        self.stat_points_seen = 0
         self.map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
 
     def buttons(self):
@@ -82,6 +84,14 @@ class GameApplication:
     def size(self):
         return getattr(self.renderer, "size", (self.cfg.width, self.cfg.height))
 
+    def touch_stat_panel(self):
+        self.stat_touch_frame = self.game.frame
+
+    @property
+    def stats_collapsed(self):
+        idle = self.game.frame - self.stat_touch_frame
+        return stat_upgrades_visible(self.game) and idle >= STAT_PANEL_IDLE_SECONDS * self.cfg.fps
+
     def activate(self, key):
         self.show_stats = False
         self.click_requested = False
@@ -89,6 +99,7 @@ class GameApplication:
         self.acc = 0.0
         if key in ("start", "restart"):
             self.game.reset(self.seed)
+            self.stat_touch_frame = self.stat_points_seen = 0
             self.mode, self.selected = "playing", 0
         elif key == "resume":
             self.mode = "playing"
@@ -157,6 +168,7 @@ class GameApplication:
             stats = (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5)
             specials = (pygame.K_F2, pygame.K_F3, pygame.K_F4, pygame.K_F5)
             if ev.key in stats:
+                self.touch_stat_panel()
                 choices = self.game.open_stat_upgrades()
                 if stats.index(ev.key) < len(choices):
                     self.game.upgrade_stat(choices[stats.index(ev.key)].key)
@@ -184,9 +196,15 @@ class GameApplication:
                 self.suppress_fire, self.click_requested = True, False
                 return
             if self.cfg.progression_enabled:
-                rows = stat_rows(*self.size, self.game.open_stat_upgrades()) if stat_upgrades_visible(self.game) else []
+                if self.stats_collapsed and pygame.Rect(stat_collapsed_rect(*self.size)).collidepoint(ev.pos):
+                    self.touch_stat_panel()
+                    self.suppress_fire, self.click_requested = True, False
+                    return
+                rows = (stat_rows(*self.size, self.game.open_stat_upgrades())
+                        if stat_upgrades_visible(self.game) and not self.stats_collapsed else [])
                 for card, rect in rows:
                     if pygame.Rect(rect).collidepoint(ev.pos):
+                        self.touch_stat_panel()
                         self.game.upgrade_stat(card.key)
                         self.suppress_fire, self.click_requested = True, False
                         return
@@ -208,8 +226,12 @@ class GameApplication:
             return True
         if not self.cfg.progression_enabled:
             return False
-        rects = ([rect for card, rect in stat_rows(*self.size, self.game.open_stat_upgrades())]
-                 if stat_upgrades_visible(self.game) else [])
+        if not stat_upgrades_visible(self.game):
+            rects = []
+        elif self.stats_collapsed:
+            rects = [stat_collapsed_rect(*self.size)]
+        else:
+            rects = [rect for card, rect in stat_rows(*self.size, self.game.open_stat_upgrades())]
         if self.game.reward_choices:
             rects += special_cards(*self.size, len(self.game.reward_choices))
         return any(pygame.Rect(rect).collidepoint(pos) for rect in rects)
@@ -219,6 +241,14 @@ class GameApplication:
                            and bool(keys[pygame.K_TAB]))
         if not buttons[0]:
             self.suppress_fire = False
+        # 새 스탯 포인트가 생기거나 마우스를 창 위에 두면 스탯 창을 다시 펼친다.
+        if self.game.upgrade_points > self.stat_points_seen:
+            self.touch_stat_panel()
+        self.stat_points_seen = self.game.upgrade_points
+        if stat_upgrades_visible(self.game):
+            panel = stat_collapsed_rect(*self.size) if self.stats_collapsed else stat_panel_rect(*self.size)
+            if pygame.Rect(panel).collidepoint(mouse_pos):
+                self.touch_stat_panel()
         if self.mode != "playing" or self.game.game_over:
             self.acc = 0.0
             self.click_requested = False
@@ -245,14 +275,14 @@ class GameApplication:
         self.renderer.draw(self.game, lines, self.mode == "pause", show_ai=self.show_debug,
                            show_controls=self.show_controls,
                            menu=self.buttons() if self.mode == "pause" else None, selected=self.selected,
-                           show_stats=self.show_stats)
+                           show_stats=self.show_stats, stats_collapsed=self.stats_collapsed)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--map", default=None, help=f"맵 이름 ({', '.join(list_maps())})")
-    parser.add_argument("--random-map", action="store_true", help="랜덤 맵 생성")
+    parser.add_argument("--random-map", action="store_true", help="랜덤 지형 (기본값)")
     parser.add_argument("--no-terrain", action="store_true", help="벽 없는 빈 경기장")
     parser.add_argument("--stage2", action="store_true", help="진흙/부서지는 벽 켜기")
     args = parser.parse_args()
@@ -261,7 +291,7 @@ def main():
     cfg = GameConfig()
     tc = cfg.terrain
     tc.enabled = not args.no_terrain
-    tc.random_map = args.random_map
+    tc.random_map = args.random_map or not args.map   # --map을 주지 않으면 랜덤 지형
     tc.mud_enabled = tc.breakable_enabled = args.stage2
     if args.map:
         tc.map_name = args.map

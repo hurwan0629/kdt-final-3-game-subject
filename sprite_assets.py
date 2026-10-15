@@ -6,11 +6,59 @@ import numpy as np
 import pygame
 
 from config import resource_path
+from progression import BARREL_OVERRIDES
+
+ENEMY_SUFFIX = "@enemy"   # "ships/Lv10_트윈@enemy" → 같은 그림의 청록 선체를 붉은색으로 바꿔 쓴다
+ELITE_SUFFIX = "@elite"   # 엘리트 적은 금색 선체
+HULL_TINTS = {ENEMY_SUFFIX: (1.0, 0.32, 0.35), ELITE_SUFFIX: (1.0, 0.72, 0.18)}
+
+
+def _hull_mask(rgb, alpha):
+    return (alpha > 100) & (rgb[:, :, 1] > rgb[:, :, 0] + 30) & (rgb[:, :, 2] > rgb[:, :, 0] + 30)
+
+
+def _recolor_hull(image, tint):
+    """청록색 선체와 테두리만 같은 밝기의 다른 색으로 바꾼다. 회색 포신은 그대로."""
+    image = image.copy()
+    rgb = pygame.surfarray.pixels3d(image)
+    src = rgb.astype(np.float32)
+    teal = (src[:, :, 2] - src[:, :, 0]) > 20
+    value = src.max(axis=2)
+    # 안티에일리어싱된 가장자리는 청록 정도만큼만 섞는다.
+    mix = np.clip((src[:, :, 2] - src[:, :, 0]) / 120.0, 0, 1)[..., None] * teal[..., None]
+    color = np.stack([value * k for k in tint], axis=2)
+    rgb[...] = (src * (1 - mix) + color * mix).astype(np.uint8)
+    del rgb
+    return image
+
+
+def _redraw_barrel(image, forward, inner):
+    """원본의 작은 회색 포신을 지우고 같은 그림체의 굵은 포신을 선체 아래에 그린다."""
+    rgb = pygame.surfarray.array3d(image).astype(np.int16)
+    alpha = pygame.surfarray.array_alpha(image)
+    xs, ys = np.where(_hull_mask(rgb, alpha))
+    cx, cy = (xs.min() + xs.max() + 1) / 2, (ys.min() + ys.max() + 1) / 2
+    radius = max(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1) / 2
+    hull = image.copy()
+    gray = (np.abs(rgb[:, :, 0] - rgb[:, :, 1]) < 25) & (np.abs(rgb[:, :, 1] - rgb[:, :, 2]) < 25)
+    hull_alpha = pygame.surfarray.pixels_alpha(hull)
+    hull_alpha[gray & (alpha > 0)] = 0
+    del hull_alpha
+    out = pygame.Surface(image.get_size(), pygame.SRCALPHA)
+    edge = max(2, round(radius * 0.08))
+    half = inner * radius + edge
+    tip = forward * radius
+    outer = pygame.Rect(0, 0, round(tip), round(2 * half))
+    outer.midleft = (round(cx), round(cy))
+    pygame.draw.rect(out, (85, 85, 85), outer, border_radius=edge)
+    pygame.draw.rect(out, (153, 153, 153), outer.inflate(-2 * edge, -2 * edge))
+    out.blit(hull, (0, 0))
+    return out
 
 
 class SpriteAssets:
     def __init__(self):
-        self._source = lru_cache(maxsize=64)(self._source)
+        self._source = lru_cache(maxsize=96)(self._source)
         self._ship_geometry = lru_cache(maxsize=32)(self._ship_geometry)
         self._ship_base = lru_cache(maxsize=32)(self._ship_base)
         self._scaled = lru_cache(maxsize=192)(self._scaled)
@@ -21,10 +69,19 @@ class SpriteAssets:
         self._projectile_rotated = lru_cache(maxsize=256)(self._projectile_rotated)
 
     def _source(self, path):
-        return pygame.image.load(resource_path(f"assets/{path}.png")).convert_alpha()
+        for suffix, tint in HULL_TINTS.items():
+            if path.endswith(suffix):
+                return _recolor_hull(self._source(path[:-len(suffix)]), tint)
+        image = pygame.image.load(resource_path(f"assets/{path}.png")).convert_alpha()
+        if path in BARREL_OVERRIDES:
+            image = _redraw_barrel(image, *BARREL_OVERRIDES[path])
+        return image
 
     def _ship_geometry(self, path):
         """회색 포신을 제외한 청록색 선체의 경계와 중심을 구한다."""
+        for suffix in HULL_TINTS:  # 색을 바꾼 적 그림도 원본 선체 기준을 쓴다
+            if path.endswith(suffix):
+                return self._ship_geometry(path[:-len(suffix)])
         source = self._source(path)
         rgb = pygame.surfarray.array3d(source).astype(np.int16)
         alpha = pygame.surfarray.array_alpha(source)
