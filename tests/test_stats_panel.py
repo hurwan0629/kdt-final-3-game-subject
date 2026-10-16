@@ -121,7 +121,7 @@ class StatsPanelTests(unittest.TestCase):
             game.upgrade_stat(key)
         stats = dict(player_stat_summary(game))
         self.assertEqual(stats["체력"], "125 / 125")
-        self.assertEqual(stats["자가 수리"], "3.0 / 초")
+        self.assertEqual(stats["자가 수리"], "3.8 / 초")   # 체력 125/100배만큼 회복도 비례해서 커짐
         self.assertEqual(stats["탄창"], "120 / 120")
         self.assertEqual(stats["재장전 시간"], "2.50초")
         for weapon in ("rookie", "triple_wing", "penta_wing", "railgunner", "hyper_railgun"):

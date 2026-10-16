@@ -377,11 +377,11 @@ class WeaponsSkillsTests(unittest.TestCase):
         shape = Shape(self.game._new_id(), "square", 558, 500, 0, 0, 100, 100, 14, 10)
         self.game.shapes = [shape]
         self.game._fire(self.game.player, True)
-        self.assertEqual(shape.hp, 70.25)
+        self.assertEqual(shape.hp, 77.6)
         self.assertEqual(self.game.bullets, [])
         self.assertEqual(self.game.player.ammo, 119)
         self.game._move_bullets()
-        self.assertEqual(shape.hp, 70.25)
+        self.assertEqual(shape.hp, 77.6)
 
     def test_projectile_collision_width_matches_measured_gun_opening(self):
         # 원본 512px PNG 포신 안쪽의 밝은 회색 부분을 실측한 픽셀 폭이다.

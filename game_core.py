@@ -1060,7 +1060,10 @@ class GameCore:
         p = self.player
         c = self.cfg
         if p.hp > 0 and self.frame - p.last_hit_frame >= c.regen_delay:
-            p.hp = min(p.max_hp, p.hp + c.regen_rate + p.regen_bonus)
+            # 체력(hull 스탯·전직 보너스 등)이 늘어난 만큼 회복량도 비례해서 커진다
+            # (기준 체력 대비 같은 비율로 회복 → 최대 체력의 일정 %/초를 유지).
+            rate = c.regen_rate * (p.max_hp / c.player_hp)
+            p.hp = min(p.max_hp, p.hp + rate + p.regen_bonus)
 
 
 def _segment_circle_hit(x0, y0, x1, y1, cx, cy, radius):
