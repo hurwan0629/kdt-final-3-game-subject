@@ -58,27 +58,33 @@ class EnemyGrowthTests(unittest.TestCase):
         self.assertEqual(game.enemy_scale_tier, ai.max_scale_tier)
         self.assertGreaterEqual(min(x.fire_cooldown_max for x in game.enemies), ai.min_fire_cooldown)
 
-    def test_enemies_mirror_player_stat_picks_but_weaker(self):
-        """플레이어가 스탯 카드를 찍으면 적도 같은 항목이 비율(stat_mirror_ratio)만큼 따라 오른다."""
-        game = open_game(enemies=2, seed=5, mercy_seconds=0)
+    def test_enemies_get_a_random_build_from_a_budget_tied_to_player_picks(self):
+        """적의 스탯 '총량'은 플레이어 픽 수 × stat_mirror_ratio로 정해지지만,
+        그 포인트를 어느 항목에 쓸지는 개체마다 무작위라 build가 서로 다르다."""
+        game = open_game(enemies=8, seed=5, mercy_seconds=0)
         ai = game.cfg.enemy_ai
-        e = game.enemies[0]
-        base_hp, base_damage, base_cooldown, base_accel = e.max_hp, e.damage_scale, e.fire_cooldown_max, e.accel_scale
         game._add_score(10 ** 6)
         for key, times in (("damage", 3), ("hull", 2), ("speed", 1), ("rapid", 1), ("range", 1)):
             for _ in range(times):
                 self.assertTrue(game.upgrade_stat(key))
-        enemy_damage_lv = int(3 * ai.stat_mirror_ratio)
-        enemy_hull_lv = int(2 * ai.stat_mirror_ratio)
-        self.assertLess(enemy_damage_lv, 3)   # 플레이어보다 약하게 성장
-        self.assertAlmostEqual(e.damage_scale, base_damage * (1.25 ** enemy_damage_lv))
-        self.assertAlmostEqual(e.max_hp, base_hp + 25 * enemy_hull_lv)
-        self.assertGreaterEqual(e.accel_scale, base_accel)
-        self.assertLessEqual(e.fire_cooldown_max, base_cooldown)
-        self.assertGreaterEqual(e.bullet_speed_scale, 1.0)
-        # 적은 플레이어가 고른 능력치 배율 자체보다 항상 약하다.
-        p = game.player
-        self.assertLess(e.damage_scale / base_damage, p.damage_scale)
+        budget = game._enemy_stat_budget()
+        self.assertEqual(budget, sum(int(n * ai.stat_mirror_ratio) for n in (3, 2, 1, 1, 1)))
+        self.assertGreater(budget, 0)
+        self.assertLess(budget, sum(game.stat_levels.values()))   # 총량은 플레이어보다 항상 적다
+
+        builds = []
+        for e in game.enemies:
+            self.assertEqual(sum(e.stat_levels.values()), budget)   # 포인트 총량은 모두 같다
+            self.assertTrue(all(v >= 0 for v in e.stat_levels.values()))
+            builds.append(tuple(e.stat_levels[k] for k in sorted(e.stat_levels)))
+        self.assertGreater(len(set(builds)), 1)   # 어디에 찍는지는 개체마다 다르다
+
+        # 레벨업으로 포인트 총량이 늘면 다시 무작위로 재배분된다.
+        self.assertTrue(game.upgrade_stat("damage"))
+        new_budget = game._enemy_stat_budget()
+        self.assertGreater(new_budget, budget)
+        for e in game.enemies:
+            self.assertEqual(sum(e.stat_levels.values()), new_budget)
 
     def test_enemies_respawn_off_screen_when_possible_but_never_fail_to_spawn(self):
         game = open_game(enemies=1, seed=3, mercy_seconds=0)

@@ -88,6 +88,7 @@ class Tank:
     reload_scale: float = 1.0
     pending_shots: list = field(default_factory=list)
     elite: bool = False              # 엘리트 적: 체력/공격력 강화, 처치 시 플레이어 회복
+    stat_levels: dict = field(default_factory=dict)  # 개체별로 무작위 배분된 스탯 레벨
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -357,6 +358,7 @@ class GameCore:
         mercy = self._mercy_factor()
         elite_chance = ai.elite_chance * (ai.mercy_elite_chance_scale + (1 - ai.mercy_elite_chance_scale) * mercy)
         e.elite = bool(self.rng.random() < elite_chance)
+        self._roll_enemy_stats(e)
         self._apply_enemy_strength(e)
         # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선, 그중에서도 화면 밖을 우선한다.
         others = [o for o in getattr(self, "enemies", []) if o.alive and o is not e]
@@ -369,14 +371,21 @@ class GameCore:
                     all((sx - o.x) ** 2 + (sy - o.y) ** 2 >= (2 * e.radius) ** 2 for o in others):
                 starts.append((sx, sy))
         offscreen_starts = [s for s in starts if self._is_offscreen(*s)]
-        if offscreen_starts:
+        # 맵의 E 지점은 몇 개 안 되는데, 다른 적들이 그 자리를 차지하고 있거나 화면이 월드의
+        # 상당 부분을 덮는 설정에서는 화면 밖 후보가 1~2개로 좁혀져 매번 같은 자리/방향에서
+        # 적이 줄지어 나오게 된다. 후보가 적을 때는 맵 전체의 화면 밖 빈 공간에서 고르게
+        # 뽑아 다양성을 확보한다.
+        if len(offscreen_starts) >= 3:
             e.x, e.y = offscreen_starts[int(self.rng.integers(len(offscreen_starts)))]
-        elif starts:
-            e.x, e.y = starts[int(self.rng.integers(len(starts)))]
         else:
             offscreen_tiles = tuple(t for t in tm.navigation_tiles(e.radius)
                                      if self._is_offscreen(*tm.center(*t)))
-            e.x, e.y = self._random_free_pos(e.radius, 300.0, tiles=offscreen_tiles or None)
+            if offscreen_tiles:
+                e.x, e.y = self._random_free_pos(e.radius, 300.0, tiles=offscreen_tiles)
+            elif starts:
+                e.x, e.y = starts[int(self.rng.integers(len(starts)))]
+            else:
+                e.x, e.y = self._random_free_pos(e.radius, 300.0)
         e.vx = e.vy = 0.0
         e.hp = e.max_hp
         e.alive = True
@@ -404,9 +413,20 @@ class GameCore:
             return 1.0
         return min(1.0, self.frame / (ai.mercy_seconds * self.cfg.fps))
 
-    def _enemy_stat_level(self, key):
-        """플레이어가 찍은 스탯 카드를 적도 일부(stat_mirror_ratio)만큼 따라간다."""
-        return int(self.stat_levels.get(key, 0) * self.cfg.enemy_ai.stat_mirror_ratio)
+    def _enemy_stat_budget(self):
+        """플레이어가 찍은 스탯 총량을 일부(stat_mirror_ratio)만큼 적의 '배분 가능한 포인트'로 쓴다."""
+        ratio = self.cfg.enemy_ai.stat_mirror_ratio
+        return sum(int(self.stat_levels.get(card.key, 0) * ratio) for card in STAT_UPGRADES)
+
+    def _roll_enemy_stats(self, e: Tank):
+        """같은 포인트 총량이라도 개체마다 다른 항목에 무작위로 배분해 build가 갈리게 한다."""
+        keys = [card.key for card in STAT_UPGRADES]
+        budget = self._enemy_stat_budget()
+        if budget <= 0:
+            e.stat_levels = dict.fromkeys(keys, 0)
+            return
+        counts = self.rng.multinomial(budget, [1.0 / len(keys)] * len(keys))
+        e.stat_levels = {key: int(n) for key, n in zip(keys, counts)}
 
     def _apply_enemy_strength(self, e: Tank):
         """시간 단계·우주선 종류·플레이어 스탯 성장에 맞춰 적 능력치를 다시 계산한다.
@@ -421,11 +441,15 @@ class GameCore:
         # 대형 선체의 체력 보너스는 플레이어의 절반만 받는다.
         elite_hp, elite_damage = (ai.elite_hp_scale, ai.elite_damage_scale) if e.elite else (1.0, 1.0)
         # 플레이어의 upgrade_stat()과 같은 배율을 적용한다(hull은 +25, 나머지는 레벨당 배율).
-        hull_lv = self._enemy_stat_level("hull")
-        damage_lv = self._enemy_stat_level("damage")
-        rapid_lv = self._enemy_stat_level("rapid")
-        speed_lv = self._enemy_stat_level("speed")
-        range_lv = self._enemy_stat_level("range")
+        # 어느 항목에 얼마나 찍혔는지는 개체마다 무작위로 다르다(_roll_enemy_stats).
+        if not e.stat_levels:
+            self._roll_enemy_stats(e)
+        levels = e.stat_levels
+        hull_lv = levels.get("hull", 0)
+        damage_lv = levels.get("damage", 0)
+        rapid_lv = levels.get("rapid", 0)
+        speed_lv = levels.get("speed", 0)
+        range_lv = levels.get("range", 0)
         e.max_hp = ((c.enemy_hp + spec.hp_bonus * 0.5 + 25 * hull_lv)
                     * (1 + ai.hp_growth * tier) * elite_hp * hp_mercy)
         e.hp = e.max_hp * ratio
@@ -559,6 +583,7 @@ class GameCore:
         self.upgrade_points -= 1
         self.stat_levels[key] += 1
         for e in self.enemies:
+            self._roll_enemy_stats(e)   # 늘어난 포인트 총량을 다시 무작위로 재배분
             self._apply_enemy_strength(e)
             e.cooldown = min(e.cooldown, e.fire_cooldown_max)
         self._reward_notice(next(card.title for card in STAT_UPGRADES if card.key == key))
