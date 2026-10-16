@@ -43,6 +43,12 @@ class EnemyAIConfig:
     hearing_frames: int = 30         # 발사 후 이 시간 동안 소리가 들린다
     alert_range: float = 700.0       # 플레이어를 본 적이 이 거리 안의 동료에게 위치를 알린다
     alert_start_seconds: float = 120.0  # 동료 호출은 게임 시작 후 이 시간이 지나야 켜진다 (초반 난이도 완화)
+    # 초반 봐주기: 게임 시작 후 mercy_seconds 동안 적이 아래 배율에서 1.0까지 서서히 강해진다
+    mercy_seconds: float = 45.0
+    mercy_hp_scale: float = 0.7
+    mercy_damage_scale: float = 0.55
+    mercy_fire_rate_scale: float = 0.7
+    mercy_elite_chance_scale: float = 0.0   # 0이면 mercy_seconds 동안 엘리트가 등장하지 않음
     lead_aim: float = 0.65           # 이동 예측 조준 비율 (0이면 현재 위치를 조준)
     keep_distance: float = 230.0     # 플레이어와 유지하려는 거리
     respawn_frames: int = 300        # 사망 후 재등장까지 프레임 (5초)
@@ -64,6 +70,9 @@ class EnemyAIConfig:
     elite_damage_scale: float = 1.6
     elite_heal_ratio: float = 0.4    # 처치 시 플레이어 최대 체력의 40% 회복
     elite_score_scale: float = 2.0
+    # 적 능력치 강화: 플레이어가 스탯 카드를 찍을 때마다 같은 항목을 적에게도 반영한다.
+    # 비율이 1보다 작을수록 적이 플레이어보다 약하게 성장한다(다수이므로).
+    stat_mirror_ratio: float = 0.6
 
 
 @dataclass
@@ -75,10 +84,12 @@ class TerrainConfig:
     map_pool: tuple = ()             # 비어있지 않으면 reset마다 seed로 이 중 하나 선택
     random_map: bool = True          # True면 reset마다 랜덤 블록 지형, False면 map_name 미로
     # 랜덤 지형 (diep.io 미로 모드 느낌): 큰 블록 격자 미로에서 벽 일부를 뚫는다
-    block_tiles: int = 5                 # 블록 한 변 (5칸 = 240px, 통로 폭)
+    block_tiles: int = 8                 # 블록 한 변 (8칸 = 384px, 통로/벽 폭 — 더 개방감 있게)
     extra_openings: float = 0.6          # 미로에서 막힌 연결 벽을 추가로 뚫는 비율 (클수록 덜 갑갑)
     pillar_removal: float = 0.5          # 벽 기둥을 없애 넓은 공간을 만드는 비율
-    wall_merge: float = 0.05             # 벽 옆 바닥 블록을 메워 큰 벽 덩어리를 만드는 비율
+    wall_merge: float = 0.0              # 벽 옆 바닥 블록을 메워 큰 벽 덩어리를 만드는 비율
+    # 0보다 크면 가끔 ㄱ/ㄷ자처럼 꺾인 벽 덩어리가 생긴다. 각진 미로 느낌보다
+    # 단순한 사각 장애물이 흩어진 느낌을 원해서 기본은 끈다.
     random_wall_density: float = 0.14    # 이전 설정 호환용: 미로 밀도는 통로/벽 두께로 결정
     wall_thickness: int = 4
     wall_min_length: int = 6
@@ -101,7 +112,7 @@ class GameConfig:
     height: int = 720
     window_width: int = 1280
     window_height: int = 800
-    world_scale: int = 3             # 2880x2160 전체 미로, 60x45 타일 (반복 배치하지 않음)
+    world_scale: int = 5              # 4800x3600 전체 미로, 100x75 타일 (기존 2880x2160의 약 1.67배)
     camera_zoom: float = 0.6         # 기본 창에서 약 2133x1333 월드 영역 표시
     progression_enabled: bool = True
     level_xp_base: int = 60
@@ -120,8 +131,8 @@ class GameConfig:
     # 플레이어
     player_hp: float = 100.0
     player_fire_cooldown: int = 28   # 기본 발사 간격 (프레임): 초당 약 2.1발
-    limited_ammo: bool = True
-    player_ammo: int = 120           # 탄창 용량 (예비 탄약은 무제한)
+    limited_ammo: bool = True        # False면 탄약 무제한 (재장전도 필요 없음) — main.py 기본 실행은 False로 켬
+    player_ammo: int = 120           # limited_ammo=True일 때만 쓰는 탄창 용량
     reload_seconds: float = 2.5
     regen_delay: int = 240           # 마지막 피격 후 회복 시작까지 프레임
     regen_rate: float = 0.05         # 프레임당 회복량

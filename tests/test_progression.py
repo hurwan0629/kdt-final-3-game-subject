@@ -75,6 +75,25 @@ class ProgressionTests(unittest.TestCase):
         self.assertTrue(game.choose_reward(0))
         self.assertEqual(game.special_reward_levels, [])
 
+    def test_regen_rate_scales_with_max_hp_from_hull_upgrades(self):
+        game = empty_game()
+        c, p = game.cfg, game.player
+        game.level, game.upgrade_points = 2, 2
+        p.hp = 1.0
+        p.last_hit_frame = -10 ** 9   # 회복 대기 시간 지남
+        game._regen_player()
+        base_regen = p.hp - 1.0
+        self.assertAlmostEqual(base_regen, c.regen_rate)
+        self.assertTrue(game.upgrade_stat("hull"))
+        self.assertTrue(game.upgrade_stat("hull"))
+        self.assertEqual(p.max_hp, c.player_hp + 50)
+        p.hp = 1.0
+        game._regen_player()
+        boosted_regen = p.hp - 1.0
+        # 최대 체력이 늘어난 비율만큼 회복량도 같이 커진다 (최대 체력 대비 %는 그대로 유지).
+        self.assertAlmostEqual(boosted_regen, base_regen * (p.max_hp / c.player_hp))
+        self.assertGreater(boosted_regen, base_regen)
+
     def test_every_card_changes_the_advertised_stat(self):
         for card in STAT_UPGRADES:
             with self.subTest(card=card.key):
@@ -170,7 +189,7 @@ class WorldTests(unittest.TestCase):
                 cfg.terrain.mud_enabled = cfg.terrain.breakable_enabled = stage2
                 game = GameCore(cfg, seed=1)
                 with self.subTest(map=name, stage2=stage2):
-                    self.assertEqual((game.terrain.cols, game.terrain.rows), (60, 45))
+                    self.assertEqual((game.terrain.cols, game.terrain.rows), (100, 75))
                     self.assertTrue(game.terrain.is_connected())
                     self.assertFalse(game.terrain.is_solid_at(game.player.x, game.player.y))
         cfg.world_scale = 1
@@ -235,7 +254,7 @@ class RendererTests(unittest.TestCase):
         p.x = game.cfg.world_width - p.radius
         p.y = game.cfg.world_height - p.radius
         renderer._update_camera(p)
-        self.assertEqual((renderer.camera_x, renderer.camera_y), (1280, 960))
+        self.assertEqual((renderer.camera_x, renderer.camera_y), (3200, 2400))
         game._add_score(190)
         game.open_rewards()
         renderer.draw(game)

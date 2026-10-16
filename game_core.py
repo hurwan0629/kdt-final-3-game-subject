@@ -28,6 +28,10 @@ N_ROTS = 3          # 0=유지, 1=왼쪽(반시계), 2=오른쪽(시계)
 N_ACTIONS = N_MOVES * N_ROTS
 ROT_DIR = (0.0, -1.0, 1.0)
 
+# 스나이퍼 계열(단발 장거리): 포탄 그림을 쓰고, 다수 상대 약점을 보완하는 관통을 1회 받는다.
+SNIPER_LINE_JOBS = ("sniper", "railgunner", "hyper_railgun", "hunter", "predator")
+SNIPER_PIERCE = 1
+
 
 def encode_action(move: int, rot: int) -> int:
     return move * N_ROTS + rot
@@ -88,6 +92,7 @@ class Tank:
     reload_scale: float = 1.0
     pending_shots: list = field(default_factory=list)
     elite: bool = False              # 엘리트 적: 체력/공격력 강화, 처치 시 플레이어 회복
+    stat_levels: dict = field(default_factory=dict)  # 개체별로 무작위 배분된 스탯 레벨
     # 적 AI 상태
     ai_timer: int = 0
     ai_target: tuple = None      # ("player", id) | ("shape", id) | None
@@ -135,6 +140,8 @@ class Bullet:
     kind: str = "plasma"
     arming_frames: int = 0
     homing: bool = False
+    pierce: int = 0                  # 남은 관통 횟수 (스나이퍼 계열: 다수 상대 약점 완화)
+    hit_ids: set = field(default_factory=set)   # 이미 맞힌 대상 (관통 중 중복 피해 방지)
 
 
 @dataclass
@@ -303,17 +310,21 @@ class GameCore:
         """여러 후보 중 다른 천체와 가장 멀리 떨어진 곳을 골라 고르게 퍼뜨린다.
 
         판 도중에는 플레이어 눈앞이 아닌 먼 곳만 후보로 쓴다. 겹치는 후보는 쓰지 않는다.
+        벽 구석에 너무 붙으면 적들이 거리 유지(140px)를 하려다 구석에 몰려 끼므로,
+        그 정도 여유가 있는 자리를 더 선호한다(강제는 아님 — 좁은 맵에서도 스폰은 돼야 함).
         """
         c, p = self.cfg, self.player
+        orbit_clearance = radius + 140.0
         best, valid = None, 0
         for _ in range(c.shape_spawn_candidates * 6):
             x, y = self._random_free_pos(radius, c.spawn_min_dist_from_tanks)
             clearance = min((math.hypot(s.x - x, s.y - y) - s.radius - radius for s in self.shapes), default=math.inf)
             far = self.frame == 0 or math.hypot(x - p.x, y - p.y) >= c.shape_respawn_dist_from_player
-            ok = far and clearance >= c.shape_spawn_gap
+            roomy = self.terrain.circle_fits(x, y, orbit_clearance)
+            ok = far and clearance >= c.shape_spawn_gap and roomy
             valid += ok
-            # 우선순위: 조건 모두 만족 > 겹치지 않음 > 플레이어와 멂 > 다른 천체와 멂
-            score = (ok, clearance >= 0, far, clearance)
+            # 우선순위: 조건 모두 만족 > 겹치지 않음 > 플레이어와 멂 > 벽에서 여유 있음 > 다른 천체와 멂
+            score = (ok, clearance >= 0, far, roomy, clearance)
             if best is None or score > best[0]:
                 best = score, x, y
             if valid >= c.shape_spawn_candidates:
@@ -338,9 +349,13 @@ class GameCore:
         tm = self.terrain
         p = self.player
         e.job = self._random_enemy_job()
-        e.elite = bool(self.rng.random() < self.cfg.enemy_ai.elite_chance)
+        ai = self.cfg.enemy_ai
+        mercy = self._mercy_factor()
+        elite_chance = ai.elite_chance * (ai.mercy_elite_chance_scale + (1 - ai.mercy_elite_chance_scale) * mercy)
+        e.elite = bool(self.rng.random() < elite_chance)
+        self._roll_enemy_stats(e)
         self._apply_enemy_strength(e)
-        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선
+        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선 (화면 안이든 밖이든 상관없음).
         others = [o for o in getattr(self, "enemies", []) if o.alive and o is not e]
         starts = []
         for s in tm.enemy_starts:
@@ -374,26 +389,69 @@ class GameCore:
         jobs = SHIPS_BY_LEVEL[SHIPS[self.player.job].level]
         return jobs[int(self.rng.integers(len(jobs)))]
 
+    def _mercy_factor(self):
+        """0(게임 시작)~1(mercy_seconds 지남): 초반 적 약화 배율이 정상으로 돌아오는 진행도."""
+        ai = self.cfg.enemy_ai
+        if ai.mercy_seconds <= 0:
+            return 1.0
+        return min(1.0, self.frame / (ai.mercy_seconds * self.cfg.fps))
+
+    def _enemy_stat_budget(self):
+        """플레이어가 찍은 스탯 총량을 일부(stat_mirror_ratio)만큼 적의 '배분 가능한 포인트'로 쓴다."""
+        ratio = self.cfg.enemy_ai.stat_mirror_ratio
+        return sum(int(self.stat_levels.get(card.key, 0) * ratio) for card in STAT_UPGRADES)
+
+    def _roll_enemy_stats(self, e: Tank):
+        """같은 포인트 총량이라도 개체마다 다른 항목에 무작위로 배분해 build가 갈리게 한다."""
+        keys = [card.key for card in STAT_UPGRADES]
+        budget = self._enemy_stat_budget()
+        if budget <= 0:
+            e.stat_levels = dict.fromkeys(keys, 0)
+            return
+        counts = self.rng.multinomial(budget, [1.0 / len(keys)] * len(keys))
+        e.stat_levels = {key: int(n) for key, n in zip(keys, counts)}
+
     def _apply_enemy_strength(self, e: Tank):
-        """시간 단계와 우주선 종류에 맞춰 적 능력치를 다시 계산한다. 현재 체력 비율은 유지."""
+        """시간 단계·우주선 종류·플레이어 스탯 성장에 맞춰 적 능력치를 다시 계산한다.
+        현재 체력 비율은 유지."""
         c, ai, spec = self.cfg, self.cfg.enemy_ai, SHIPS[e.job]
         tier = self.enemy_scale_tier
+        mercy = self._mercy_factor()
+        hp_mercy = ai.mercy_hp_scale + (1 - ai.mercy_hp_scale) * mercy
+        damage_mercy = ai.mercy_damage_scale + (1 - ai.mercy_damage_scale) * mercy
+        fire_rate_mercy = ai.mercy_fire_rate_scale + (1 - ai.mercy_fire_rate_scale) * mercy
         ratio = e.hp / e.max_hp if e.max_hp > 0 else 1.0
         # 대형 선체의 체력 보너스는 플레이어의 절반만 받는다.
         elite_hp, elite_damage = (ai.elite_hp_scale, ai.elite_damage_scale) if e.elite else (1.0, 1.0)
-        e.max_hp = (c.enemy_hp + spec.hp_bonus * 0.5) * (1 + ai.hp_growth * tier) * elite_hp
+        # 플레이어의 upgrade_stat()과 같은 배율을 적용한다(hull은 +25, 나머지는 레벨당 배율).
+        # 어느 항목에 얼마나 찍혔는지는 개체마다 무작위로 다르다(_roll_enemy_stats).
+        if not e.stat_levels:
+            self._roll_enemy_stats(e)
+        levels = e.stat_levels
+        hull_lv = levels.get("hull", 0)
+        damage_lv = levels.get("damage", 0)
+        rapid_lv = levels.get("rapid", 0)
+        speed_lv = levels.get("speed", 0)
+        range_lv = levels.get("range", 0)
+        e.max_hp = ((c.enemy_hp + spec.hp_bonus * 0.5 + 25 * hull_lv)
+                    * (1 + ai.hp_growth * tier) * elite_hp * hp_mercy)
         e.hp = e.max_hp * ratio
         e.radius = c.tank_radius * spec.radius_scale
-        e.damage_scale = (1 + ai.damage_growth * tier) * elite_damage
-        e.fire_cooldown_max = max(ai.min_fire_cooldown, round(ai.fire_cooldown / (1 + ai.fire_rate_growth * tier)))
-        e.accel_scale = 1 + ai.speed_growth * tier
+        e.damage_scale = (1 + ai.damage_growth * tier) * elite_damage * damage_mercy * (1.25 ** damage_lv)
+        rapid_factor = (1 + ai.fire_rate_growth * tier) * fire_rate_mercy * ((1 / 0.95) ** rapid_lv)
+        e.fire_cooldown_max = max(ai.min_fire_cooldown, round(ai.fire_cooldown / rapid_factor))
+        e.accel_scale = (1 + ai.speed_growth * tier) * (1.07 ** speed_lv)
+        e.bullet_speed_scale = 1.2 ** range_lv
+        e.bullet_life_scale = 1.15 ** range_lv
         e.projectiles = len(spec.shots)
 
     def _update_enemy_scaling(self):
         ai = self.cfg.enemy_ai
         tier = min(ai.max_scale_tier, int(self.frame / (ai.scale_interval_seconds * self.cfg.fps)))
-        if tier != self.enemy_scale_tier:
+        tier_changed = tier != self.enemy_scale_tier
+        if tier_changed:
             self.enemy_scale_tier = tier
+        if tier_changed or self.frame <= ai.mercy_seconds * self.cfg.fps:
             for e in self.enemies:
                 self._apply_enemy_strength(e)
 
@@ -507,6 +565,10 @@ class GameCore:
             p.bullet_life_scale *= 1.15
         self.upgrade_points -= 1
         self.stat_levels[key] += 1
+        for e in self.enemies:
+            self._roll_enemy_stats(e)   # 늘어난 포인트 총량을 다시 무작위로 재배분
+            self._apply_enemy_strength(e)
+            e.cooldown = min(e.cooldown, e.fire_cooldown_max)
         self._reward_notice(next(card.title for card in STAT_UPGRADES if card.key == key))
         self.stat_choices = ()
         self.open_stat_upgrades()
@@ -561,10 +623,12 @@ class GameCore:
         # 포신이 벽과 겹쳐도 벽 뒤에서 탄이 생기지 않게 실제 포신 축을 따라 자른다.
         if wall is not None:
             reach = max(0.0, reach - 0.01)
+        is_sniper_line = tank.job in SNIPER_LINE_JOBS
         bullet = Bullet(
             base_x + ca * reach, base_y + sa * reach, ca * speed * shot.speed, sa * speed * shot.speed,
             max(1, int(life * shot.life)), tank.id, tank.team, damage * shot.damage, radius,
-            kind="shell" if tank.job in ("sniper", "railgunner", "hyper_railgun", "hunter", "predator") else "plasma")
+            kind="shell" if is_sniper_line else "plasma",
+            pierce=SNIPER_PIERCE if is_sniper_line else 0)
         # 길어진 포신과 이미 겹친 작은 천체/적을 포구 뒤에 남겨 놓고 발사하지 않는다.
         bullet.prev_x, bullet.prev_y = base_x, base_y
         if not self._bullet_hit(bullet):
@@ -775,7 +839,11 @@ class GameCore:
 
         tgt = self._target_pos(e)
         if tgt is None and e.ai_target is not None and e.ai_target[0] != "player":
+            # 쫓던 천체가 (다른 적에게) 부서져 사라졌을 수 있다. 다음 반응 주기까지
+            # 기다리지 않고 바로 새 목표를 고르게 해서 구석에 계속 머무르지 않게 한다.
             e.ai_target = None
+            e.ai_path = []
+            e.ai_timer = 0
 
         # 3) 이동
         direct = False
@@ -907,13 +975,16 @@ class GameCore:
         self.shapes = [s for s in self.shapes if s.hp > 0]
 
     def _bullet_hit(self, b: Bullet) -> bool:
-        """모든 탄환은 이동 구간의 첫 대상만 타격하고 소멸한다."""
+        """탄환은 이동 구간에서 가장 가까운 대상 하나를 맞힌다. 관통(pierce)이 남아있으면
+        맞은 대상은 넘기고 계속 날아간다(같은 대상을 두 번 맞히지 않음). 반환값이 True면
+        탄환이 사라진다."""
         by_player = b.team == "player"
         targets = self.enemies if by_player else (self.player,)
         hits = []
         sx, sy = (b.prev_x, b.prev_y) if b.prev_x is not None else (b.x, b.y)
         for target in list(targets) + self.shapes:
-            if target.hp <= 0 or (isinstance(target, Tank) and not target.alive):
+            if (target.hp <= 0 or (isinstance(target, Tank) and not target.alive)
+                    or target.id in b.hit_ids):
                 continue
             fraction = _segment_circle_hit(sx, sy, b.x, b.y, target.x, target.y, target.radius + b.radius)
             if fraction is not None:
@@ -928,6 +999,10 @@ class GameCore:
             self._damage_tank(target, b.damage, by_player)
         else:
             self._damage_shape(target, b.damage, by_player)
+        if b.pierce > 0:
+            b.pierce -= 1
+            b.hit_ids.add(target.id)
+            return False
         return True
 
     def _damage_tank(self, t: Tank, dmg: float, by_player: bool):
@@ -1006,7 +1081,10 @@ class GameCore:
         p = self.player
         c = self.cfg
         if p.hp > 0 and self.frame - p.last_hit_frame >= c.regen_delay:
-            p.hp = min(p.max_hp, p.hp + c.regen_rate + p.regen_bonus)
+            # 체력(hull 스탯·전직 보너스 등)이 늘어난 만큼 회복량도 비례해서 커진다
+            # (기준 체력 대비 같은 비율로 회복 → 최대 체력의 일정 %/초를 유지).
+            rate = c.regen_rate * (p.max_hp / c.player_hp)
+            p.hp = min(p.max_hp, p.hp + rate + p.regen_bonus)
 
 
 def _segment_circle_hit(x0, y0, x1, y1, cx, cy, radius):

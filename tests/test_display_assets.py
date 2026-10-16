@@ -38,7 +38,7 @@ class DisplayAssetsTests(unittest.TestCase):
     def test_default_window_is_larger_and_resizable(self):
         self.assertEqual(self.renderer.size, (1280, 800))
         self.assertTrue(self.renderer.screen.get_flags() & pygame.RESIZABLE)
-        self.assertEqual((self.cfg.world_width, self.cfg.world_height), (2880, 2160))
+        self.assertEqual((self.cfg.world_width, self.cfg.world_height), (4800, 3600))
 
     def test_fullscreen_menu_round_trip_preserves_world_and_game_state(self):
         self.game._add_score(1980)

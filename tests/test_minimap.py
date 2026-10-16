@@ -12,7 +12,7 @@ import pygame
 
 from config import GameConfig
 from game_core import GameCore, Tank
-from renderer import Renderer, COLORS
+from renderer import Renderer, COLORS, MINIMAP_ALPHA
 from terrain import TileMap, EMPTY, WALL, BREAKABLE
 
 
@@ -38,13 +38,25 @@ class MinimapTests(unittest.TestCase):
         tiles[6][10] = BREAKABLE
         self.game.terrain = TileMap(tiles, 48, (2, 2), [], "minimap-test", self.cfg.terrain)
 
+    @staticmethod
+    def _blended(color, bg=(0, 0, 0)):
+        """미니맵이 지금은 반투명이라, 같은 방식으로 합성한 값과 비교해야 한다."""
+        base = pygame.Surface((1, 1))
+        base.fill(bg)
+        layer = pygame.Surface((1, 1), pygame.SRCALPHA)
+        layer.fill(color)
+        layer.set_alpha(MINIMAP_ALPHA)
+        base.blit(layer, (0, 0))
+        return base.get_at((0, 0))[:3]
+
     def test_full_world_walls_are_drawn_on_light_background(self):
         r = self.renderer
+        r.screen.fill((0, 0, 0))
         r._draw_minimap(self.game)
         area = r.minimap_rect().inflate(-12, -12)
-        self.assertEqual(r.screen.get_at((area.left + 1, area.top + 1))[:3], COLORS["minimap_wall"])
-        self.assertEqual(r.screen.get_at((area.right - 2, area.bottom - 2))[:3], COLORS["minimap_wall"])
-        self.assertEqual(r.screen.get_at(area.center)[:3], COLORS["minimap_floor"])
+        self.assertEqual(r.screen.get_at((area.left + 1, area.top + 1))[:3], self._blended(COLORS["minimap_wall"]))
+        self.assertEqual(r.screen.get_at((area.right - 2, area.bottom - 2))[:3], self._blended(COLORS["minimap_wall"]))
+        self.assertEqual(r.screen.get_at(area.center)[:3], self._blended(COLORS["minimap_floor"]))
 
     def test_marker_position_and_direction_ignore_camera_and_zoom(self):
         r, p = self.renderer, self.game.player
@@ -81,9 +93,14 @@ class MinimapTests(unittest.TestCase):
 
     def test_enemies_and_experience_objects_do_not_appear(self):
         r = self.renderer
+        r.screen.fill((0, 0, 0))
         r._draw_minimap(self.game)
         area = r.minimap_rect()
         before = pygame.image.tobytes(r.screen.subsurface(area), "RGB")
+        # 미니맵이 반투명해지면서 매 프레임 바탕을 다시 채우지 않으면 이전 합성 결과 위에
+        # 또 겹쳐 그려져 색이 누적된다. 실제 게임은 매 프레임 화면을 새로 채우므로 여기서도
+        # 같은 조건으로 다시 채운 뒤 비교한다.
+        r.screen.fill((0, 0, 0))
         self.game.enemies = [Tank(100, "enemy", 800, 600, 60, 60, 44, 36)]
         self.game.shapes = [SimpleNamespace(x=600, y=500, radius=26)]
         r._draw_minimap(self.game)

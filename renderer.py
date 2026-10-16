@@ -52,6 +52,7 @@ SHAPE_FADE_FRAMES = 60  # 천체는 1초 동안 서서히 떠오른다
 SCORE_TEXT_FRAMES = 50  # "+점수" 글자가 떠오르는 시간
 DEATH_FRAMES = 22   # 파괴/폭발 애니메이션 길이
 FLASH_FRAMES = 5    # 피격 깜빡임 길이
+MINIMAP_ALPHA = 165  # 우하단 미니맵 반투명도 (0=완전 투명, 255=불투명)
 
 def _mix(a, b, t):
     return tuple(int(x + (y - x) * t) for x, y in zip(a, b))
@@ -514,6 +515,10 @@ class Renderer:
         else:
             image = self.assets.projectile_image("projectiles/" + path, b.radius * 2, angle)
         x, y = self.world_to_view(b.x, b.y)
+        if b.kind == "shell":
+            # 저격 계열 포탄은 금속 회색이라 우주 배경에 묻히므로 발광을 더해 눈에 띄게 한다.
+            glow = COLORS["enemy_shot"] if b.team == "enemy" else COLORS["player_shot"]
+            self._blit_glow(self.screen, x, y, b.radius * 2.2, glow, 0.9)
         self.screen.blit(image, image.get_rect(center=(round(x), round(y))))
 
     def _draw_ship(self, t, f, is_player=False):
@@ -598,7 +603,12 @@ class Renderer:
         color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS["white"]
         self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))
         reloading = game.reload_frames_left > 0
-        hint = f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초" if reloading else "R: 재장전 · ESC: 메뉴"
+        if reloading:
+            hint = f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초"
+        elif game.cfg.limited_ammo:
+            hint = "R: 재장전 · ESC: 메뉴"
+        else:
+            hint = "ESC: 메뉴"
         self.screen.blit(self.font_small.render(hint, True, COLORS["text"]), (rect.x + 14, rect.y + 33))
         if reloading:
             bar = pygame.Rect(rect.x + 14, rect.y + 54, rect.width - 28, 6)
@@ -645,7 +655,8 @@ class Renderer:
 
         # 메뉴의 조작 안내 설정을 즉시 반영한다.
         if show_controls:
-            for i, hint in enumerate(("WASD 이동 · 마우스 조준 / 발사 · Tab 능력치", "R 재장전 · 1–5 스탯 강화 · ESC 화면 설정")):
+            second_line = "1–5 스탯 강화 · ESC 화면 설정" if not self.cfg.limited_ammo else "R 재장전 · 1–5 스탯 강화 · ESC 화면 설정"
+            for i, hint in enumerate(("WASD 이동 · 마우스 조준 / 발사 · Tab 능력치", second_line)):
                 surf = self.font_small.render(hint, True, COLORS["text"])
                 self.screen.blit(surf, surf.get_rect(midtop=(W / 2 + 30, 10 + i * 23)))
         self._draw_minimap(game)
@@ -694,13 +705,17 @@ class Renderer:
         rect = self.minimap_rect()
         area = rect.inflate(-12, -12)
         self._ensure_minimap(game.terrain, area.size)
-        pygame.draw.rect(self.screen, COLORS["minimap_border"], rect, border_radius=3)
-        self.screen.blit(self._minimap_floor, area.topleft)
-        clip = self.screen.get_clip()
-        self.screen.set_clip(area)
-        marker = self._minimap_marker(game, area)
-        pygame.draw.polygon(self.screen, COLORS["minimap_player"], marker)
-        self.screen.set_clip(clip)
+        # 배경이 비치도록 별도의 알파 표면에 그린 다음 반투명하게 합성한다.
+        layer = pygame.Surface(rect.size, pygame.SRCALPHA)
+        local_area = pygame.Rect(area.left - rect.left, area.top - rect.top, area.width, area.height)
+        pygame.draw.rect(layer, COLORS["minimap_border"], layer.get_rect(), border_radius=3)
+        layer.blit(self._minimap_floor, local_area.topleft)
+        layer.set_clip(local_area)
+        marker = self._minimap_marker(game, local_area)
+        pygame.draw.polygon(layer, COLORS["minimap_player"], marker)
+        layer.set_clip(None)
+        layer.set_alpha(MINIMAP_ALPHA)
+        self.screen.blit(layer, rect.topleft)
 
     def _draw_progression(self, game, show_notice, stats_collapsed=False):
         p = game.player

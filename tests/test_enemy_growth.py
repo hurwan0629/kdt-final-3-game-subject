@@ -17,9 +17,11 @@ from progression import SHIPS, SHIPS_BY_LEVEL, STAT_MAX_LEVEL, STAT_UPGRADES, st
 from renderer import Renderer
 
 
-def open_game(enemies=0, seed=7):
+def open_game(enemies=0, seed=7, mercy_seconds=None):
     cfg = GameConfig(num_enemies=enemies, num_shapes=0)
     cfg.terrain.enabled = False
+    if mercy_seconds is not None:
+        cfg.enemy_ai.mercy_seconds = mercy_seconds
     return GameCore(cfg, seed=seed)
 
 
@@ -39,7 +41,7 @@ def evolve(game, job):
 
 class EnemyGrowthTests(unittest.TestCase):
     def test_enemies_get_stronger_over_time(self):
-        game = open_game(enemies=3)
+        game = open_game(enemies=3, mercy_seconds=0)   # 초반 봐주기 배율과 분리해서 시간 성장만 검증
         ai = game.cfg.enemy_ai
         e = game.enemies[0]
         base = (e.max_hp, e.damage_scale, e.fire_cooldown_max)
@@ -55,6 +57,58 @@ class EnemyGrowthTests(unittest.TestCase):
         game._update_enemy_scaling()
         self.assertEqual(game.enemy_scale_tier, ai.max_scale_tier)
         self.assertGreaterEqual(min(x.fire_cooldown_max for x in game.enemies), ai.min_fire_cooldown)
+
+    def test_enemies_get_a_random_build_from_a_budget_tied_to_player_picks(self):
+        """적의 스탯 '총량'은 플레이어 픽 수 × stat_mirror_ratio로 정해지지만,
+        그 포인트를 어느 항목에 쓸지는 개체마다 무작위라 build가 서로 다르다."""
+        game = open_game(enemies=8, seed=5, mercy_seconds=0)
+        ai = game.cfg.enemy_ai
+        game._add_score(10 ** 6)
+        for key, times in (("damage", 3), ("hull", 2), ("speed", 1), ("rapid", 1), ("range", 1)):
+            for _ in range(times):
+                self.assertTrue(game.upgrade_stat(key))
+        budget = game._enemy_stat_budget()
+        self.assertEqual(budget, sum(int(n * ai.stat_mirror_ratio) for n in (3, 2, 1, 1, 1)))
+        self.assertGreater(budget, 0)
+        self.assertLess(budget, sum(game.stat_levels.values()))   # 총량은 플레이어보다 항상 적다
+
+        builds = []
+        for e in game.enemies:
+            self.assertEqual(sum(e.stat_levels.values()), budget)   # 포인트 총량은 모두 같다
+            self.assertTrue(all(v >= 0 for v in e.stat_levels.values()))
+            builds.append(tuple(e.stat_levels[k] for k in sorted(e.stat_levels)))
+        self.assertGreater(len(set(builds)), 1)   # 어디에 찍는지는 개체마다 다르다
+
+        # 레벨업으로 포인트 총량이 늘면 다시 무작위로 재배분된다.
+        self.assertTrue(game.upgrade_stat("damage"))
+        new_budget = game._enemy_stat_budget()
+        self.assertGreater(new_budget, budget)
+        for e in game.enemies:
+            self.assertEqual(sum(e.stat_levels.values()), new_budget)
+
+    def test_enemies_respawn_away_from_player_and_other_enemies(self):
+        game = open_game(enemies=1, seed=3, mercy_seconds=0)
+        e = game.enemies[0]
+        for _ in range(20):
+            game._respawn_enemy(e)
+            self.assertTrue(game.terrain.circle_fits(e.x, e.y, e.radius))
+            self.assertGreaterEqual(math.hypot(e.x - game.player.x, e.y - game.player.y), 300.0 - 1e-6)
+
+    def test_mercy_weakens_early_enemies_and_fades_out(self):
+        """초반 mercy_seconds 동안 적이 약하게 시작해 서서히 정상(tier 0) 강도로 돌아온다."""
+        game = open_game(enemies=1, seed=11, mercy_seconds=30)
+        ai = game.cfg.enemy_ai
+        e = game.enemies[0]
+        full_hp = (game.cfg.enemy_hp + SHIPS[e.job].hp_bonus * 0.5)
+        full_cooldown = ai.fire_cooldown
+        self.assertAlmostEqual(e.max_hp, full_hp * ai.mercy_hp_scale)
+        self.assertAlmostEqual(e.damage_scale, ai.mercy_damage_scale)
+        self.assertGreater(e.fire_cooldown_max, full_cooldown)   # 더 느리게 쏜다
+        game.frame = int(ai.mercy_seconds * game.cfg.fps)
+        game._update_enemy_scaling()
+        self.assertAlmostEqual(e.max_hp, full_hp)
+        self.assertAlmostEqual(e.damage_scale, 1.0)
+        self.assertEqual(e.fire_cooldown_max, full_cooldown)
 
     def test_enemies_evolve_with_player_stage(self):
         game = open_game(enemies=8)
@@ -114,7 +168,7 @@ class ShipTweakTests(unittest.TestCase):
         game, guardian = self.fire("guardian")
         self.assertGreater(sniper.radius, rookie.radius)
         self.assertGreater(guardian.radius, rookie.radius)
-        self.assertLess(guardian.damage, game.cfg.bullet_damage * 0.5)
+        self.assertLess(guardian.damage, game.cfg.bullet_damage * 0.7)
 
     def test_guardian_hull_is_smaller(self):
         game = open_game()
@@ -154,6 +208,38 @@ class ShapeSpawnTests(unittest.TestCase):
                                     game.cfg.shape_respawn_dist_from_player)
 
 
+class ShapeSpawnAvoidsTightCornersTests(unittest.TestCase):
+    def test_mostly_avoids_a_tight_corner_that_leaves_no_room_to_orbit(self):
+        """적이 거리(140px)를 유지하며 돌 공간이 없는 좁은 구석엔 가능하면 스폰하지 않는다
+        (그런 구석에 천체가 생기면 적들이 거리 유지를 하려다 구석에 몰려 끼기 쉽다).
+        방 대부분은 넓게 트여 있고 한쪽 구석만 ㄱ자 벽으로 좁게 막아 둔 뒤, 스폰 위치
+        대부분이 '적이 돌 수 있는 자리(roomy)'를 만족하는지 확인한다."""
+        from terrain import TileMap, EMPTY, WALL
+        cfg = GameConfig(num_enemies=0, num_shapes=0)
+        cfg.terrain.enabled = False
+        game = GameCore(cfg, seed=3)
+        size = 30
+        tiles = [[EMPTY] * size for _ in range(size)]
+        for i in range(size):
+            tiles[0][i] = tiles[size - 1][i] = tiles[i][0] = tiles[i][size - 1] = WALL
+        for row in range(1, 7):      # 왼쪽 위 구석에 ㄱ자 벽을 세워 좁은 틈을 만든다
+            tiles[row][1] = tiles[row][2] = WALL
+        for col in range(1, 7):
+            tiles[1][col] = tiles[2][col] = WALL
+        game.terrain = TileMap(tiles, 48, (size // 2, size // 2), [], "corner", cfg.terrain)
+        game.player.x, game.player.y = game.terrain.center(size // 2, size // 2)
+        game.frame = 0   # frame==0이면 player 거리 조건은 통과로 처리됨
+
+        radius = 26
+        roomy_hits = 0
+        n = 40
+        for _ in range(n):
+            x, y = game._shape_spawn_pos(radius)
+            if game.terrain.circle_fits(x, y, radius + 140.0):
+                roomy_hits += 1
+        self.assertGreaterEqual(roomy_hits, n - 2)   # 대부분은 여유 있는 자리를 골라야 한다
+
+
 class SmarterEnemyAITests(unittest.TestCase):
     """플레이어가 대각선/벽 뒤에 있어도 적이 찾아오는지."""
     def make(self, enemies, wall_col=None):
@@ -187,6 +273,21 @@ class SmarterEnemyAITests(unittest.TestCase):
         self.run_frames(game, 25)
         self.assertEqual(e.ai_target[0], "player")
         self.assertLess(math.hypot(e.x - p.x, e.y - p.y), 636)
+
+    def test_enemy_abandons_target_immediately_when_it_was_destroyed_elsewhere(self):
+        """다른 적이 쫓던 천체를 부쉈을 때, 다음 반응 주기까지 기다리지 않고
+        바로 새 목표를 찾도록 풀어줘야 구석에 계속 머무르지 않는다."""
+        game = self.make(1)
+        e, p = game.enemies[0], game.player
+        self.place(e, 1000, 800)
+        self.place(p, 1000 + 10 ** 5, 800)   # 멀리 둬서 플레이어가 안 보이게 한다
+        e.ai_target = ("shape", 999)   # 이미 사라진(다른 적이 파괴한) 천체
+        e.ai_timer = 15
+        e.ai_path = [(10, 10), (11, 10)]
+        game._enemy_ai(e)
+        self.assertIsNone(e.ai_target)
+        self.assertEqual(e.ai_timer, 0)
+        self.assertEqual(e.ai_path, [])
 
     def test_finds_player_hiding_behind_a_wall(self):
         game = self.make(1, wall_col=20)
@@ -236,7 +337,7 @@ class SmarterEnemyAITests(unittest.TestCase):
 
 class EliteEnemyTests(unittest.TestCase):
     def test_some_enemies_spawn_as_elite_with_more_hp_and_damage(self):
-        game = open_game(enemies=60, seed=3)
+        game = open_game(enemies=60, seed=3, mercy_seconds=0)   # 초반 봐주기로 엘리트가 사라지지 않게 분리
         elites = [e for e in game.enemies if e.elite]
         normals = [e for e in game.enemies if not e.elite and e.job == "rookie"]
         self.assertTrue(0 < len(elites) < len(game.enemies))

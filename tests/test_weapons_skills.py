@@ -96,7 +96,7 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.assertEqual((game.player.max_hp, game.player.radius), (hp, radius))
         self.assertEqual(game.special_reward_levels, [])
         self.assertFalse(game.choose_reward(0))
-        self.assertAlmostEqual(game.weapon_values(game.player)[1], game.cfg.bullet_damage * 0.55 * 1.2)
+        self.assertAlmostEqual(game.weapon_values(game.player)[1], game.cfg.bullet_damage * 0.5 * 1.2)
 
     def test_five_fixed_stats_show_at_zero_and_points_accumulate(self):
         game = self.game
@@ -255,18 +255,36 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.assertEqual(self.game.player.pending_shots, [])
         self.assertEqual(self.game.player.job, "rookie")
 
-    def test_all_sniper_ships_hit_only_first_target(self):
+    def test_all_sniper_ships_pierce_exactly_one_extra_target(self):
+        """다수 상대 약점을 보완하는 관통 1회: 첫 번째와 두 번째 대상은 맞지만
+        세 번째는 맞지 않고, 같은 대상을 두 번 맞히지도 않는다."""
         for job in ("sniper", "railgunner", "hyper_railgun", "hunter", "predator"):
+            with self.subTest(job=job):
+                self.setUp()
+                self.evolve(job)
+                first, second, third = self.enemy(600, 500), self.enemy(720, 500), self.enemy(840, 500)
+                self.game._fire(self.game.player, True)
+                for _ in range(20):
+                    self.game._move_bullets()
+                self.assertLess(first.hp, 100)
+                self.assertLess(second.hp, 100)
+                self.assertEqual(third.hp, 100)
+                self.assertEqual(self.game.bullets, [])
+
+    def test_non_sniper_ships_still_hit_only_one_target(self):
+        for job in ("rookie", "twin", "flank", "guardian"):
             with self.subTest(job=job):
                 self.setUp()
                 self.evolve(job)
                 first, second = self.enemy(600, 500), self.enemy(720, 500)
                 self.game._fire(self.game.player, True)
-                for _ in range(12):
+                for _ in range(20):
                     self.game._move_bullets()
                 self.assertLess(first.hp, 100)
                 self.assertEqual(second.hp, 100)
-                self.assertEqual(self.game.bullets, [])
+                # 전후방으로 쏘는 전직(플랭크 등)은 뒤로 날아간 탄이 아직 살아있을 수 있으니,
+                # 첫 대상을 맞힌 탄 자체가 관통 없이 사라졌는지만 확인한다.
+                self.assertFalse(any(b.hit_ids for b in self.game.bullets))
 
     def test_fast_bullet_stops_at_breakable_wall(self):
         self.wall_map(BREAKABLE)
@@ -306,7 +324,7 @@ class WeaponsSkillsTests(unittest.TestCase):
                 self.game._fire(p, True)
                 self.assertEqual(len(self.game.bullets), count)
                 self.assertTrue(all(b.damage < self.game.cfg.bullet_damage for b in self.game.bullets))
-                if job != "guardian":  # 가디언은 대구경 포신으로 바꿨다
+                if job not in ("guardian", "bastion", "aegis"):  # 이 셋은 포신을 키웠다
                     self.assertTrue(all(b.radius < self.game.cfg.bullet_radius for b in self.game.bullets))
                 self.assertTrue(all(math.hypot(b.x - p.x, b.y - p.y) > p.radius for b in self.game.bullets))
 
@@ -377,11 +395,14 @@ class WeaponsSkillsTests(unittest.TestCase):
         shape = Shape(self.game._new_id(), "square", 558, 500, 0, 0, 100, 100, 14, 10)
         self.game.shapes = [shape]
         self.game._fire(self.game.player, True)
-        self.assertEqual(shape.hp, 65)
-        self.assertEqual(self.game.bullets, [])
+        self.assertEqual(shape.hp, 77.6)
+        # 하이퍼 레일건은 관통 1회가 있어 맞힐 대상이 더 없어도 탄환 자체는 계속 날아간다.
+        self.assertEqual(len(self.game.bullets), 1)
+        self.assertEqual(self.game.bullets[0].pierce, 0)
+        self.assertIn(shape.id, self.game.bullets[0].hit_ids)
         self.assertEqual(self.game.player.ammo, 119)
         self.game._move_bullets()
-        self.assertEqual(shape.hp, 65)
+        self.assertEqual(shape.hp, 77.6)
 
     def test_projectile_collision_width_matches_measured_gun_opening(self):
         # 원본 512px PNG 포신 안쪽의 밝은 회색 부분을 실측한 픽셀 폭이다.

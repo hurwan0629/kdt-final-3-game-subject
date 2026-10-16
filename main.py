@@ -239,8 +239,8 @@ class GameApplication:
         return bool(get_rect is not None and get_rect().collidepoint(pos))
 
     def pointer_over_rewards(self, pos):
-        if self.pointer_over_minimap(pos):
-            return True
+        # 미니맵은 버튼이 없는 표시용이라 마우스가 지나가는 정도로는 발사를 막지 않는다.
+        # 미니맵을 눌러서 발사가 새는 것은 MOUSEBUTTONDOWN에서 suppress_fire로 따로 막는다.
         if not self.cfg.progression_enabled:
             return False
         if not stat_upgrades_visible(self.game):
@@ -302,10 +302,11 @@ def main():
     parser.add_argument("--random-map", action="store_true", help="랜덤 지형 (기본값)")
     parser.add_argument("--no-terrain", action="store_true", help="벽 없는 빈 경기장")
     parser.add_argument("--stage2", action="store_true", help="진흙/부서지는 벽 켜기")
+    parser.add_argument("--limited-ammo", action="store_true", help="탄약 제한 켜기 (기본은 무제한)")
     args = parser.parse_args()
 
     pygame.init()
-    cfg = GameConfig()
+    cfg = GameConfig(limited_ammo=args.limited_ammo)
     tc = cfg.terrain
     tc.enabled = not args.no_terrain
     tc.random_map = args.random_map or not args.map   # --map을 주지 않으면 랜덤 지형
