@@ -4,23 +4,35 @@ from dataclasses import dataclass
 import pygame
 
 
+DIFFICULTY_OPTIONS = (
+    ("difficulty_easy", "쉬움", 0.4),
+    ("difficulty_normal", "보통", 0.5),
+    ("difficulty_hard", "어려움", 0.6),
+)
+
+
 @dataclass(frozen=True)
 class MenuButton:
     key: str
     label: str
     rect: pygame.Rect
     enabled: bool = True
+    checked: bool = False
 
 
 def menu_buttons(mode, cfg, show_debug=False, show_controls=True, auto_pause=True,
-                 fullscreen=False, size=None):
+                 fullscreen=False, size=None, difficulty_ratio=0.5):
     width, height = size or (cfg.width, cfg.height)
     x = width // 2 - 190
     if mode == "main":
-        y = height // 2 - 107
-        return [MenuButton("start", "무한 스테이지", pygame.Rect(x, y, 380, 58)),
-                MenuButton("story", "스토리 모드 · 준비 중", pygame.Rect(x, y + 78, 380, 58), False),
-                MenuButton("quit", "게임 나가기", pygame.Rect(x, y + 156, 380, 58))]
+        y = height // 2 - 6
+        choices = [MenuButton(key, label, pygame.Rect(x + i * 131, y - 68, 118, 46),
+                              checked=ratio == difficulty_ratio)
+                   for i, (key, label, ratio) in enumerate(DIFFICULTY_OPTIONS)]
+        return choices + [
+            MenuButton("start", "무한 스테이지", pygame.Rect(x, y, 380, 58)),
+            MenuButton("story", "스토리 모드 · 준비 중", pygame.Rect(x, y + 78, 380, 58), False),
+            MenuButton("quit", "게임 나가기", pygame.Rect(x, y + 156, 380, 58))]
     rows = [("fullscreen", f"화면 모드   {'전체화면' if fullscreen else '창 모드'}"),
             ("zoom", f"줌 배율   {cfg.camera_zoom:.0%}"),
             ("controls", f"조작 안내   {'켜짐' if show_controls else '꺼짐'}"),

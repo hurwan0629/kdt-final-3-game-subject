@@ -18,7 +18,7 @@ from config import GameConfig, ObsConfig
 from env import build_vector
 from game_core import GameCore, encode_action, move_from_vector
 from terrain import list_maps
-from menus import menu_buttons
+from menus import DIFFICULTY_OPTIONS, menu_buttons
 from progression import (stat_rows, special_cards, stat_upgrades_visible, stat_panel_rect,
                          stat_collapsed_rect, STAT_PANEL_IDLE_SECONDS)
 
@@ -67,7 +67,8 @@ class GameApplication:
         self.show_controls = True
         self.show_stats = False
         self.auto_pause = True
-        self.selected = 0
+        self.difficulty_ratio = 0.5
+        self.selected = next(i for i, button in enumerate(self.buttons()) if button.key == "start")
         self.acc = 0.0
         self.action = 0
         self.click_requested = False
@@ -78,7 +79,7 @@ class GameApplication:
 
     def buttons(self):
         return menu_buttons(self.mode, self.cfg, self.show_debug, self.show_controls, self.auto_pause,
-                            getattr(self.renderer, "fullscreen", False), self.size)
+                            getattr(self.renderer, "fullscreen", False), self.size, self.difficulty_ratio)
 
     @property
     def size(self):
@@ -93,18 +94,26 @@ class GameApplication:
         return stat_upgrades_visible(self.game) and idle >= STAT_PANEL_IDLE_SECONDS * self.cfg.fps
 
     def activate(self, key):
+        for option_key, _, ratio in DIFFICULTY_OPTIONS:
+            if key == option_key:
+                if self.mode == "main":
+                    self.difficulty_ratio = ratio
+                return
         self.show_stats = False
         self.click_requested = False
         self.suppress_fire = True
         self.acc = 0.0
         if key in ("start", "restart"):
+            if key == "start":
+                self.cfg.enemy_ai.stat_mirror_ratio = self.difficulty_ratio
             self.game.reset(self.seed)
             self.stat_touch_frame = self.stat_points_seen = 0
             self.mode, self.selected = "playing", 0
         elif key == "resume":
             self.mode = "playing"
         elif key == "main":
-            self.mode, self.selected = "main", 0
+            self.mode = "main"
+            self.selected = next(i for i, button in enumerate(self.buttons()) if button.key == "start")
         elif key == "quit":
             self.running = False
         elif key == "zoom":

@@ -498,12 +498,19 @@ class Renderer:
             active = button.enabled and (i == selected or button.rect.collidepoint(mouse))
             color = (32, 65, 95) if active else (20, 29, 51)
             edge = COLORS["player"] if active else COLORS["panel_edge"]
+            border_width = 2 if active else 1
+            difficulty_choice = main and button.key.startswith("difficulty_")
+            if difficulty_choice:
+                color = (32, 65, 95) if button.checked else (26, 40, 64) if active else (20, 29, 51)
+                edge = COLORS["player"] if button.checked else COLORS["text"] if active else COLORS["panel_edge"]
+                border_width = 2 if button.checked else 1
             if not button.enabled:
                 color, edge = (21, 23, 35), (48, 51, 66)
             pygame.draw.rect(self.screen, color, button.rect, border_radius=10)
-            pygame.draw.rect(self.screen, edge, button.rect, 2 if active else 1, border_radius=10)
+            pygame.draw.rect(self.screen, edge, button.rect, border_width, border_radius=10)
             text_color = COLORS["white"] if button.enabled else (94, 100, 120)
-            label = (self.font_card if main else self.font_body).render(button.label, True, text_color)
+            font = self.font_hud if difficulty_choice else self.font_card if main else self.font_body
+            label = font.render(button.label, True, text_color)
             self.screen.blit(label, label.get_rect(center=button.rect.center))
         hint = "클릭 또는 ↑↓ / Enter로 선택" if main else "새 게임은 진행도를 초기화합니다 · 설정은 이번 실행 동안 유지됩니다"
         text = self.font_small.render(hint, True, COLORS["text"])

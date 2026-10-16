@@ -37,19 +37,21 @@ class MenusReloadTests(unittest.TestCase):
     def update(self, elapsed=1 / 60, fire=False):
         self.app.update(elapsed, defaultdict(bool), (480, 360), (fire, False, False))
 
-    def test_main_menu_three_buttons_disabled_story_and_keyboard_navigation(self):
+    def test_main_menu_difficulty_choices_disabled_story_and_keyboard_navigation(self):
         buttons = self.app.buttons()
-        self.assertEqual([b.key for b in buttons], ["start", "story", "quit"])
-        self.assertEqual((buttons[0].rect.top + buttons[-1].rect.bottom) / 2, 360)
-        self.assertFalse(buttons[1].enabled)
+        self.assertEqual([b.key for b in buttons],
+                         ["difficulty_easy", "difficulty_normal", "difficulty_hard", "start", "story", "quit"])
+        self.assertEqual(buttons[3].rect.top, 354)
+        self.assertFalse(buttons[4].enabled)
+        self.assertEqual(self.app.selected, 3)
         self.click("story")
         self.assertEqual(self.app.mode, "main")
         self.update(100)
         self.assertEqual(self.game.frame, 0)
         self.key(pygame.K_DOWN)
-        self.assertEqual(self.app.selected, 2)
+        self.assertEqual(self.app.selected, 5)
         self.key(pygame.K_UP)
-        self.assertEqual(self.app.selected, 0)
+        self.assertEqual(self.app.selected, 3)
         self.key(pygame.K_RETURN)
         self.assertEqual(self.app.mode, "playing")
 
