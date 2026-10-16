@@ -4,6 +4,7 @@
     cfg = GameConfig(num_enemies=2)
     env = TankEnv(game_config=cfg, obs_config=ObsConfig(n_enemies=2))
 """
+import math
 import os
 import sys
 from dataclasses import dataclass, field
@@ -112,7 +113,8 @@ class GameConfig:
     height: int = 720
     window_width: int = 1280
     window_height: int = 800
-    world_scale: int = 5              # 4800x3600 전체 미로, 100x75 타일 (기존 2880x2160의 약 1.67배)
+    world_scale: int = 5              # 면적 배율 적용 전 기준 월드: 4800x3600
+    world_area_scale: float = 1.8    # 가로·세로 비율을 유지하며 기존 월드 면적의 약 1.8배
     camera_zoom: float = 0.6         # 기본 창에서 약 2133x1333 월드 영역 표시
     progression_enabled: bool = True
     level_xp_base: int = 60
@@ -138,7 +140,7 @@ class GameConfig:
     regen_rate: float = 0.05         # 프레임당 회복량
 
     # 적
-    num_enemies: int = 6             # 적이 똑똑해져서 9 → 6마리
+    num_enemies: int = 9             # 기존 6대에서 1.5배
     enemy_hp: float = 60.0
     enemy_ai: EnemyAIConfig = field(default_factory=EnemyAIConfig)
     enemy_kill_score: int = 200
@@ -164,12 +166,22 @@ class GameConfig:
     shape_spawn_candidates: int = 12 # 후보 위치 수: 그중 다른 천체와 가장 먼 곳에 생겨 뭉치지 않는다
 
     @property
+    def world_cols(self) -> int:
+        return max(1, round(self.width * self.world_scale * math.sqrt(self.world_area_scale)
+                            / self.terrain.tile_size))
+
+    @property
+    def world_rows(self) -> int:
+        return max(1, round(self.height * self.world_scale * math.sqrt(self.world_area_scale)
+                            / self.terrain.tile_size))
+
+    @property
     def world_width(self) -> int:
-        return self.width * self.world_scale
+        return self.world_cols * self.terrain.tile_size
 
     @property
     def world_height(self) -> int:
-        return self.height * self.world_scale
+        return self.world_rows * self.terrain.tile_size
 
     @property
     def max_speed(self) -> float:

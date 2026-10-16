@@ -192,9 +192,6 @@ class GameApplication:
                     tc.map_name = name
                 self.activate("restart")
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-            if self.pointer_over_minimap(ev.pos):
-                self.suppress_fire, self.click_requested = True, False
-                return
             if self.cfg.progression_enabled:
                 if self.stats_collapsed and pygame.Rect(stat_collapsed_rect(*self.size)).collidepoint(ev.pos):
                     self.touch_stat_panel()
@@ -222,8 +219,7 @@ class GameApplication:
         return bool(get_rect is not None and get_rect().collidepoint(pos))
 
     def pointer_over_rewards(self, pos):
-        # 미니맵은 버튼이 없는 표시용이라 마우스가 지나가는 정도로는 발사를 막지 않는다.
-        # 미니맵을 눌러서 발사가 새는 것은 MOUSEBUTTONDOWN에서 suppress_fire로 따로 막는다.
+        # 미니맵은 표시용이며 클릭과 드래그 모두 일반 월드 사격으로 처리한다.
         if not self.cfg.progression_enabled:
             return False
         if not stat_upgrades_visible(self.game):

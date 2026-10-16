@@ -544,6 +544,16 @@ def expand_map(tm: TileMap, scale: int, tcfg: TerrainConfig) -> TileMap:
     return expanded
 
 
+def _clear_outer_wall_band(tiles, *, left, right, top, bottom):
+    """생성기의 외곽 벽띠만 비우며 내부 장애물은 유지한다."""
+    rows, cols = len(tiles), len(tiles[0])
+    for r, row in enumerate(tiles):
+        for c, tile in enumerate(row):
+            if (c < left or c >= cols - right or r < top or r >= rows - bottom):
+                if tile in (WALL, BREAKABLE):
+                    row[c] = EMPTY
+
+
 def _generate_maze(rng, tcfg: TerrainConfig, cols, rows, name="random") -> TileMap:
     """넓은 방을 굵은 벽으로 나누고 DFS 통로로 잇는 하나의 전체 월드 미로.
 
@@ -634,6 +644,7 @@ def _generate_maze(rng, tcfg: TerrainConfig, cols, rows, name="random") -> TileM
         if count:
             for index in rng.choice(len(closed), size=count, replace=False):
                 carve(*closed[int(index)], thickness, thickness, BREAKABLE)
+    _clear_outer_wall_band(tiles, left=border, right=border, top=border, bottom=border)
     player = centers[root]
     enemies = sorted((point for node, point in centers.items() if node != root),
                      key=lambda point: (-(point[0] - player[0]) ** 2 - (point[1] - player[1]) ** 2, point))[:12]
@@ -757,6 +768,10 @@ def generate_random_map(rng, tcfg: TerrainConfig, cols, rows, max_attempts=50) -
                     for cc in range(c - 1, c + 2):
                         tiles[rr][cc] = MUD
 
+        _clear_outer_wall_band(
+            tiles, left=off_c, right=cols - off_c - bw * block,
+            top=off_r, bottom=rows - off_r - bh * block,
+        )
         player = block_center(*root)
         tm = TileMap(tiles, tcfg.tile_size, player, [], "random", tcfg)
         if tm.is_connected() and tm.is_connected(tcfg.navigation_radius):

@@ -321,10 +321,10 @@ class Renderer:
         if not 0 < zoom <= 1:
             raise ValueError("camera_zoom은 0보다 크고 1 이하여야 합니다.")
         self.cfg.camera_zoom = zoom
-        # 큰 모니터에서도 맵 밖 빈 공간 대신 플레이 영역을 채운다.
-        self.effective_zoom = max(zoom, self.size[0] / self.cfg.world_width, self.size[1] / self.cfg.world_height)
-        self.view_width = round(self.size[0] / self.effective_zoom)
-        self.view_height = round(self.size[1] / self.effective_zoom)
+        self.effective_zoom = zoom
+        # 선체를 그릴 때 반올림해도 정중앙에 오도록 뷰 크기를 짝수로 유지한다.
+        self.view_width = max(2, 2 * round(self.size[0] / (2 * zoom)))
+        self.view_height = max(2, 2 * round(self.size[1] / (2 * zoom)))
         self._view = pygame.Surface((self.view_width, self.view_height)).convert()
 
     def world_to_view(self, x, y):
@@ -339,11 +339,8 @@ class Renderer:
                 y * self.view_height / self.size[1] + self.camera_y)
 
     def _update_camera(self, player):
-        c = self.cfg
-        self.camera_x = (int(max(0, min(player.x - self.view_width / 2, c.world_width - self.view_width)))
-                         if c.world_width >= self.view_width else (c.world_width - self.view_width) // 2)
-        self.camera_y = (int(max(0, min(player.y - self.view_height / 2, c.world_height - self.view_height)))
-                         if c.world_height >= self.view_height else (c.world_height - self.view_height) // 2)
+        self.camera_x = player.x - self.view_width / 2
+        self.camera_y = player.y - self.view_height / 2
 
     def _visible(self, x, y, margin=100):
         sx, sy = self.world_to_view(x, y)
@@ -358,8 +355,14 @@ class Renderer:
         self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔
         display = self.screen
         self.screen = scr = self._view
-        scr.fill(COLORS["space_top"])
-        scr.blit(self._floor, (-self.camera_x, -self.camera_y))
+        # 맵 밖에도 우주 배경을 채우며 카메라는 가장자리에서도 선체를 따라간다.
+        bg_width, bg_height = self._bg.get_size()
+        offset_x, offset_y = round(-self.camera_x), round(-self.camera_y)
+        start_x, start_y = offset_x % bg_width - bg_width, offset_y % bg_height - bg_height
+        for y in range(start_y, self.view_height, bg_height):
+            for x in range(start_x, self.view_width, bg_width):
+                scr.blit(self._bg, (x, y))
+        scr.blit(self._floor, (offset_x, offset_y))
         self._draw_twinkles()
         f = game.frame
         p = game.player
@@ -394,6 +397,7 @@ class Renderer:
 
         self.screen = display
         pygame.transform.smoothscale(scr, self.size, display)
+        self._draw_world_boundary()
         self._draw_score_text(game)
         self._draw_hud(game, paused, show_notice=menu is None,
                        show_controls=show_controls, stats_collapsed=stats_collapsed)
@@ -407,6 +411,23 @@ class Renderer:
             self._draw_game_over(game)
         elif paused:
             self._draw_card(["일시정지"], ["P / ESC: 계속"])
+
+    def _draw_world_boundary(self):
+        """0.5px 외곽선을 화면 1px의 절반 농도로 표현한다."""
+        left, top = (round(value) for value in self.world_to_screen(0, 0))
+        right, bottom = (round(value) for value in
+                         self.world_to_screen(self.cfg.world_width, self.cfg.world_height))
+        width, height = self.size
+        if left < 0 and top < 0 and right >= width and bottom >= height:
+            return
+        layer = getattr(self, "_world_boundary_layer", None)
+        if layer is None or layer.get_size() != self.size:
+            layer = self._world_boundary_layer = pygame.Surface(self.size, pygame.SRCALPHA)
+        layer.fill((0, 0, 0, 0))
+        points = [(round(x), round(y)) for x, y in
+                  ((left, top), (right, top), (right, bottom), (left, bottom))]
+        pygame.draw.lines(layer, (255, 0, 0, 128), True, points, 1)
+        self.screen.blit(layer, (0, 0))
 
     def _draw_score_effects(self, game):
         for x, y, _, _, age, life, color in self._sparks:
@@ -593,28 +614,25 @@ class Renderer:
         W, H = self.size
         secs = game.frame / self.cfg.fps
 
-        ammo = f"탄약 {p.ammo} / {p.max_ammo}" if game.cfg.limited_ammo else "탄약 무제한"
-        rect = pygame.Rect(W - 198, 14, 184, 60)
-        self._panel(rect)
-        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS["white"]
-        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))
-        reloading = game.reload_frames_left > 0
-        if reloading:
-            hint = f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초"
-        elif game.cfg.limited_ammo:
-            hint = "R: 재장전 · ESC: 메뉴"
-        else:
-            hint = "ESC: 메뉴"
-        self.screen.blit(self.font_small.render(hint, True, COLORS["text"]), (rect.x + 14, rect.y + 33))
-        if reloading:
-            bar = pygame.Rect(rect.x + 14, rect.y + 54, rect.width - 28, 6)
-            pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=3)
-            bar.width = int(bar.width * (1 - game.reload_frames_left / game.reload_frames_total))
-            if bar.width:
-                pygame.draw.rect(self.screen, COLORS["player"], bar, border_radius=3)
-        if game.cfg.limited_ammo and p.ammo == 0 and not game.game_over and not reloading and show_notice:
-            text = self.font_body.render("탄약 소진! [R] 재장전", True, (255, 165, 100))
-            self.screen.blit(text, text.get_rect(midtop=(W / 2, 270)))
+        if game.cfg.limited_ammo:
+            ammo = f"탄약 {p.ammo} / {p.max_ammo}"
+            rect = pygame.Rect(W - 198, 14, 184, 60)
+            self._panel(rect)
+            color = (255, 130, 100) if p.ammo == 0 else COLORS["white"]
+            self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))
+            reloading = game.reload_frames_left > 0
+            hint = (f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초"
+                    if reloading else "R: 재장전")
+            self.screen.blit(self.font_small.render(hint, True, COLORS["text"]), (rect.x + 14, rect.y + 33))
+            if reloading:
+                bar = pygame.Rect(rect.x + 14, rect.y + 54, rect.width - 28, 6)
+                pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=3)
+                bar.width = int(bar.width * (1 - game.reload_frames_left / game.reload_frames_total))
+                if bar.width:
+                    pygame.draw.rect(self.screen, COLORS["player"], bar, border_radius=3)
+            if p.ammo == 0 and not game.game_over and not reloading and show_notice:
+                text = self.font_body.render("탄약 소진! [R] 재장전", True, (255, 165, 100))
+                self.screen.blit(text, text.get_rect(midtop=(W / 2, 270)))
 
         # 좌상단: 점수/처치/시간
         items = [(self.font_label.render(label, True, COLORS["label"]),
@@ -651,14 +669,17 @@ class Renderer:
 
         # 메뉴의 조작 안내 설정을 즉시 반영한다.
         if show_controls:
-            second_line = "1–5 스탯 강화 · ESC 화면 설정" if not self.cfg.limited_ammo else "R 재장전 · 1–5 스탯 강화 · ESC 화면 설정"
-            for i, hint in enumerate(("WASD 이동 · 마우스 조준 / 발사 · Tab 능력치", second_line)):
+            first_line = "WASD 이동 · 마우스 조준 / 발사"
+            if game.cfg.limited_ammo:
+                first_line += " · R 재장전"
+            second_line = "1–5 스탯 강화 · Tab 능력치 · ESC 메뉴"
+            for i, hint in enumerate((first_line, second_line)):
                 surf = self.font_small.render(hint, True, COLORS["text"])
                 self.screen.blit(surf, surf.get_rect(midtop=(W / 2 + 30, 10 + i * 23)))
         self._draw_minimap(game)
 
     def minimap_rect(self):
-        """현재 창의 우하단 전체 지도 영역. 입력 차단에도 같은 좌표를 쓴다."""
+        """현재 창의 우하단에 표시할 전체 지도 영역."""
         width, height = self.size
         max_width = max(176, min(224, round(width * 0.16)))
         max_height = max(112, min(196, round(height * 0.25)))
@@ -827,8 +848,6 @@ class Renderer:
                    else f"Lv.{level} {stage} · F2 / 클릭" if count else f"다음 성장 Lv.{level}")
         self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))
         cards = game.reward_choices
-        if not cards and game.reward_portrait and game.frame < game.reward_message_until:
-            cards = (SHIPS[game.reward_portrait],)
         for i, card in enumerate(cards):
             rect = pygame.Rect(special_cards(*self.size, len(cards))[i])
             self._panel(rect, 205, 10)

@@ -1,4 +1,4 @@
-"""표시용 미니맵 위의 마우스 입력이 월드 사격으로 새지 않는다."""
+"""표시용 미니맵 위에서도 일반 월드 사격을 유지한다."""
 import os
 import unittest
 from collections import defaultdict
@@ -25,20 +25,24 @@ class MinimapInputTests(unittest.TestCase):
         app.suppress_fire = False
         return game, app
 
-    def test_click_and_hold_on_minimap_never_spends_ammo(self):
+    def test_click_and_hold_on_minimap_fires_normally(self):
         for progression in (False, True):
             with self.subTest(progression=progression):
                 game, app = self.application(progression)
                 pos = (1150, 700)
                 app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
                 app.update(1/60, defaultdict(bool), pos, (True, False, False))
-                self.assertEqual(game.player.ammo, 120)
-                self.assertFalse(game.bullets)
+                self.assertEqual(game.player.ammo, 119)
+                self.assertEqual(len(game.bullets), 1)
+                self.assertFalse(app.suppress_fire)
                 self.assertFalse(app.click_requested)
+                for _ in range(game.player.fire_cooldown_max + 5):
+                    app.update(1/60, defaultdict(bool), pos, (True, False, False))
+                self.assertLess(game.player.ammo, 119)
+                self.assertGreater(len(game.bullets), 1)
 
     def test_firing_continues_when_cursor_sweeps_over_the_minimap_mid_hold(self):
-        """다른 곳을 눌러서 이미 발사 중이면, 조준하다 커서가 미니맵 위를 지나가도
-        발사가 끊기면 안 된다(미니맵은 버튼 없는 표시용이라 클릭 시작 때만 막는다)."""
+        """발사 중 커서가 미니맵 위를 지나가도 사격을 계속한다."""
         game, app = self.application()
         pos = (640, 400)
         app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))

@@ -181,6 +181,8 @@ class GameCore:
         self.cfg = config or GameConfig()
         if not isinstance(self.cfg.world_scale, int) or self.cfg.world_scale < 1:
             raise ValueError("world_scale은 1 이상의 정수여야 합니다.")
+        if not math.isfinite(self.cfg.world_area_scale) or self.cfg.world_area_scale <= 0:
+            raise ValueError("world_area_scale은 유한한 양수여야 합니다.")
         if self.cfg.level_xp_base <= 0 or self.cfg.level_xp_growth < 0:
             raise ValueError("레벨 경험치는 양수, 증가량은 0 이상이어야 합니다.")
         if not isinstance(self.cfg.player_ammo, int) or self.cfg.player_ammo < 0:
@@ -257,13 +259,13 @@ class GameCore:
         if cols * tc.tile_size != c.width or rows * tc.tile_size != c.height:
             raise ValueError(f"화면 크기 {c.width}x{c.height}가 타일 크기 {tc.tile_size}로 나누어떨어지지 않습니다.")
         if not tc.enabled:
-            return empty_map(tc, cols * c.world_scale, rows * c.world_scale)
+            return empty_map(tc, c.world_cols, c.world_rows)
         if tc.random_map:
-            return generate_random_map(self.rng, tc, cols * c.world_scale, rows * c.world_scale)
+            return generate_random_map(self.rng, tc, c.world_cols, c.world_rows)
         name = tc.map_name
         if tc.map_pool:
             name = tc.map_pool[int(self.rng.integers(len(tc.map_pool)))]
-        return load_map(name, tc, cols * c.world_scale, rows * c.world_scale)
+        return load_map(name, tc, c.world_cols, c.world_rows)
 
     def _random_free_pos(self, radius: float, min_dist: float, tiles=None):
         """선체 전체가 벽 밖에 있고 다른 선체와 떨어진 위치를 고른다."""

@@ -20,7 +20,7 @@ class MinimapTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pygame.init()
-        cls.cfg = GameConfig(num_enemies=0, num_shapes=0, world_scale=1)
+        cls.cfg = GameConfig(num_enemies=0, num_shapes=0, world_scale=1, world_area_scale=1)
         cls.cfg.terrain.enabled = False
         cls.cfg.terrain.breakable_enabled = True
         cls.renderer = Renderer(cls.cfg)

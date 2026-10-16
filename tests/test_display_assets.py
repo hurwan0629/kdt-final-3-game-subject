@@ -38,7 +38,7 @@ class DisplayAssetsTests(unittest.TestCase):
     def test_default_window_is_larger_and_resizable(self):
         self.assertEqual(self.renderer.size, (1280, 800))
         self.assertTrue(self.renderer.screen.get_flags() & pygame.RESIZABLE)
-        self.assertEqual((self.cfg.world_width, self.cfg.world_height), (4800, 3600))
+        self.assertEqual((self.cfg.world_width, self.cfg.world_height), (6432, 4848))
 
     def test_fullscreen_menu_round_trip_preserves_world_and_game_state(self):
         self.game._add_score(1980)
@@ -119,9 +119,13 @@ class DisplayAssetsTests(unittest.TestCase):
                 self.renderer.draw(self.game)
                 image = self.renderer.assets.image(SHIPS[key].asset, 62)
                 self.assertIs(image, self.renderer.assets.image(SHIPS[key].asset, 62))
+        selected_zoom = self.cfg.camera_zoom
         self.renderer.resize((4000, 2400))
-        self.assertLessEqual(self.renderer.view_width, self.cfg.world_width)
-        self.assertLessEqual(self.renderer.view_height, self.cfg.world_height)
+        self.assertAlmostEqual(self.renderer.effective_zoom, selected_zoom)
+        self.renderer._update_camera(self.game.player)
+        sx, sy = self.renderer.world_to_screen(self.game.player.x, self.game.player.y)
+        self.assertAlmostEqual(sx, 2000)
+        self.assertAlmostEqual(sy, 1200)
 
     def test_player_sprite_faces_right_and_enemy_keeps_original_orientation(self):
         import math

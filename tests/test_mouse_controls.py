@@ -106,8 +106,17 @@ class MouseControlTests(unittest.TestCase):
             self.assertAlmostEqual(screen[0], pos[0])
             self.assertAlmostEqual(screen[1], pos[1])
         renderer.cfg.world_scale = 1
-        renderer._update_camera(self.game.player)
-        self.assertEqual((renderer.camera_x, renderer.camera_y), (-320, -240))
+        player = self.game.player
+        player.x, player.y = player.radius + 0.25, player.radius + 0.75
+        renderer._update_camera(player)
+        self.assertLess(renderer.camera_x, 0)
+        self.assertLess(renderer.camera_y, 0)
+        sx, sy = renderer.world_to_screen(player.x, player.y)
+        self.assertAlmostEqual(sx, renderer.size[0] / 2)
+        self.assertAlmostEqual(sy, renderer.size[1] / 2)
+        wx, wy = renderer.screen_to_world(renderer.size[0] / 2, renderer.size[1] / 2)
+        self.assertAlmostEqual(wx, player.x)
+        self.assertAlmostEqual(wy, player.y)
 
     def test_pause_focus_loss_freeze_but_stat_selection_keeps_game_running(self):
         game = self.game

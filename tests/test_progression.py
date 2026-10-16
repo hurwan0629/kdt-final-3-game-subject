@@ -189,11 +189,11 @@ class WorldTests(unittest.TestCase):
                 cfg.terrain.mud_enabled = cfg.terrain.breakable_enabled = stage2
                 game = GameCore(cfg, seed=1)
                 with self.subTest(map=name, stage2=stage2):
-                    self.assertEqual((game.terrain.cols, game.terrain.rows), (100, 75))
+                    self.assertEqual((game.terrain.cols, game.terrain.rows), (134, 101))
                     self.assertTrue(game.terrain.is_connected())
                     self.assertFalse(game.terrain.is_solid_at(game.player.x, game.player.y))
         cfg.world_scale = 1
-        self.assertEqual(GameCore(cfg).terrain.cols, 20)
+        self.assertEqual(GameCore(cfg).terrain.cols, 27)
 
     def test_world_boundary_and_bullets_beyond_the_viewport(self):
         game = empty_game()
@@ -250,11 +250,17 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(renderer.screen.get_size(), (960, 720))
         p.x, p.y = p.radius, p.radius
         renderer._update_camera(p)
-        self.assertEqual((renderer.camera_x, renderer.camera_y), (0, 0))
+        self.assertEqual(renderer.world_to_screen(p.x, p.y),
+                         (renderer.size[0] / 2, renderer.size[1] / 2))
+        self.assertLess(renderer.camera_x, 0)
+        self.assertLess(renderer.camera_y, 0)
         p.x = game.cfg.world_width - p.radius
         p.y = game.cfg.world_height - p.radius
         renderer._update_camera(p)
-        self.assertEqual((renderer.camera_x, renderer.camera_y), (3200, 2400))
+        self.assertEqual(renderer.world_to_screen(p.x, p.y),
+                         (renderer.size[0] / 2, renderer.size[1] / 2))
+        self.assertGreater(renderer.camera_x + renderer.view_width, game.cfg.world_width)
+        self.assertGreater(renderer.camera_y + renderer.view_height, game.cfg.world_height)
         game._add_score(190)
         game.open_rewards()
         renderer.draw(game)
