@@ -28,6 +28,10 @@ N_ROTS = 3          # 0=유지, 1=왼쪽(반시계), 2=오른쪽(시계)
 N_ACTIONS = N_MOVES * N_ROTS
 ROT_DIR = (0.0, -1.0, 1.0)
 
+# 스나이퍼 계열(단발 장거리): 포탄 그림을 쓰고, 다수 상대 약점을 보완하는 관통을 1회 받는다.
+SNIPER_LINE_JOBS = ("sniper", "railgunner", "hyper_railgun", "hunter", "predator")
+SNIPER_PIERCE = 1
+
 
 def encode_action(move: int, rot: int) -> int:
     return move * N_ROTS + rot
@@ -136,6 +140,8 @@ class Bullet:
     kind: str = "plasma"
     arming_frames: int = 0
     homing: bool = False
+    pierce: int = 0                  # 남은 관통 횟수 (스나이퍼 계열: 다수 상대 약점 완화)
+    hit_ids: set = field(default_factory=set)   # 이미 맞힌 대상 (관통 중 중복 피해 방지)
 
 
 @dataclass
@@ -644,10 +650,12 @@ class GameCore:
         # 포신이 벽과 겹쳐도 벽 뒤에서 탄이 생기지 않게 실제 포신 축을 따라 자른다.
         if wall is not None:
             reach = max(0.0, reach - 0.01)
+        is_sniper_line = tank.job in SNIPER_LINE_JOBS
         bullet = Bullet(
             base_x + ca * reach, base_y + sa * reach, ca * speed * shot.speed, sa * speed * shot.speed,
             max(1, int(life * shot.life)), tank.id, tank.team, damage * shot.damage, radius,
-            kind="shell" if tank.job in ("sniper", "railgunner", "hyper_railgun", "hunter", "predator") else "plasma")
+            kind="shell" if is_sniper_line else "plasma",
+            pierce=SNIPER_PIERCE if is_sniper_line else 0)
         # 길어진 포신과 이미 겹친 작은 천체/적을 포구 뒤에 남겨 놓고 발사하지 않는다.
         bullet.prev_x, bullet.prev_y = base_x, base_y
         if not self._bullet_hit(bullet):
@@ -994,13 +1002,16 @@ class GameCore:
         self.shapes = [s for s in self.shapes if s.hp > 0]
 
     def _bullet_hit(self, b: Bullet) -> bool:
-        """모든 탄환은 이동 구간의 첫 대상만 타격하고 소멸한다."""
+        """탄환은 이동 구간에서 가장 가까운 대상 하나를 맞힌다. 관통(pierce)이 남아있으면
+        맞은 대상은 넘기고 계속 날아간다(같은 대상을 두 번 맞히지 않음). 반환값이 True면
+        탄환이 사라진다."""
         by_player = b.team == "player"
         targets = self.enemies if by_player else (self.player,)
         hits = []
         sx, sy = (b.prev_x, b.prev_y) if b.prev_x is not None else (b.x, b.y)
         for target in list(targets) + self.shapes:
-            if target.hp <= 0 or (isinstance(target, Tank) and not target.alive):
+            if (target.hp <= 0 or (isinstance(target, Tank) and not target.alive)
+                    or target.id in b.hit_ids):
                 continue
             fraction = _segment_circle_hit(sx, sy, b.x, b.y, target.x, target.y, target.radius + b.radius)
             if fraction is not None:
@@ -1015,6 +1026,10 @@ class GameCore:
             self._damage_tank(target, b.damage, by_player)
         else:
             self._damage_shape(target, b.damage, by_player)
+        if b.pierce > 0:
+            b.pierce -= 1
+            b.hit_ids.add(target.id)
+            return False
         return True
 
     def _damage_tank(self, t: Tank, dmg: float, by_player: bool):

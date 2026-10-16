@@ -255,18 +255,36 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.assertEqual(self.game.player.pending_shots, [])
         self.assertEqual(self.game.player.job, "rookie")
 
-    def test_all_sniper_ships_hit_only_first_target(self):
+    def test_all_sniper_ships_pierce_exactly_one_extra_target(self):
+        """다수 상대 약점을 보완하는 관통 1회: 첫 번째와 두 번째 대상은 맞지만
+        세 번째는 맞지 않고, 같은 대상을 두 번 맞히지도 않는다."""
         for job in ("sniper", "railgunner", "hyper_railgun", "hunter", "predator"):
+            with self.subTest(job=job):
+                self.setUp()
+                self.evolve(job)
+                first, second, third = self.enemy(600, 500), self.enemy(720, 500), self.enemy(840, 500)
+                self.game._fire(self.game.player, True)
+                for _ in range(20):
+                    self.game._move_bullets()
+                self.assertLess(first.hp, 100)
+                self.assertLess(second.hp, 100)
+                self.assertEqual(third.hp, 100)
+                self.assertEqual(self.game.bullets, [])
+
+    def test_non_sniper_ships_still_hit_only_one_target(self):
+        for job in ("rookie", "twin", "flank", "guardian"):
             with self.subTest(job=job):
                 self.setUp()
                 self.evolve(job)
                 first, second = self.enemy(600, 500), self.enemy(720, 500)
                 self.game._fire(self.game.player, True)
-                for _ in range(12):
+                for _ in range(20):
                     self.game._move_bullets()
                 self.assertLess(first.hp, 100)
                 self.assertEqual(second.hp, 100)
-                self.assertEqual(self.game.bullets, [])
+                # 전후방으로 쏘는 전직(플랭크 등)은 뒤로 날아간 탄이 아직 살아있을 수 있으니,
+                # 첫 대상을 맞힌 탄 자체가 관통 없이 사라졌는지만 확인한다.
+                self.assertFalse(any(b.hit_ids for b in self.game.bullets))
 
     def test_fast_bullet_stops_at_breakable_wall(self):
         self.wall_map(BREAKABLE)
@@ -378,7 +396,10 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.game.shapes = [shape]
         self.game._fire(self.game.player, True)
         self.assertEqual(shape.hp, 77.6)
-        self.assertEqual(self.game.bullets, [])
+        # 하이퍼 레일건은 관통 1회가 있어 맞힐 대상이 더 없어도 탄환 자체는 계속 날아간다.
+        self.assertEqual(len(self.game.bullets), 1)
+        self.assertEqual(self.game.bullets[0].pierce, 0)
+        self.assertIn(shape.id, self.game.bullets[0].hit_ids)
         self.assertEqual(self.game.player.ammo, 119)
         self.game._move_bullets()
         self.assertEqual(shape.hp, 77.6)
