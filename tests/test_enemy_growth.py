@@ -216,6 +216,38 @@ class ShapeSpawnTests(unittest.TestCase):
                                     game.cfg.shape_respawn_dist_from_player)
 
 
+class ShapeSpawnAvoidsTightCornersTests(unittest.TestCase):
+    def test_mostly_avoids_a_tight_corner_that_leaves_no_room_to_orbit(self):
+        """적이 거리(140px)를 유지하며 돌 공간이 없는 좁은 구석엔 가능하면 스폰하지 않는다
+        (그런 구석에 천체가 생기면 적들이 거리 유지를 하려다 구석에 몰려 끼기 쉽다).
+        방 대부분은 넓게 트여 있고 한쪽 구석만 ㄱ자 벽으로 좁게 막아 둔 뒤, 스폰 위치
+        대부분이 '적이 돌 수 있는 자리(roomy)'를 만족하는지 확인한다."""
+        from terrain import TileMap, EMPTY, WALL
+        cfg = GameConfig(num_enemies=0, num_shapes=0)
+        cfg.terrain.enabled = False
+        game = GameCore(cfg, seed=3)
+        size = 30
+        tiles = [[EMPTY] * size for _ in range(size)]
+        for i in range(size):
+            tiles[0][i] = tiles[size - 1][i] = tiles[i][0] = tiles[i][size - 1] = WALL
+        for row in range(1, 7):      # 왼쪽 위 구석에 ㄱ자 벽을 세워 좁은 틈을 만든다
+            tiles[row][1] = tiles[row][2] = WALL
+        for col in range(1, 7):
+            tiles[1][col] = tiles[2][col] = WALL
+        game.terrain = TileMap(tiles, 48, (size // 2, size // 2), [], "corner", cfg.terrain)
+        game.player.x, game.player.y = game.terrain.center(size // 2, size // 2)
+        game.frame = 0   # frame==0이면 player 거리 조건은 통과로 처리됨
+
+        radius = 26
+        roomy_hits = 0
+        n = 40
+        for _ in range(n):
+            x, y = game._shape_spawn_pos(radius)
+            if game.terrain.circle_fits(x, y, radius + 140.0):
+                roomy_hits += 1
+        self.assertGreaterEqual(roomy_hits, n - 2)   # 대부분은 여유 있는 자리를 골라야 한다
+
+
 class SmarterEnemyAITests(unittest.TestCase):
     """플레이어가 대각선/벽 뒤에 있어도 적이 찾아오는지."""
     def make(self, enemies, wall_col=None):
@@ -249,6 +281,21 @@ class SmarterEnemyAITests(unittest.TestCase):
         self.run_frames(game, 25)
         self.assertEqual(e.ai_target[0], "player")
         self.assertLess(math.hypot(e.x - p.x, e.y - p.y), 636)
+
+    def test_enemy_abandons_target_immediately_when_it_was_destroyed_elsewhere(self):
+        """다른 적이 쫓던 천체를 부쉈을 때, 다음 반응 주기까지 기다리지 않고
+        바로 새 목표를 찾도록 풀어줘야 구석에 계속 머무르지 않는다."""
+        game = self.make(1)
+        e, p = game.enemies[0], game.player
+        self.place(e, 1000, 800)
+        self.place(p, 1000 + 10 ** 5, 800)   # 멀리 둬서 플레이어가 안 보이게 한다
+        e.ai_target = ("shape", 999)   # 이미 사라진(다른 적이 파괴한) 천체
+        e.ai_timer = 15
+        e.ai_path = [(10, 10), (11, 10)]
+        game._enemy_ai(e)
+        self.assertIsNone(e.ai_target)
+        self.assertEqual(e.ai_timer, 0)
+        self.assertEqual(e.ai_path, [])
 
     def test_finds_player_hiding_behind_a_wall(self):
         game = self.make(1, wall_col=20)

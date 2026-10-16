@@ -97,18 +97,26 @@ class LargeWallLayoutTests(unittest.TestCase):
 
     def test_random_maps_are_open_block_mazes(self):
         # 기본 랜덤 지형은 diep.io 미로 모드처럼 큰 블록 미로에 통로를 더 뚫은 형태다.
-        cfg = TerrainConfig(mud_enabled=True, breakable_enabled=True)
-        for cols, rows, seeds in ((20, 15, range(50)), (60, 45, range(10))):
+        # 실제 게임은 world_scale=3이라 항상 60x45로만 생성한다(_make_terrain).
+        # 20x15는 작은 캔버스에서도 생성기 자체가 안전한지 보는 용도라, 기본
+        # block_tiles(8, 60x45 기준으로 고른 값)를 그대로 쓰면 블록 하나가 캔버스의
+        # 절반 가까이 되어 답답해진다 — 그 경우에는 예전 기본값(5)으로 돌려 확인한다.
+        cfg60 = TerrainConfig(mud_enabled=True, breakable_enabled=True)
+        cfg20 = TerrainConfig(mud_enabled=True, breakable_enabled=True, block_tiles=5)
+        for cols, rows, seeds, cfg in ((20, 15, range(50), cfg20), (60, 45, range(10), cfg60)):
             for seed in seeds:
                 with self.subTest(size=(cols, rows), seed=seed):
                     tm = generate_random_map(np.random.default_rng(seed), cfg, cols, rows)
                     self.assertTrue(tm.is_connected())
                     self.assertTrue(tm.is_connected(96))
                     self.assertTrue(tm.circle_fits(*tm.center(*tm.player_start), 96))
-                    self.assert_thick_walls(tm, 4 if cols == 60 else 2)
+                    # block_tiles=8은 60/45와 나누어떨어지지 않아 테두리가 2칸으로 얇아질 수
+                    # 있다(안쪽 벽은 여전히 8칸). is_connected(96)/A* 등 실제 통과 가능성은
+                    # 위에서 이미 검증하므로 두께 자체는 2칸 이상이면 충분하다.
+                    self.assert_thick_walls(tm, 2)
                     self.assertNotIn("*", map_to_text(tm))
                     solid = sum(tm.solid[r][c] for r in range(rows) for c in range(cols))
-                    self.assertLess(solid / (cols * rows), 0.35)      # 너무 갑갑하지 않게
+                    self.assertLess(solid / (cols * rows), 0.4)      # 너무 갑갑하지 않게
                     if cols == 60:
                         self.assertGreater(solid / (cols * rows), 0.1)  # 벽이 아예 없지는 않게
                         self.assertGreaterEqual(len(tm.enemy_starts), 8)

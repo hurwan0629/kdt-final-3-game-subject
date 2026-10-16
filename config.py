@@ -86,10 +86,12 @@ class TerrainConfig:
     map_pool: tuple = ()             # 비어있지 않으면 reset마다 seed로 이 중 하나 선택
     random_map: bool = True          # True면 reset마다 랜덤 블록 지형, False면 map_name 미로
     # 랜덤 지형 (diep.io 미로 모드 느낌): 큰 블록 격자 미로에서 벽 일부를 뚫는다
-    block_tiles: int = 5                 # 블록 한 변 (5칸 = 240px, 통로 폭)
+    block_tiles: int = 8                 # 블록 한 변 (8칸 = 384px, 통로/벽 폭 — 더 개방감 있게)
     extra_openings: float = 0.6          # 미로에서 막힌 연결 벽을 추가로 뚫는 비율 (클수록 덜 갑갑)
     pillar_removal: float = 0.5          # 벽 기둥을 없애 넓은 공간을 만드는 비율
-    wall_merge: float = 0.05             # 벽 옆 바닥 블록을 메워 큰 벽 덩어리를 만드는 비율
+    wall_merge: float = 0.0              # 벽 옆 바닥 블록을 메워 큰 벽 덩어리를 만드는 비율
+    # 0보다 크면 가끔 ㄱ/ㄷ자처럼 꺾인 벽 덩어리가 생긴다. 각진 미로 느낌보다
+    # 단순한 사각 장애물이 흩어진 느낌을 원해서 기본은 끈다.
     random_wall_density: float = 0.14    # 이전 설정 호환용: 미로 밀도는 통로/벽 두께로 결정
     wall_thickness: int = 4
     wall_min_length: int = 6

@@ -319,17 +319,21 @@ class GameCore:
         """여러 후보 중 다른 천체와 가장 멀리 떨어진 곳을 골라 고르게 퍼뜨린다.
 
         판 도중에는 플레이어 눈앞이 아닌 먼 곳만 후보로 쓴다. 겹치는 후보는 쓰지 않는다.
+        벽 구석에 너무 붙으면 적들이 거리 유지(140px)를 하려다 구석에 몰려 끼므로,
+        그 정도 여유가 있는 자리를 더 선호한다(강제는 아님 — 좁은 맵에서도 스폰은 돼야 함).
         """
         c, p = self.cfg, self.player
+        orbit_clearance = radius + 140.0
         best, valid = None, 0
         for _ in range(c.shape_spawn_candidates * 6):
             x, y = self._random_free_pos(radius, c.spawn_min_dist_from_tanks)
             clearance = min((math.hypot(s.x - x, s.y - y) - s.radius - radius for s in self.shapes), default=math.inf)
             far = self.frame == 0 or math.hypot(x - p.x, y - p.y) >= c.shape_respawn_dist_from_player
-            ok = far and clearance >= c.shape_spawn_gap
+            roomy = self.terrain.circle_fits(x, y, orbit_clearance)
+            ok = far and clearance >= c.shape_spawn_gap and roomy
             valid += ok
-            # 우선순위: 조건 모두 만족 > 겹치지 않음 > 플레이어와 멂 > 다른 천체와 멂
-            score = (ok, clearance >= 0, far, clearance)
+            # 우선순위: 조건 모두 만족 > 겹치지 않음 > 플레이어와 멂 > 벽에서 여유 있음 > 다른 천체와 멂
+            score = (ok, clearance >= 0, far, roomy, clearance)
             if best is None or score > best[0]:
                 best = score, x, y
             if valid >= c.shape_spawn_candidates:
@@ -854,7 +858,11 @@ class GameCore:
 
         tgt = self._target_pos(e)
         if tgt is None and e.ai_target is not None and e.ai_target[0] != "player":
+            # 쫓던 천체가 (다른 적에게) 부서져 사라졌을 수 있다. 다음 반응 주기까지
+            # 기다리지 않고 바로 새 목표를 고르게 해서 구석에 계속 머무르지 않게 한다.
             e.ai_target = None
+            e.ai_path = []
+            e.ai_timer = 0
 
         # 3) 이동
         direct = False
