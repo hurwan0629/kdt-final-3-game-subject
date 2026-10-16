@@ -131,8 +131,8 @@ class GameConfig:
     # 플레이어
     player_hp: float = 100.0
     player_fire_cooldown: int = 28   # 기본 발사 간격 (프레임): 초당 약 2.1발
-    limited_ammo: bool = True
-    player_ammo: int = 120           # 탄창 용량 (예비 탄약은 무제한)
+    limited_ammo: bool = True        # False면 탄약 무제한 (재장전도 필요 없음) — main.py 기본 실행은 False로 켬
+    player_ammo: int = 120           # limited_ammo=True일 때만 쓰는 탄창 용량
     reload_seconds: float = 2.5
     regen_delay: int = 240           # 마지막 피격 후 회복 시작까지 프레임
     regen_rate: float = 0.05         # 프레임당 회복량

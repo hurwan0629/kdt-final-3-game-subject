@@ -599,7 +599,12 @@ class Renderer:
         color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS["white"]
         self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))
         reloading = game.reload_frames_left > 0
-        hint = f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초" if reloading else "R: 재장전 · ESC: 메뉴"
+        if reloading:
+            hint = f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초"
+        elif game.cfg.limited_ammo:
+            hint = "R: 재장전 · ESC: 메뉴"
+        else:
+            hint = "ESC: 메뉴"
         self.screen.blit(self.font_small.render(hint, True, COLORS["text"]), (rect.x + 14, rect.y + 33))
         if reloading:
             bar = pygame.Rect(rect.x + 14, rect.y + 54, rect.width - 28, 6)
@@ -646,7 +651,8 @@ class Renderer:
 
         # 메뉴의 조작 안내 설정을 즉시 반영한다.
         if show_controls:
-            for i, hint in enumerate(("WASD 이동 · 마우스 조준 / 발사 · Tab 능력치", "R 재장전 · 1–5 스탯 강화 · ESC 화면 설정")):
+            second_line = "1–5 스탯 강화 · ESC 화면 설정" if not self.cfg.limited_ammo else "R 재장전 · 1–5 스탯 강화 · ESC 화면 설정"
+            for i, hint in enumerate(("WASD 이동 · 마우스 조준 / 발사 · Tab 능력치", second_line)):
                 surf = self.font_small.render(hint, True, COLORS["text"])
                 self.screen.blit(surf, surf.get_rect(midtop=(W / 2 + 30, 10 + i * 23)))
         self._draw_minimap(game)
