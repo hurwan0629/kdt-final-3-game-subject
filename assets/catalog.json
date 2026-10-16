@@ -1,287 +1,20 @@
 {
   "created": "2026-10-15",
   "generator": "user-supplied player ships; built-in image_gen for other existing assets",
-  "square_images": true,
-  "direction": "player ships face right; enemies and directional projectiles face up",
+  "square_images": false,
+  "direction": "Active ships face right; directional projectile source images face up.",
   "categories": {
     "ships": 21,
     "backgrounds": 2,
-    "objects": 7,
-    "enemies": 3,
-    "projectiles": 5
+    "objects": 4,
+    "projectiles": 3
   },
   "assets": [
     {
-      "id": "background_deep",
-      "name": "심우주 배경",
-      "category": "backgrounds",
-      "path": "backgrounds/deep_space.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGB",
-      "transparent_background": false,
-      "alpha_extrema": null,
-      "bytes": 2379761,
-      "sha256": "6e9bfd39ee8d227f73310cfad4700777ddf9bef99d177c4bad293c52d4a47638"
-    },
-    {
-      "id": "background_nebula",
-      "name": "성운 배경",
-      "category": "backgrounds",
-      "path": "backgrounds/nebula.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGB",
-      "transparent_background": false,
-      "alpha_extrema": null,
-      "bytes": 2192131,
-      "sha256": "4327b5d9f184839554c5e86a9b9d836274ab1a6073e8b6c53b1b023839d5563b"
-    },
-    {
-      "id": "object_asteroid",
-      "name": "소행성 벽",
-      "category": "objects",
-      "path": "objects/asteroid_wall.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 2076097,
-      "sha256": "7a4c49be14cc49865f9500f06e13aec434f438fa59adfe06ad974b10e9551af6"
-    },
-    {
-      "id": "object_breakable",
-      "name": "파괴 가능한 소행성",
-      "category": "objects",
-      "path": "objects/breakable_asteroid.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1934669,
-      "sha256": "79816636a34164671cd9354b0273214d18be7bf12a9b9a0fc70586d811c3ab97"
-    },
-    {
-      "id": "object_gas",
-      "name": "은폐 가스 구름",
-      "category": "objects",
-      "path": "objects/gas_cloud.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        253
-      ],
-      "bytes": 1497770,
-      "sha256": "6172ce36904c6ebcd4ee470bebf9e51c9bf62f1aa9fb8e2ed06fc7208b4b938f"
-    },
-    {
-      "id": "object_gravity",
-      "name": "감속 중력장",
-      "category": "objects",
-      "path": "objects/gravity_field.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        253
-      ],
-      "bytes": 2028685,
-      "sha256": "312e9ebad7e02821c866d7b5e7fac0d31f8b0b5f64af4af91ade7728b4c591a2"
-    },
-    {
-      "id": "object_fragment",
-      "name": "별 조각",
-      "category": "objects",
-      "path": "objects/star_fragment.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 814614,
-      "sha256": "be8c1ca78b259101551c0edba24d5b77a9e767590ef8b8ba8fe2be5e6d6fdf2e"
-    },
-    {
-      "id": "object_planet",
-      "name": "암석 행성",
-      "category": "objects",
-      "path": "objects/rock_planet.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 2176894,
-      "sha256": "da4275d485555ea0f4849cb1ffdcdecbeed0d04e57121a64af709db4badbe8b9"
-    },
-    {
-      "id": "object_ring",
-      "name": "고리 행성",
-      "category": "objects",
-      "path": "objects/ring_planet.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1284247,
-      "sha256": "8b4fa866733177946eb3484177703a1931cc3ab509be9549ede84d3f26777bec"
-    },
-    {
-      "id": "enemy_scout",
-      "name": "적 정찰선",
-      "category": "enemies",
-      "path": "enemies/scout.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 928400,
-      "sha256": "c9b2059a7ec5d95deeb0314ae21c355ac262076e49429e1cc70a11bd81480f94"
-    },
-    {
-      "id": "enemy_fighter",
-      "name": "적 전투선",
-      "category": "enemies",
-      "path": "enemies/fighter.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1275923,
-      "sha256": "3b5c0a7fd691fea97f80efcda8a8dcc70638709b02701208cb25a29d16eea9d4"
-    },
-    {
-      "id": "enemy_heavy",
-      "name": "적 중장갑선",
-      "category": "enemies",
-      "path": "enemies/heavy.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1565164,
-      "sha256": "d6a1ae3c479b1036d991c42ccb42e3ea479b2c80a7acc58f25334b732cb3e176"
-    },
-    {
-      "id": "projectile_plasma",
-      "name": "플레이어 플라즈마 탄",
-      "category": "projectiles",
-      "path": "projectiles/player_plasma.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        254
-      ],
-      "bytes": 189115,
-      "sha256": "05e7f50b1d8c62568b097f3e0fae2c17fdb786a8f9591ec73dfec07aedffced1"
-    },
-    {
-      "id": "projectile_enemy",
-      "name": "적 플라즈마 탄",
-      "category": "projectiles",
-      "path": "projectiles/enemy_plasma.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 205754,
-      "sha256": "ef2a75b6173fb11009cdd147d503253d16e8b025c930fb4d1da5c13c75eaf643"
-    },
-    {
-      "id": "projectile_shell",
-      "name": "대포 탄",
-      "category": "projectiles",
-      "path": "projectiles/cannon_shell.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 716606,
-      "sha256": "214e7c6e605301f706cca797533c9685af4f48fbd6a6cc17c1e9cc8498bae4bd"
-    },
-    {
-      "id": "projectile_missile",
-      "name": "유도 미사일",
-      "category": "projectiles",
-      "path": "projectiles/homing_missile.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 343122,
-      "sha256": "53a542e07269647c80c08677307d10ddd77dc220756bb014c6ebcbfdffc18caa"
-    },
-    {
-      "id": "projectile_mine",
-      "name": "기뢰",
-      "category": "projectiles",
-      "path": "projectiles/mine.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1234587,
-      "sha256": "a44d4ad62dc2201031ec2cf953b93c2477b7e12985481d24a61f7a2c7f65992a"
-    },
-    {
-      "id": "Lv10_가디언",
-      "name": "가디언",
+      "id": "Lv1_베이직",
+      "name": "Lv.1 베이직",
       "category": "ships",
-      "path": "ships/Lv10_가디언.png",
+      "path": "ships/Lv1_베이직.png",
       "width": 512,
       "height": 512,
       "mode": "RGBA",
@@ -290,82 +23,56 @@
         0,
         255
       ],
-      "bytes": 15909,
-      "sha256": "bc9df5f158fe400cce5bbe7d3b598ab572127367a7ad02ad33c4d43a771fe920",
+      "bytes": 11258,
+      "sha256": "a92e53e6e10f978fba848c795130470d1f3076c25b891fa323613f8548bfa11e",
       "direction": "right, 0 degrees",
       "source": "user-supplied",
       "body_bounds": [
-        155,
-        148,
-        364,
-        364
+        197,
+        194,
+        336,
+        318
       ],
       "alpha_bounds": [
-        155,
-        148,
-        246,
-        216
+        196,
+        194,
+        185,
+        124
       ],
       "center": [
-        259.5,
+        266.5,
         256.0
       ],
-      "body_diameter": 216,
-      "forward_muzzles": [
-        {
-          "y": 256.0,
-          "x": 399,
-          "forward": 1.2917,
-          "lateral": 0.0
-        }
-      ]
-    },
-    {
-      "id": "Lv10_스나이퍼",
-      "name": "스나이퍼",
-      "category": "ships",
-      "path": "ships/Lv10_스나이퍼.png",
-      "width": 512,
-      "height": 512,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 14482,
-      "sha256": "fe7ab6acee1a37f7aa4b8cd627dd41aff52dce405c57277ee9c1d10f29c515b2",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        189,
-        202,
-        356,
-        310
-      ],
-      "alpha_bounds": [
-        189,
-        201,
-        237,
-        110
-      ],
-      "center": [
-        272.5,
-        256.0
-      ],
-      "body_diameter": 167,
+      "body_diameter": 139,
       "forward_muzzles": [
         {
           "y": 255.5,
-          "x": 424,
-          "forward": 1.8144,
-          "lateral": -0.006
+          "x": 379,
+          "forward": 1.6187,
+          "lateral": -0.0072
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
         }
       ]
     },
     {
       "id": "Lv10_트윈",
-      "name": "트윈",
+      "name": "Lv.10 트윈",
       "category": "ships",
       "path": "ships/Lv10_트윈.png",
       "width": 512,
@@ -410,11 +117,88 @@
           "forward": 1.6618,
           "lateral": 0.3676
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv10_스나이퍼",
+      "name": "Lv.10 스나이퍼",
+      "category": "ships",
+      "path": "ships/Lv10_스나이퍼.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14482,
+      "sha256": "fe7ab6acee1a37f7aa4b8cd627dd41aff52dce405c57277ee9c1d10f29c515b2",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        189,
+        202,
+        356,
+        310
+      ],
+      "alpha_bounds": [
+        189,
+        201,
+        237,
+        110
+      ],
+      "center": [
+        272.5,
+        256.0
+      ],
+      "body_diameter": 167,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 424,
+          "forward": 1.8144,
+          "lateral": -0.006
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
       "id": "Lv10_플랭크",
-      "name": "플랭크",
+      "name": "Lv.10 플랭크",
       "category": "ships",
       "path": "ships/Lv10_플랭크.png",
       "width": 512,
@@ -453,13 +237,30 @@
           "forward": 1.5714,
           "lateral": -0.0068
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
-      "id": "Lv1_베이직",
-      "name": "베이직",
+      "id": "Lv10_가디언",
+      "name": "Lv.10 가디언",
       "category": "ships",
-      "path": "ships/Lv1_베이직.png",
+      "path": "ships/Lv10_가디언.png",
       "width": 512,
       "height": 512,
       "mode": "RGBA",
@@ -468,39 +269,56 @@
         0,
         255
       ],
-      "bytes": 11258,
-      "sha256": "a92e53e6e10f978fba848c795130470d1f3076c25b891fa323613f8548bfa11e",
+      "bytes": 15909,
+      "sha256": "bc9df5f158fe400cce5bbe7d3b598ab572127367a7ad02ad33c4d43a771fe920",
       "direction": "right, 0 degrees",
       "source": "user-supplied",
       "body_bounds": [
-        197,
-        194,
-        336,
-        318
+        155,
+        148,
+        364,
+        364
       ],
       "alpha_bounds": [
-        196,
-        194,
-        185,
-        124
+        155,
+        148,
+        246,
+        216
       ],
       "center": [
-        266.5,
+        259.5,
         256.0
       ],
-      "body_diameter": 139,
+      "body_diameter": 216,
       "forward_muzzles": [
         {
-          "y": 255.5,
-          "x": 379,
-          "forward": 1.6187,
-          "lateral": -0.0072
+          "y": 256.0,
+          "x": 399,
+          "forward": 1.2917,
+          "lateral": 0.0
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
         }
       ]
     },
     {
       "id": "Lv20_듀얼 스트라이커",
-      "name": "듀얼 스트라이커",
+      "name": "Lv.20 듀얼 스트라이커",
       "category": "ships",
       "path": "ships/Lv20_듀얼 스트라이커.png",
       "width": 512,
@@ -539,189 +357,28 @@
           "forward": 1.6013,
           "lateral": -0.0063
         }
-      ]
-    },
-    {
-      "id": "Lv20_레일거너",
-      "name": "레일거너",
-      "category": "ships",
-      "path": "ships/Lv20_레일거너.png",
-      "width": 512,
-      "height": 512,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
       ],
-      "bytes": 16013,
-      "sha256": "cb3a50ad9d62b5ff53823fe1b1ee8777ad66fbb82374a1c92d4c0dc621c41dc2",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        181,
-        194,
-        371,
-        318
-      ],
-      "alpha_bounds": [
-        180,
-        194,
-        276,
-        124
-      ],
-      "center": [
-        276.0,
-        256.0
-      ],
-      "body_diameter": 190,
-      "forward_muzzles": [
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
         {
-          "y": 255.5,
-          "x": 455,
-          "forward": 1.8842,
-          "lateral": -0.0053
-        }
-      ]
-    },
-    {
-      "id": "Lv20_바스티온",
-      "name": "바스티온",
-      "category": "ships",
-      "path": "ships/Lv20_바스티온.png",
-      "width": 512,
-      "height": 512,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 17107,
-      "sha256": "083a3ac246630da5ce8b8ef8d07315e32a8e3cb63f807c41a030384f820ffad7",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        142,
-        135,
-        377,
-        377
-      ],
-      "alpha_bounds": [
-        142,
-        134,
-        274,
-        244
-      ],
-      "center": [
-        259.5,
-        256.0
-      ],
-      "body_diameter": 242,
-      "forward_muzzles": [
-        {
-          "y": 235.5,
-          "x": 414,
-          "forward": 1.2769,
-          "lateral": -0.1694
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
         },
         {
-          "y": 275.5,
-          "x": 414,
-          "forward": 1.2769,
-          "lateral": 0.1612
-        }
-      ]
-    },
-    {
-      "id": "Lv20_이지스",
-      "name": "이지스",
-      "category": "ships",
-      "path": "ships/Lv20_이지스.png",
-      "width": 512,
-      "height": 512,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 18798,
-      "sha256": "b0fdcfa2815fbcc6edfd4ce3dbc5e37572b7463eead98b9b0223cba2e28d54be",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        128,
-        127,
-        385,
-        385
-      ],
-      "alpha_bounds": [
-        127,
-        121,
-        294,
-        270
-      ],
-      "center": [
-        256.5,
-        256.0
-      ],
-      "body_diameter": 258,
-      "forward_muzzles": [
-        {
-          "y": 256.0,
-          "x": 419,
-          "forward": 1.2597,
-          "lateral": 0.0
-        }
-      ]
-    },
-    {
-      "id": "Lv20_쿼드 윙",
-      "name": "쿼드 윙",
-      "category": "ships",
-      "path": "ships/Lv20_쿼드 윙.png",
-      "width": 512,
-      "height": 512,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 14391,
-      "sha256": "c3cc3911fbdcca13ea51b0546b60fc99b74601045691811aada0ecdcf27d136d",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        178,
-        186,
-        339,
-        326
-      ],
-      "alpha_bounds": [
-        141,
-        141,
-        240,
-        230
-      ],
-      "center": [
-        258.5,
-        256.0
-      ],
-      "body_diameter": 161,
-      "forward_muzzles": [
-        {
-          "y": 255.5,
-          "x": 379,
-          "forward": 1.4969,
-          "lateral": -0.0062
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
         }
       ]
     },
     {
       "id": "Lv20_트리플 윙",
-      "name": "트리플 윙",
+      "name": "Lv.20 트리플 윙",
       "category": "ships",
       "path": "ships/Lv20_트리플 윙.png",
       "width": 512,
@@ -772,11 +429,208 @@
           "forward": 1.4789,
           "lateral": 0.6972
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv20_레일거너",
+      "name": "Lv.20 레일거너",
+      "category": "ships",
+      "path": "ships/Lv20_레일거너.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 16013,
+      "sha256": "cb3a50ad9d62b5ff53823fe1b1ee8777ad66fbb82374a1c92d4c0dc621c41dc2",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        181,
+        194,
+        371,
+        318
+      ],
+      "alpha_bounds": [
+        180,
+        194,
+        276,
+        124
+      ],
+      "center": [
+        276.0,
+        256.0
+      ],
+      "body_diameter": 190,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 455,
+          "forward": 1.8842,
+          "lateral": -0.0053
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv20_헌터",
+      "name": "Lv.20 헌터",
+      "category": "ships",
+      "path": "ships/Lv20_헌터.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14686,
+      "sha256": "5fbfe776fba3257bd55443751ba10c53b531e46973fe40be2c9cbe847cbf7578",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        186,
+        199,
+        360,
+        313
+      ],
+      "alpha_bounds": [
+        186,
+        199,
+        250,
+        114
+      ],
+      "center": [
+        273.0,
+        256.0
+      ],
+      "body_diameter": 174,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 435,
+          "forward": 1.8621,
+          "lateral": -0.0057
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv20_쿼드 윙",
+      "name": "Lv.20 쿼드 윙",
+      "category": "ships",
+      "path": "ships/Lv20_쿼드 윙.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 14391,
+      "sha256": "c3cc3911fbdcca13ea51b0546b60fc99b74601045691811aada0ecdcf27d136d",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        178,
+        186,
+        339,
+        326
+      ],
+      "alpha_bounds": [
+        141,
+        141,
+        240,
+        230
+      ],
+      "center": [
+        258.5,
+        256.0
+      ],
+      "body_diameter": 161,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 379,
+          "forward": 1.4969,
+          "lateral": -0.0062
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
       "id": "Lv20_트윈 플랭크",
-      "name": "트윈 플랭크",
+      "name": "Lv.20 트윈 플랭크",
       "category": "ships",
       "path": "ships/Lv20_트윈 플랭크.png",
       "width": 512,
@@ -821,13 +675,30 @@
           "forward": 1.4286,
           "lateral": 0.2857
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
-      "id": "Lv20_헌터",
-      "name": "헌터",
+      "id": "Lv20_바스티온",
+      "name": "Lv.20 바스티온",
       "category": "ships",
-      "path": "ships/Lv20_헌터.png",
+      "path": "ships/Lv20_바스티온.png",
       "width": 512,
       "height": 512,
       "mode": "RGBA",
@@ -836,39 +707,122 @@
         0,
         255
       ],
-      "bytes": 14686,
-      "sha256": "5fbfe776fba3257bd55443751ba10c53b531e46973fe40be2c9cbe847cbf7578",
+      "bytes": 17107,
+      "sha256": "083a3ac246630da5ce8b8ef8d07315e32a8e3cb63f807c41a030384f820ffad7",
       "direction": "right, 0 degrees",
       "source": "user-supplied",
       "body_bounds": [
-        186,
-        199,
-        360,
-        313
+        142,
+        135,
+        377,
+        377
       ],
       "alpha_bounds": [
-        186,
-        199,
-        250,
-        114
+        142,
+        134,
+        274,
+        244
       ],
       "center": [
-        273.0,
+        259.5,
         256.0
       ],
-      "body_diameter": 174,
+      "body_diameter": 242,
       "forward_muzzles": [
         {
-          "y": 255.5,
-          "x": 435,
-          "forward": 1.8621,
-          "lateral": -0.0057
+          "y": 235.5,
+          "x": 414,
+          "forward": 1.2769,
+          "lateral": -0.1694
+        },
+        {
+          "y": 275.5,
+          "x": 414,
+          "forward": 1.2769,
+          "lateral": 0.1612
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv20_이지스",
+      "name": "Lv.20 이지스",
+      "category": "ships",
+      "path": "ships/Lv20_이지스.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 18798,
+      "sha256": "b0fdcfa2815fbcc6edfd4ce3dbc5e37572b7463eead98b9b0223cba2e28d54be",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        128,
+        127,
+        385,
+        385
+      ],
+      "alpha_bounds": [
+        127,
+        121,
+        294,
+        270
+      ],
+      "center": [
+        256.5,
+        256.0
+      ],
+      "body_diameter": 258,
+      "forward_muzzles": [
+        {
+          "y": 256.0,
+          "x": 419,
+          "forward": 1.2597,
+          "lateral": 0.0
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
         }
       ]
     },
     {
       "id": "Lv30_개틀링 스톰",
-      "name": "개틀링 스톰",
+      "name": "Lv.30 개틀링 스톰",
       "category": "ships",
       "path": "ships/Lv30_개틀링 스톰.png",
       "width": 512,
@@ -907,13 +861,30 @@
           "forward": 1.7202,
           "lateral": -0.006
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
-      "id": "Lv30_시타델",
-      "name": "시타델",
+      "id": "Lv30_펜타 윙",
+      "name": "Lv.30 펜타 윙",
       "category": "ships",
-      "path": "ships/Lv30_시타델.png",
+      "path": "ships/Lv30_펜타 윙.png",
       "width": 512,
       "height": 512,
       "mode": "RGBA",
@@ -922,39 +893,176 @@
         0,
         255
       ],
-      "bytes": 20409,
-      "sha256": "a88baff380b383603693bc4de0fd9938ae6d0dcacdd63e471a2a04cda5b9b747",
+      "bytes": 21631,
+      "sha256": "5245495c7bc1284d7cfc7c5c8ea45a7d92355827af9d49d742a856431fb62cfa",
       "direction": "right, 0 degrees",
       "source": "user-supplied",
       "body_bounds": [
-        111,
-        111,
-        401,
-        401
+        189,
+        180,
+        335,
+        332
       ],
       "alpha_bounds": [
-        81,
-        109,
-        362,
-        294
+        189,
+        162,
+        212,
+        188
       ],
       "center": [
-        256.0,
+        262.0,
         256.0
       ],
-      "body_diameter": 290,
+      "body_diameter": 152,
       "forward_muzzles": [
         {
           "y": 255.5,
-          "x": 442,
-          "forward": 1.2828,
-          "lateral": -0.0034
+          "x": 399,
+          "forward": 1.8026,
+          "lateral": -0.0066
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv30_하이퍼 레일건",
+      "name": "Lv.30 하이퍼 레일건",
+      "category": "ships",
+      "path": "ships/Lv30_하이퍼 레일건.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 17868,
+      "sha256": "2300a23a5d5ff3d953c0125143b3c9c2bc7987894d411da90ac888da2cd9e26c",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        176,
+        190,
+        378,
+        322
+      ],
+      "alpha_bounds": [
+        176,
+        190,
+        305,
+        132
+      ],
+      "center": [
+        277.0,
+        256.0
+      ],
+      "body_diameter": 202,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 480,
+          "forward": 2.0099,
+          "lateral": -0.005
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv30_프레데터",
+      "name": "Lv.30 프레데터",
+      "category": "ships",
+      "path": "ships/Lv30_프레데터.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 15555,
+      "sha256": "078d929c0c09bff0ca5a4ec78084e3992d719c32a24360b45080d23f24778a34",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        182,
+        196,
+        367,
+        316
+      ],
+      "alpha_bounds": [
+        181,
+        195,
+        275,
+        122
+      ],
+      "center": [
+        274.5,
+        256.0
+      ],
+      "body_diameter": 185,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 455,
+          "forward": 1.9514,
+          "lateral": -0.0054
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
         }
       ]
     },
     {
       "id": "Lv30_옥타 스타",
-      "name": "옥타 스타",
+      "name": "Lv.30 옥타 스타",
       "category": "ships",
       "path": "ships/Lv30_옥타 스타.png",
       "width": 512,
@@ -1005,11 +1113,88 @@
           "forward": 1.0233,
           "lateral": 0.7849
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ]
+    },
+    {
+      "id": "Lv30_헥사 크루저",
+      "name": "Lv.30 헥사 크루저",
+      "category": "ships",
+      "path": "ships/Lv30_헥사 크루저.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 15252,
+      "sha256": "47b0721b6e43e9a85c7bd60c53800f28df6d35d0da6b44cde381180fd8f78fa7",
+      "direction": "right, 0 degrees",
+      "source": "user-supplied",
+      "body_bounds": [
+        182,
+        185,
+        347,
+        327
+      ],
+      "alpha_bounds": [
+        131,
+        185,
+        260,
+        142
+      ],
+      "center": [
+        264.5,
+        256.0
+      ],
+      "body_diameter": 165,
+      "forward_muzzles": [
+        {
+          "y": 255.5,
+          "x": 389,
+          "forward": 1.5091,
+          "lateral": -0.0061
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
       "id": "Lv30_콜로서스",
-      "name": "콜로서스",
+      "name": "Lv.30 콜로서스",
       "category": "ships",
       "path": "ships/Lv30_콜로서스.png",
       "width": 512,
@@ -1060,13 +1245,30 @@
           "forward": 1.19,
           "lateral": 0.18
         }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
       ]
     },
     {
-      "id": "Lv30_펜타 윙",
-      "name": "펜타 윙",
+      "id": "Lv30_시타델",
+      "name": "Lv.30 시타델",
       "category": "ships",
-      "path": "ships/Lv30_펜타 윙.png",
+      "path": "ships/Lv30_시타델.png",
       "width": 512,
       "height": 512,
       "mode": "RGBA",
@@ -1075,164 +1277,1943 @@
         0,
         255
       ],
-      "bytes": 21631,
-      "sha256": "5245495c7bc1284d7cfc7c5c8ea45a7d92355827af9d49d742a856431fb62cfa",
+      "bytes": 20409,
+      "sha256": "a88baff380b383603693bc4de0fd9938ae6d0dcacdd63e471a2a04cda5b9b747",
       "direction": "right, 0 degrees",
       "source": "user-supplied",
       "body_bounds": [
-        189,
-        180,
-        335,
-        332
+        111,
+        111,
+        401,
+        401
       ],
       "alpha_bounds": [
-        189,
-        162,
-        212,
-        188
+        81,
+        109,
+        362,
+        294
       ],
       "center": [
-        262.0,
+        256.0,
         256.0
       ],
-      "body_diameter": 152,
+      "body_diameter": 290,
       "forward_muzzles": [
         {
           "y": 255.5,
-          "x": 399,
-          "forward": 1.8026,
-          "lateral": -0.0066
+          "x": 442,
+          "forward": 1.2828,
+          "lateral": -0.0034
+        }
+      ],
+      "status": "active",
+      "rendering": "image",
+      "usage": "플레이어·적·전직 카드가 공유하는 투명 PNG. 정면은 오른쪽입니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
         }
       ]
     },
     {
-      "id": "Lv30_프레데터",
-      "name": "프레데터",
-      "category": "ships",
-      "path": "ships/Lv30_프레데터.png",
-      "width": 512,
-      "height": 512,
+      "id": "background_deep",
+      "name": "우주 배경",
+      "category": "backgrounds",
+      "path": "backgrounds/deep_space.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "transparent_background": false,
+      "alpha_extrema": null,
+      "bytes": 2379761,
+      "sha256": "6e9bfd39ee8d227f73310cfad4700777ddf9bef99d177c4bad293c52d4a47638",
+      "status": "active",
+      "rendering": "image",
+      "usage": "두 배경을 합성한 뒤 어둡게 보정합니다. 성운은 투명도 35/255로 합성.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 142,
+          "function": "Renderer._make_background",
+          "excerpt": "    def _make_background(self):\n        size = (self.cfg.world_width, self.cfg.world_height)\n        surf = self.assets.image(\"backgrounds/deep_space\", size).copy()\n        haze = self.assets.image(\"backgrounds/nebula\", size).copy()\n        haze.set_alpha(35)\n        surf.blit(haze, (0, 0))\n        surf.fill((120, 125, 145), special_flags=pygame.BLEND_RGB_MULT)\n        return surf"
+        }
+      ]
+    },
+    {
+      "id": "background_nebula",
+      "name": "성운 레이어",
+      "category": "backgrounds",
+      "path": "backgrounds/nebula.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "transparent_background": false,
+      "alpha_extrema": null,
+      "bytes": 2192131,
+      "sha256": "4327b5d9f184839554c5e86a9b9d836274ab1a6073e8b6c53b1b023839d5563b",
+      "status": "active",
+      "rendering": "image",
+      "usage": "두 배경을 합성한 뒤 어둡게 보정합니다. 성운은 투명도 35/255로 합성.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 142,
+          "function": "Renderer._make_background",
+          "excerpt": "    def _make_background(self):\n        size = (self.cfg.world_width, self.cfg.world_height)\n        surf = self.assets.image(\"backgrounds/deep_space\", size).copy()\n        haze = self.assets.image(\"backgrounds/nebula\", size).copy()\n        haze.set_alpha(35)\n        surf.blit(haze, (0, 0))\n        surf.fill((120, 125, 145), special_flags=pygame.BLEND_RGB_MULT)\n        return surf"
+        }
+      ]
+    },
+    {
+      "id": "object_fragment",
+      "name": "별 조각",
+      "category": "objects",
+      "path": "objects/star_fragment.png",
+      "width": 1254,
+      "height": 1254,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
         255
       ],
-      "bytes": 15555,
-      "sha256": "078d929c0c09bff0ca5a4ec78084e3992d719c32a24360b45080d23f24778a34",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        182,
-        196,
-        367,
-        316
-      ],
-      "alpha_bounds": [
-        181,
-        195,
-        275,
-        122
-      ],
-      "center": [
-        274.5,
-        256.0
-      ],
-      "body_diameter": 185,
-      "forward_muzzles": [
+      "bytes": 814614,
+      "sha256": "be8c1ca78b259101551c0edba24d5b77a9e767590ef8b8ba8fe2be5e6d6fdf2e",
+      "status": "active",
+      "rendering": "image",
+      "usage": "경험치를 주는 천체. 회전·등장·피격 효과는 코드에서 적용합니다.",
+      "rendering_code": [
         {
-          "y": 255.5,
-          "x": 455,
-          "forward": 1.9514,
-          "lateral": -0.0054
+          "path": "renderer.py",
+          "line": 201,
+          "function": "Renderer._make_shape_sprite",
+          "excerpt": "    def _make_shape_sprite(self, kind):\n        from config import SHAPE_TYPES\n        path = {\n            \"square\": \"star_fragment\", \n            \"triangle\": \"rock_planet\", \n            \"pentagon\": \"ring_planet\"\n        }[kind]\n        sprite = self.assets.image(\"objects/\" + path, SHAPE_TYPES[kind][\"radius\"] * 2.8)\n        flash = sprite.copy()\n        flash.fill((100, 100, 100, 0), special_flags=pygame.BLEND_RGBA_ADD)\n        return sprite, flash"
         }
       ]
     },
     {
-      "id": "Lv30_하이퍼 레일건",
-      "name": "하이퍼 레일건",
-      "category": "ships",
-      "path": "ships/Lv30_하이퍼 레일건.png",
-      "width": 512,
-      "height": 512,
+      "id": "object_planet",
+      "name": "암석 행성",
+      "category": "objects",
+      "path": "objects/rock_planet.png",
+      "width": 1254,
+      "height": 1254,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
         255
       ],
-      "bytes": 17868,
-      "sha256": "2300a23a5d5ff3d953c0125143b3c9c2bc7987894d411da90ac888da2cd9e26c",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        176,
-        190,
-        378,
-        322
-      ],
-      "alpha_bounds": [
-        176,
-        190,
-        305,
-        132
-      ],
-      "center": [
-        277.0,
-        256.0
-      ],
-      "body_diameter": 202,
-      "forward_muzzles": [
+      "bytes": 2176894,
+      "sha256": "da4275d485555ea0f4849cb1ffdcdecbeed0d04e57121a64af709db4badbe8b9",
+      "status": "active",
+      "rendering": "image",
+      "usage": "경험치를 주는 천체. 회전·등장·피격 효과는 코드에서 적용합니다.",
+      "rendering_code": [
         {
-          "y": 255.5,
-          "x": 480,
-          "forward": 2.0099,
-          "lateral": -0.005
+          "path": "renderer.py",
+          "line": 201,
+          "function": "Renderer._make_shape_sprite",
+          "excerpt": "    def _make_shape_sprite(self, kind):\n        from config import SHAPE_TYPES\n        path = {\n            \"square\": \"star_fragment\", \n            \"triangle\": \"rock_planet\", \n            \"pentagon\": \"ring_planet\"\n        }[kind]\n        sprite = self.assets.image(\"objects/\" + path, SHAPE_TYPES[kind][\"radius\"] * 2.8)\n        flash = sprite.copy()\n        flash.fill((100, 100, 100, 0), special_flags=pygame.BLEND_RGBA_ADD)\n        return sprite, flash"
         }
       ]
     },
     {
-      "id": "Lv30_헥사 크루저",
-      "name": "헥사 크루저",
-      "category": "ships",
-      "path": "ships/Lv30_헥사 크루저.png",
-      "width": 512,
-      "height": 512,
+      "id": "object_ring",
+      "name": "고리 행성",
+      "category": "objects",
+      "path": "objects/ring_planet.png",
+      "width": 1254,
+      "height": 1254,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
         255
       ],
-      "bytes": 15252,
-      "sha256": "47b0721b6e43e9a85c7bd60c53800f28df6d35d0da6b44cde381180fd8f78fa7",
-      "direction": "right, 0 degrees",
-      "source": "user-supplied",
-      "body_bounds": [
-        182,
-        185,
-        347,
-        327
-      ],
-      "alpha_bounds": [
-        131,
-        185,
-        260,
-        142
-      ],
-      "center": [
-        264.5,
-        256.0
-      ],
-      "body_diameter": 165,
-      "forward_muzzles": [
+      "bytes": 1284247,
+      "sha256": "8b4fa866733177946eb3484177703a1931cc3ab509be9549ede84d3f26777bec",
+      "status": "active",
+      "rendering": "image",
+      "usage": "경험치를 주는 천체. 회전·등장·피격 효과는 코드에서 적용합니다.",
+      "rendering_code": [
         {
-          "y": 255.5,
-          "x": 389,
-          "forward": 1.5091,
-          "lateral": -0.0061
+          "path": "renderer.py",
+          "line": 201,
+          "function": "Renderer._make_shape_sprite",
+          "excerpt": "    def _make_shape_sprite(self, kind):\n        from config import SHAPE_TYPES\n        path = {\n            \"square\": \"star_fragment\", \n            \"triangle\": \"rock_planet\", \n            \"pentagon\": \"ring_planet\"\n        }[kind]\n        sprite = self.assets.image(\"objects/\" + path, SHAPE_TYPES[kind][\"radius\"] * 2.8)\n        flash = sprite.copy()\n        flash.fill((100, 100, 100, 0), special_flags=pygame.BLEND_RGBA_ADD)\n        return sprite, flash"
         }
       ]
+    },
+    {
+      "id": "object_gravity",
+      "name": "중력장",
+      "category": "objects",
+      "path": "objects/gravity_field.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        253
+      ],
+      "bytes": 2028685,
+      "sha256": "312e9ebad7e02821c866d7b5e7fac0d31f8b0b5f64af4af91ade7728b4c591a2",
+      "status": "active",
+      "rendering": "image",
+      "usage": "--stage2에서 켜지는 선택 지형 이미지.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 162,
+          "function": "Renderer._ensure_terrain",
+          "excerpt": "    def _ensure_terrain(self, tm):\n        key = (id(tm), tm.version)\n        if key == self._terrain_key:\n            return\n        self._terrain_key = key\n        tile = tm.tile\n        floor = self._bg.copy()\n        solids = (WALL, BREAKABLE)\n        for row in range(tm.rows):\n            for col in range(tm.cols):\n                kind = tm.tiles[row][col]\n                rect = pygame.Rect(col * tile, row * tile, tile, tile)"
+        }
+      ]
+    },
+    {
+      "id": "projectile_plasma",
+      "name": "플레이어 플라즈마",
+      "category": "projectiles",
+      "path": "projectiles/player_plasma.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "bytes": 189115,
+      "sha256": "05e7f50b1d8c62568b097f3e0fae2c17fdb786a8f9591ec73dfec07aedffced1",
+      "status": "active",
+      "rendering": "image",
+      "usage": "원본의 투명 여백을 잘라내고 탄체 너비를 충돌 지름에 맞춰 그립니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 508,
+          "function": "Renderer._draw_bullet",
+          "excerpt": "    def _draw_bullet(self, b):\n        path = (\"mine\" if b.kind == \"mine\" else \"homing_missile\" if b.kind == \"missile\"\n                else \"cannon_shell\" if b.kind == \"shell\" else \"enemy_plasma\" if b.team == \"enemy\" else \"player_plasma\")\n        angle = None if b.kind == \"mine\" and not b.arming_frames else -90 - math.degrees(math.atan2(b.vy, b.vx))\n        if b.kind == \"mine\":\n            image = self.assets.image(\"projectiles/\" + path, 24, angle)\n        else:\n            image = self.assets.projectile_image(\"projectiles/\" + path, b.radius * 2, angle)\n        x, y = self.world_to_view(b.x, b.y)\n        self.screen.blit(image, image.get_rect(center=(round(x), round(y))))"
+        }
+      ]
+    },
+    {
+      "id": "projectile_enemy",
+      "name": "적 플라즈마",
+      "category": "projectiles",
+      "path": "projectiles/enemy_plasma.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 205754,
+      "sha256": "ef2a75b6173fb11009cdd147d503253d16e8b025c930fb4d1da5c13c75eaf643",
+      "status": "active",
+      "rendering": "image",
+      "usage": "원본의 투명 여백을 잘라내고 탄체 너비를 충돌 지름에 맞춰 그립니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 508,
+          "function": "Renderer._draw_bullet",
+          "excerpt": "    def _draw_bullet(self, b):\n        path = (\"mine\" if b.kind == \"mine\" else \"homing_missile\" if b.kind == \"missile\"\n                else \"cannon_shell\" if b.kind == \"shell\" else \"enemy_plasma\" if b.team == \"enemy\" else \"player_plasma\")\n        angle = None if b.kind == \"mine\" and not b.arming_frames else -90 - math.degrees(math.atan2(b.vy, b.vx))\n        if b.kind == \"mine\":\n            image = self.assets.image(\"projectiles/\" + path, 24, angle)\n        else:\n            image = self.assets.projectile_image(\"projectiles/\" + path, b.radius * 2, angle)\n        x, y = self.world_to_view(b.x, b.y)\n        self.screen.blit(image, image.get_rect(center=(round(x), round(y))))"
+        }
+      ]
+    },
+    {
+      "id": "projectile_shell",
+      "name": "저격탄 · 포탄",
+      "category": "projectiles",
+      "path": "projectiles/cannon_shell.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 716606,
+      "sha256": "214e7c6e605301f706cca797533c9685af4f48fbd6a6cc17c1e9cc8498bae4bd",
+      "status": "active",
+      "rendering": "image",
+      "usage": "원본의 투명 여백을 잘라내고 탄체 너비를 충돌 지름에 맞춰 그립니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 508,
+          "function": "Renderer._draw_bullet",
+          "excerpt": "    def _draw_bullet(self, b):\n        path = (\"mine\" if b.kind == \"mine\" else \"homing_missile\" if b.kind == \"missile\"\n                else \"cannon_shell\" if b.kind == \"shell\" else \"enemy_plasma\" if b.team == \"enemy\" else \"player_plasma\")\n        angle = None if b.kind == \"mine\" and not b.arming_frames else -90 - math.degrees(math.atan2(b.vy, b.vx))\n        if b.kind == \"mine\":\n            image = self.assets.image(\"projectiles/\" + path, 24, angle)\n        else:\n            image = self.assets.projectile_image(\"projectiles/\" + path, b.radius * 2, angle)\n        x, y = self.world_to_view(b.x, b.y)\n        self.screen.blit(image, image.get_rect(center=(round(x), round(y))))"
+        }
+      ]
+    },
+    {
+      "id": "enemy_fighter",
+      "name": "fighter",
+      "category": "trash",
+      "path": "trash/enemies/fighter.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1275923,
+      "sha256": "3b5c0a7fd691fea97f80efcda8a8dcc70638709b02701208cb25a29d16eea9d4",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 적 기체. 현재는 한글 우주선 PNG의 선체 색상을 변환하여 사용합니다.",
+      "rendering_code": [],
+      "original_path": "enemies/fighter.png"
+    },
+    {
+      "id": "enemy_heavy",
+      "name": "heavy",
+      "category": "trash",
+      "path": "trash/enemies/heavy.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1565164,
+      "sha256": "d6a1ae3c479b1036d991c42ccb42e3ea479b2c80a7acc58f25334b732cb3e176",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 적 기체. 현재는 한글 우주선 PNG의 선체 색상을 변환하여 사용합니다.",
+      "rendering_code": [],
+      "original_path": "enemies/heavy.png"
+    },
+    {
+      "id": "enemy_scout",
+      "name": "scout",
+      "category": "trash",
+      "path": "trash/enemies/scout.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 928400,
+      "sha256": "c9b2059a7ec5d95deeb0314ae21c355ac262076e49429e1cc70a11bd81480f94",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 적 기체. 현재는 한글 우주선 PNG의 선체 색상을 변환하여 사용합니다.",
+      "rendering_code": [],
+      "original_path": "enemies/scout.png"
+    },
+    {
+      "id": "object_asteroid",
+      "name": "asteroid_wall",
+      "category": "trash",
+      "path": "trash/objects/asteroid_wall.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 2076097,
+      "sha256": "7a4c49be14cc49865f9500f06e13aec434f438fa59adfe06ad974b10e9551af6",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "현재 장벽은 코드로 그리며 은신 구름 기능은 제거되었습니다.",
+      "rendering_code": [],
+      "original_path": "objects/asteroid_wall.png"
+    },
+    {
+      "id": "object_breakable",
+      "name": "breakable_asteroid",
+      "category": "trash",
+      "path": "trash/objects/breakable_asteroid.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1934669,
+      "sha256": "79816636a34164671cd9354b0273214d18be7bf12a9b9a0fc70586d811c3ab97",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "현재 장벽은 코드로 그리며 은신 구름 기능은 제거되었습니다.",
+      "rendering_code": [],
+      "original_path": "objects/breakable_asteroid.png"
+    },
+    {
+      "id": "object_gas",
+      "name": "gas_cloud",
+      "category": "trash",
+      "path": "trash/objects/gas_cloud.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        253
+      ],
+      "bytes": 1497770,
+      "sha256": "6172ce36904c6ebcd4ee470bebf9e51c9bf62f1aa9fb8e2ed06fc7208b4b938f",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "현재 장벽은 코드로 그리며 은신 구름 기능은 제거되었습니다.",
+      "rendering_code": [],
+      "original_path": "objects/gas_cloud.png"
+    },
+    {
+      "id": "projectile_missile",
+      "name": "homing_missile",
+      "category": "trash",
+      "path": "trash/projectiles/homing_missile.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 343122,
+      "sha256": "53a542e07269647c80c08677307d10ddd77dc220756bb014c6ebcbfdffc18caa",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "렌더러 분기는 있지만 현재 발사 로직에서는 생성하지 않습니다. 기능 복원 시 원래 경로로 돌려놓아야 합니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 508,
+          "function": "Renderer._draw_bullet",
+          "excerpt": "    def _draw_bullet(self, b):\n        path = (\"mine\" if b.kind == \"mine\" else \"homing_missile\" if b.kind == \"missile\"\n                else \"cannon_shell\" if b.kind == \"shell\" else \"enemy_plasma\" if b.team == \"enemy\" else \"player_plasma\")\n        angle = None if b.kind == \"mine\" and not b.arming_frames else -90 - math.degrees(math.atan2(b.vy, b.vx))\n        if b.kind == \"mine\":\n            image = self.assets.image(\"projectiles/\" + path, 24, angle)\n        else:\n            image = self.assets.projectile_image(\"projectiles/\" + path, b.radius * 2, angle)\n        x, y = self.world_to_view(b.x, b.y)\n        self.screen.blit(image, image.get_rect(center=(round(x), round(y))))"
+        }
+      ],
+      "original_path": "projectiles/homing_missile.png"
+    },
+    {
+      "id": "projectile_mine",
+      "name": "mine",
+      "category": "trash",
+      "path": "trash/projectiles/mine.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 1234587,
+      "sha256": "a44d4ad62dc2201031ec2cf953b93c2477b7e12985481d24a61f7a2c7f65992a",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "렌더러 분기는 있지만 현재 발사 로직에서는 생성하지 않습니다. 기능 복원 시 원래 경로로 돌려놓아야 합니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 508,
+          "function": "Renderer._draw_bullet",
+          "excerpt": "    def _draw_bullet(self, b):\n        path = (\"mine\" if b.kind == \"mine\" else \"homing_missile\" if b.kind == \"missile\"\n                else \"cannon_shell\" if b.kind == \"shell\" else \"enemy_plasma\" if b.team == \"enemy\" else \"player_plasma\")\n        angle = None if b.kind == \"mine\" and not b.arming_frames else -90 - math.degrees(math.atan2(b.vy, b.vx))\n        if b.kind == \"mine\":\n            image = self.assets.image(\"projectiles/\" + path, 24, angle)\n        else:\n            image = self.assets.projectile_image(\"projectiles/\" + path, b.radius * 2, angle)\n        x, y = self.world_to_view(b.x, b.y)\n        self.screen.blit(image, image.get_rect(center=(round(x), round(y))))"
+        }
+      ],
+      "original_path": "projectiles/mine.png"
+    },
+    {
+      "id": "trash-우주선_진화트리",
+      "name": "우주선_진화트리",
+      "path": "trash/references/우주선_진화트리.png",
+      "category": "trash",
+      "width": 2800,
+      "height": 1760,
+      "bytes": 508843,
+      "sha256": "8c78d0676479a69a281ae0612f86ec1e20916e90707bb134317d439753f934ba",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "게임에서 로드하지 않는 진화 트리 참고 자료입니다. 삭제하지 않고 보관합니다.",
+      "rendering_code": [],
+      "original_path": "references/우주선_진화트리.png"
+    },
+    {
+      "id": "trash-booster",
+      "name": "booster",
+      "path": "trash/ships/booster.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1551005,
+      "sha256": "78f5fdf0c8d395dc2ba8624dcc1aad258c9d4c4c6d1949a5a9aab3c772c533c7",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/booster.png"
+    },
+    {
+      "id": "trash-cross",
+      "name": "cross",
+      "path": "trash/ships/cross.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1072769,
+      "sha256": "fa9b2f888a4d011daf4513f5b7faab7e60872e13d9c3630362d7048100e236b1",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/cross.png"
+    },
+    {
+      "id": "trash-gatling",
+      "name": "gatling",
+      "path": "trash/ships/gatling.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1529188,
+      "sha256": "cd3a848000db488e925477f6efe115c0955ef468b196402039c84df26237db34",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/gatling.png"
+    },
+    {
+      "id": "trash-guardian",
+      "name": "guardian",
+      "path": "trash/ships/guardian.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1701366,
+      "sha256": "a92d47a6563f60dbc7d99bf602592f3e7f1cc9ec990c6ea63aec4acade264ac7",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/guardian.png"
+    },
+    {
+      "id": "trash-homing",
+      "name": "homing",
+      "path": "trash/ships/homing.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1330889,
+      "sha256": "fd61849a702515a8c4929345a8f37d356261cab33f6bb91722ac4bbb4ff1a9a3",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/homing.png"
+    },
+    {
+      "id": "trash-minelayer",
+      "name": "minelayer",
+      "path": "trash/ships/minelayer.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1816512,
+      "sha256": "a8e5df197f25a50c4e5a6c9a4f744b645e6d907e8903220e4a83c3b3cebfc895",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/minelayer.png"
+    },
+    {
+      "id": "trash-railgun",
+      "name": "railgun",
+      "path": "trash/ships/railgun.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 773231,
+      "sha256": "681e2a7e5c75cd91fcbd2e0ab5430a42cc42c51c1dc04ae38db10c3596e72f39",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/railgun.png"
+    },
+    {
+      "id": "trash-ram",
+      "name": "ram",
+      "path": "trash/ships/ram.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1787394,
+      "sha256": "cd146e7e555591e36971e71579a4b332572e4ca0c58091c6637f1c84c5b8def0",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/ram.png"
+    },
+    {
+      "id": "trash-rookie",
+      "name": "rookie",
+      "path": "trash/ships/rookie.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 806179,
+      "sha256": "32ac434e0c4867362f64f6d877d113ce2634c31d48667a81bbfd76da91e52b8f",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/rookie.png"
+    },
+    {
+      "id": "trash-shotgun",
+      "name": "shotgun",
+      "path": "trash/ships/shotgun.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1633315,
+      "sha256": "d82b362274acd2ab9276887e8c6c9280000d242d8fe1b205fc573cf8263467dd",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/shotgun.png"
+    },
+    {
+      "id": "trash-sniper",
+      "name": "sniper",
+      "path": "trash/ships/sniper.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 651601,
+      "sha256": "e7b3e70ea3030bb959228a61eea6404c4c9085e2878098a8041d90564c4bace6",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/sniper.png"
+    },
+    {
+      "id": "trash-triple",
+      "name": "triple",
+      "path": "trash/ships/triple.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1238117,
+      "sha256": "af8a47d232341ccd8a351464a5c61e24355698272675bf056f0e453a43eb361e",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/triple.png"
+    },
+    {
+      "id": "trash-twin",
+      "name": "twin",
+      "path": "trash/ships/twin.png",
+      "category": "trash",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1151331,
+      "sha256": "2cd67abf3fe17cfcf6ba7c18e0f25080b72e32e8b1e7f95f442879d0e622fa0f",
+      "status": "archived",
+      "rendering": "unused",
+      "usage": "예전 영문 파일명 기체. 현재는 한글 파일명 21종을 사용합니다.",
+      "rendering_code": [],
+      "original_path": "ships/twin.png"
+    },
+    {
+      "id": "screen-main",
+      "name": "메인 화면 전체",
+      "path": "made_by_code/screen-main.png",
+      "category": "made_by_code",
+      "width": 1280,
+      "height": 800,
+      "bytes": 549626,
+      "sha256": "bd4a475d594c65b9da9b4669982c572072882f6b0e2246f7fd27597c7ff1f806",
+      "status": "capture",
+      "rendering": "screen",
+      "usage": "우주 배경 PNG 위에 제목과 버튼을 코드로 합성합니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 461,
+          "function": "Renderer.draw_main_menu",
+          "excerpt": "    def draw_main_menu(self, buttons, selected=0):\n        pygame.transform.smoothscale(self._bg, self.size, self.screen)\n        self._draw_menu(buttons, \"SPACE SKIRMISH\", selected, main=True)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "main-menu",
+      "name": "메인 메뉴 · 버튼",
+      "path": "made_by_code/main-menu.png",
+      "category": "made_by_code",
+      "width": 540,
+      "height": 480,
+      "bytes": 17997,
+      "sha256": "654475d6fdc33f9b2f8d80e2a0e45b70e077e96ab38cc49350dd5e1b598a92d0",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "제목, 부제, 활성·비활성 버튼, 조작 힌트.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 465,
+          "function": "Renderer._draw_menu",
+          "excerpt": "    def _draw_menu(self, buttons, title, selected, main=False):\n        W, H = self.size\n        shade = pygame.Surface((W, H), pygame.SRCALPHA)\n        shade.fill((0, 0, 15, 170 if main else 215))\n        self.screen.blit(shade, (0, 0))\n        if not main:\n            self._panel(pygame.Rect(W // 2 - 225, H // 2 - 276, 450, 552), 240, 20)\n        font = self.font_big if main else self.font_card\n        text = font.render(title, True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 - (188 if main else 224))))\n        sub = \"당신의 우주선을 지휘하세요\" if main else \"설정을 클릭해 변경 · ESC / P로 계속하기\"\n        text = self.font_body.render(sub, True, COLORS[\"text\"])"
+        },
+        {
+          "path": "menus.py",
+          "line": 15,
+          "function": "menu_buttons",
+          "excerpt": "def menu_buttons(mode, cfg, show_debug=False, show_controls=True, auto_pause=True,\n                 fullscreen=False, size=None):\n    width, height = size or (cfg.width, cfg.height)\n    x = width // 2 - 190\n    if mode == \"main\":\n        y = height // 2 - 107\n        return [MenuButton(\"start\", \"무한 스테이지\", pygame.Rect(x, y, 380, 58)),\n                MenuButton(\"story\", \"스토리 모드 · 준비 중\", pygame.Rect(x, y + 78, 380, 58), False),\n                MenuButton(\"quit\", \"게임 나가기\", pygame.Rect(x, y + 156, 380, 58))]\n    rows = [(\"fullscreen\", f\"화면 모드   {'전체화면' if fullscreen else '창 모드'}\"),\n            (\"zoom\", f\"줌 배율   {cfg.camera_zoom:.0%}\"),\n            (\"controls\", f\"조작 안내   {'켜짐' if show_controls else '꺼짐'}\"),"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "screen-playing",
+      "name": "플레이 화면 전체",
+      "path": "made_by_code/screen-playing.png",
+      "category": "made_by_code",
+      "width": 1280,
+      "height": 800,
+      "bytes": 578449,
+      "sha256": "fefd5ff7c1876b9033b39d6df0a21d869050f2fe8eba658fe2e7af28b79f8255",
+      "status": "capture",
+      "rendering": "screen",
+      "usage": "기본 HUD·지형·기체의 상대 크기와 배치를 확인하는 화면.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 355,
+          "function": "Renderer.draw",
+          "excerpt": "    def draw(self, game, debug_lines=None, paused=False, show_ai=False,\n             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):\n        self._tick += 1\n        self._update_camera(game.player)\n        self._track(game)\n        self._ensure_terrain(game.terrain)\n        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔\n        display = self.screen\n        self.screen = scr = self._view\n        scr.fill(COLORS[\"space_top\"])\n        scr.blit(self._floor, (-self.camera_x, -self.camera_y))\n        self._draw_twinkles()"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "pause-menu",
+      "name": "ESC 일시정지 · 설정",
+      "path": "made_by_code/pause-menu.png",
+      "category": "made_by_code",
+      "width": 484,
+      "height": 588,
+      "bytes": 22418,
+      "sha256": "8390128352595bf185adcc841ad27bb192083ebe6e1a47071fb8809819f3396f",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "설정 5개와 계속·새 게임·메인·종료 버튼.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 465,
+          "function": "Renderer._draw_menu",
+          "excerpt": "    def _draw_menu(self, buttons, title, selected, main=False):\n        W, H = self.size\n        shade = pygame.Surface((W, H), pygame.SRCALPHA)\n        shade.fill((0, 0, 15, 170 if main else 215))\n        self.screen.blit(shade, (0, 0))\n        if not main:\n            self._panel(pygame.Rect(W // 2 - 225, H // 2 - 276, 450, 552), 240, 20)\n        font = self.font_big if main else self.font_card\n        text = font.render(title, True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 - (188 if main else 224))))\n        sub = \"당신의 우주선을 지휘하세요\" if main else \"설정을 클릭해 변경 · ESC / P로 계속하기\"\n        text = self.font_body.render(sub, True, COLORS[\"text\"])"
+        },
+        {
+          "path": "menus.py",
+          "line": 15,
+          "function": "menu_buttons",
+          "excerpt": "def menu_buttons(mode, cfg, show_debug=False, show_controls=True, auto_pause=True,\n                 fullscreen=False, size=None):\n    width, height = size or (cfg.width, cfg.height)\n    x = width // 2 - 190\n    if mode == \"main\":\n        y = height // 2 - 107\n        return [MenuButton(\"start\", \"무한 스테이지\", pygame.Rect(x, y, 380, 58)),\n                MenuButton(\"story\", \"스토리 모드 · 준비 중\", pygame.Rect(x, y + 78, 380, 58), False),\n                MenuButton(\"quit\", \"게임 나가기\", pygame.Rect(x, y + 156, 380, 58))]\n    rows = [(\"fullscreen\", f\"화면 모드   {'전체화면' if fullscreen else '창 모드'}\"),\n            (\"zoom\", f\"줌 배율   {cfg.camera_zoom:.0%}\"),\n            (\"controls\", f\"조작 안내   {'켜짐' if show_controls else '꺼짐'}\"),"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "hud-score",
+      "name": "점수 · 처치 · 시간",
+      "path": "made_by_code/hud-score.png",
+      "category": "made_by_code",
+      "width": 430,
+      "height": 54,
+      "bytes": 2387,
+      "sha256": "0ac72b235c807050de57ebc0e7181b4b21ae5abe9024929b330d82e9792b6263",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "좌상단 반투명 패널과 수치.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "hud-ammo",
+      "name": "탄약 · 기본 상태",
+      "path": "made_by_code/hud-ammo.png",
+      "category": "made_by_code",
+      "width": 200,
+      "height": 76,
+      "bytes": 2628,
+      "sha256": "0f41423f088492f9e71e6d0455f3b2e7a708641e66edf48b10f308fd728e5c3a",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "잔탄과 탄창 크기, 재장전 안내.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "hud-reload",
+      "name": "탄약 · 재장전 중",
+      "path": "made_by_code/hud-reload.png",
+      "category": "made_by_code",
+      "width": 200,
+      "height": 76,
+      "bytes": 2524,
+      "sha256": "1027f8f43e7ca031bfe67816ede70557e021b0d6bb9899807673f00d7946bbfa",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "남은 재장전 시간과 진행 게이지.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "ammo-empty",
+      "name": "탄약 소진 알림",
+      "path": "made_by_code/ammo-empty.png",
+      "category": "made_by_code",
+      "width": 520,
+      "height": 64,
+      "bytes": 2159,
+      "sha256": "cc17f21a51adfa6135785bb8d667064e3aa302a82e528faf51a24032c99a5a54",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "화면 중앙 상단의 재장전 경고.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "hp-bar",
+      "name": "선체 HP · 정상",
+      "path": "made_by_code/hp-bar.png",
+      "category": "made_by_code",
+      "width": 352,
+      "height": 44,
+      "bytes": 1313,
+      "sha256": "16f5d38ff1f6c53083866b3294138e2080e5bfaafccaa4a6957310e0429af577",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "하단 HP 패널과 현재·최대 체력.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "hp-low",
+      "name": "선체 HP · 위험",
+      "path": "made_by_code/hp-low.png",
+      "category": "made_by_code",
+      "width": 352,
+      "height": 44,
+      "bytes": 1560,
+      "sha256": "e82f80c99050e6a99341fd423d21916ecb87858f070d22956c7dd81cc2ade915",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "낮은 체력일 때 붉게 변하는 체력바.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "exp-bar",
+      "name": "레벨 · EXP",
+      "path": "made_by_code/exp-bar.png",
+      "category": "made_by_code",
+      "width": 352,
+      "height": 96,
+      "bytes": 2854,
+      "sha256": "3198b13c0ef794371b835d607d771bdf9885db12a62fe22b78bce2194a86a460",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "기체명, 레벨, 경험치 수치와 채움 바.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 705,
+          "function": "Renderer._draw_progression",
+          "excerpt": "    def _draw_progression(self, game, show_notice, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        panel = pygame.Rect(W // 2 - 166, H - 100, 332, 84)\n        self._panel(panel)\n        title = f\"Lv.{game.level}  {JOB_NAMES[p.job]}\"\n        text = self.font_body.render(title, True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(midtop=(W // 2, H - 98)))\n        bar = pygame.Rect(W // 2 - 160, H - 67, 320, 18)\n        pygame.draw.rect(self.screen, COLORS[\"hp_bg\"], bar, border_radius=9)\n        fill = bar.copy()\n        fill.width = int(bar.width * game.xp / game.xp_to_next_level)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "exp-flash",
+      "name": "EXP 획득 · 발광",
+      "path": "made_by_code/exp-flash.png",
+      "category": "made_by_code",
+      "width": 352,
+      "height": 96,
+      "bytes": 2964,
+      "sha256": "ac3f4dd91c1a6faae234f98526e0ac86bfe083c3b2d24c2aff04be5c8c55a00b",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "점수를 얻으면 EXP 바에 짧은 발광 테두리가 나타납니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 705,
+          "function": "Renderer._draw_progression",
+          "excerpt": "    def _draw_progression(self, game, show_notice, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        panel = pygame.Rect(W // 2 - 166, H - 100, 332, 84)\n        self._panel(panel)\n        title = f\"Lv.{game.level}  {JOB_NAMES[p.job]}\"\n        text = self.font_body.render(title, True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(midtop=(W // 2, H - 98)))\n        bar = pygame.Rect(W // 2 - 160, H - 67, 320, 18)\n        pygame.draw.rect(self.screen, COLORS[\"hp_bg\"], bar, border_radius=9)\n        fill = bar.copy()\n        fill.width = int(bar.width * game.xp / game.xp_to_next_level)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "stat-upgrades",
+      "name": "스탯 강화 · 사용 가능",
+      "path": "made_by_code/stat-upgrades.png",
+      "category": "made_by_code",
+      "width": 284,
+      "height": 168,
+      "bytes": 5857,
+      "sha256": "9690c5cf7e057c84b447541c7b2f9bf9b76b24f6ddec91b894822f8e72381428",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "5개 강화 행, 순위와 + 버튼.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 755,
+          "function": "Renderer._draw_stat_upgrades",
+          "excerpt": "    def _draw_stat_upgrades(self, game):\n        rows = stat_rows(*self.size, game.stat_choices)\n        if not rows:\n            return\n        top = rows[0][1][1] - 30\n        bottom = rows[-1][1][1] + rows[-1][1][3] + 8\n        self._panel(pygame.Rect(14, top, 272, bottom - top), 195, 10)\n        title = self.font_small.render(f\"남은 스탯 {game.upgrade_points}P · 1–5 / 클릭\", True, COLORS[\"player\"])\n        self.screen.blit(title, (22, top + 7))\n        for i, (card, coords) in enumerate(rows):\n            rect = pygame.Rect(coords)\n            enabled = game.can_upgrade_stat(card.key)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "stat-disabled",
+      "name": "스탯 강화 · 포인트 없음",
+      "path": "made_by_code/stat-disabled.png",
+      "category": "made_by_code",
+      "width": 284,
+      "height": 168,
+      "bytes": 5769,
+      "sha256": "e1ec8f83b75874e3f3e7cc1b6350cb490eff5e043d8318d60c5d432b7d65475a",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "사용 불가능한 강화 버튼의 어두운 색상.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 755,
+          "function": "Renderer._draw_stat_upgrades",
+          "excerpt": "    def _draw_stat_upgrades(self, game):\n        rows = stat_rows(*self.size, game.stat_choices)\n        if not rows:\n            return\n        top = rows[0][1][1] - 30\n        bottom = rows[-1][1][1] + rows[-1][1][3] + 8\n        self._panel(pygame.Rect(14, top, 272, bottom - top), 195, 10)\n        title = self.font_small.render(f\"남은 스탯 {game.upgrade_points}P · 1–5 / 클릭\", True, COLORS[\"player\"])\n        self.screen.blit(title, (22, top + 7))\n        for i, (card, coords) in enumerate(rows):\n            rect = pygame.Rect(coords)\n            enabled = game.can_upgrade_stat(card.key)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "stat-max",
+      "name": "스탯 강화 · MAX",
+      "path": "made_by_code/stat-max.png",
+      "category": "made_by_code",
+      "width": 284,
+      "height": 168,
+      "bytes": 6040,
+      "sha256": "74d6645744070109c1740768241e14dbdee653e173c9c53ad4cc7fbbe97ec2d3",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "최대 강화 상태의 MAX 표시와 비활성 버튼.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 755,
+          "function": "Renderer._draw_stat_upgrades",
+          "excerpt": "    def _draw_stat_upgrades(self, game):\n        rows = stat_rows(*self.size, game.stat_choices)\n        if not rows:\n            return\n        top = rows[0][1][1] - 30\n        bottom = rows[-1][1][1] + rows[-1][1][3] + 8\n        self._panel(pygame.Rect(14, top, 272, bottom - top), 195, 10)\n        title = self.font_small.render(f\"남은 스탯 {game.upgrade_points}P · 1–5 / 클릭\", True, COLORS[\"player\"])\n        self.screen.blit(title, (22, top + 7))\n        for i, (card, coords) in enumerate(rows):\n            rect = pygame.Rect(coords)\n            enabled = game.can_upgrade_stat(card.key)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "stat-collapsed",
+      "name": "접힌 스탯 강화",
+      "path": "made_by_code/stat-collapsed.png",
+      "category": "made_by_code",
+      "width": 208,
+      "height": 50,
+      "bytes": 1852,
+      "sha256": "36bf5c14c87d4349334b7479096e1eb7a12e5a3435d5bd637633a1a843823300",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "4초 동안 조작하지 않으면 접히는 포인트 배지.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 783,
+          "function": "Renderer._draw_stat_collapsed",
+          "excerpt": "    def _draw_stat_collapsed(self, game):\n        rect = pygame.Rect(stat_collapsed_rect(*self.size))\n        hover = rect.collidepoint(pygame.mouse.get_pos())\n        self._panel(rect, 215 if hover else 185, 10)\n        badge = pygame.Rect(rect.x + 8, rect.y + 8, 22, 22)\n        pygame.draw.rect(self.screen, (80, 185, 215), badge, border_radius=7)\n        plus = self.font_body.render(\"+\", True, (10, 25, 35))\n        self.screen.blit(plus, plus.get_rect(center=badge.center))\n        text = self.font_small.render(f\"남은 스탯 {game.upgrade_points}P · 펼치기\", True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(midleft=(badge.right + 9, rect.centery)))"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "stats-panel",
+      "name": "Tab 상세 능력치",
+      "path": "made_by_code/stats-panel.png",
+      "category": "made_by_code",
+      "width": 484,
+      "height": 456,
+      "bytes": 22563,
+      "sha256": "74270b70d2f0836199bbe82c62d43135195884b5a56c2a1701f1b0647daaa02c",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "기체·체력·공격·사거리·발사속도·이동속도 등의 상세 수치.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 737,
+          "function": "Renderer._draw_stats_panel",
+          "excerpt": "    def _draw_stats_panel(self, game):\n        rect = pygame.Rect(self.size[0] // 2 - 230, self.size[1] // 2 - 220, 460, 440)\n        self._panel(rect, 175, 16)\n        title = self.font_card.render(\"나의 능력치\", True, COLORS[\"white\"])\n        self.screen.blit(title, (rect.x + 24, rect.y + 18))\n        ship = self.font_body.render(f\"Lv.{game.level} · {JOB_NAMES[game.player.job]}\", True, COLORS[\"player\"])\n        self.screen.blit(ship, (rect.x + 24, rect.y + 52))\n        for i, (label, value) in enumerate(player_stat_summary(game)):\n            y = rect.y + 92 + i * 31\n            name = self.font_body.render(label, True, COLORS[\"text\"])\n            number = self.font_body.render(value, True, COLORS[\"white\"])\n            self.screen.blit(name, (rect.x + 24, y))"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "tooltip",
+      "name": "툴팁 · 자동 줄바꿈",
+      "path": "made_by_code/tooltip.png",
+      "category": "made_by_code",
+      "width": 346,
+      "height": 108,
+      "bytes": 1868,
+      "sha256": "7a6e81445ece0682d7ded18c192f8a31bc8362e77fe17a4ebbf7268ae133bbc0",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "스탯 강화 설명을 지정 너비로 줄바꿈합니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 794,
+          "function": "Renderer._tooltip",
+          "excerpt": "    def _tooltip(self, lines, pos, width):\n        wrapped = [line for text in lines for line in self._wrapped_text(text, width - 20)]\n        rect = pygame.Rect(pos, (width, 14 + len(wrapped) * 18))\n        self._panel(rect, 240, 8)\n        for i, line in enumerate(wrapped):\n            self.screen.blit(self.font_small.render(line, True, COLORS[\"text\"]), (rect.x + 10, rect.y + 7 + i * 18))"
+        },
+        {
+          "path": "renderer.py",
+          "line": 801,
+          "function": "Renderer._wrapped_text",
+          "excerpt": "    def _wrapped_text(self, text, width):\n        lines, line = [], \"\"\n        for char in text:\n            if line and self.font_small.size(line + char)[0] > width:\n                lines.append(line)\n                line = \"\"\n            line += char\n        return lines + ([line] if line else [])"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "controls",
+      "name": "조작 안내",
+      "path": "made_by_code/controls.png",
+      "category": "made_by_code",
+      "width": 540,
+      "height": 60,
+      "bytes": 5889,
+      "sha256": "b0197643188fd0c3b83bfe82eca1dc89d4dde6a619014e7a0fd66d96d99a7657",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "상단 두 줄의 키·마우스 안내. 설정에서 끌 수 있습니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 590,
+          "function": "Renderer._draw_hud",
+          "excerpt": "    def _draw_hud(self, game, paused, show_notice=True, show_controls=True, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        secs = game.frame / self.cfg.fps\n\n        ammo = f\"탄약 {p.ammo} / {p.max_ammo}\" if game.cfg.limited_ammo else \"탄약 무제한\"\n        rect = pygame.Rect(W - 198, 14, 184, 60)\n        self._panel(rect)\n        color = (255, 130, 100) if game.cfg.limited_ammo and p.ammo == 0 else COLORS[\"white\"]\n        self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))\n        reloading = game.reload_frames_left > 0\n        hint = f\"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초\" if reloading else \"R: 재장전 · ESC: 메뉴\""
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "minimap",
+      "name": "미니맵",
+      "path": "made_by_code/minimap.png",
+      "category": "made_by_code",
+      "width": 217,
+      "height": 169,
+      "bytes": 834,
+      "sha256": "1963b720ca0d5fcb8bda32eadfa643adec842aedf56111bdd3dbb7d07a9e9fd7",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "실제 타일맵과 플레이어 위치·방향을 축소하여 표시.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 693,
+          "function": "Renderer._draw_minimap",
+          "excerpt": "    def _draw_minimap(self, game):\n        rect = self.minimap_rect()\n        area = rect.inflate(-12, -12)\n        self._ensure_minimap(game.terrain, area.size)\n        pygame.draw.rect(self.screen, COLORS[\"minimap_border\"], rect, border_radius=3)\n        self.screen.blit(self._minimap_floor, area.topleft)\n        clip = self.screen.get_clip()\n        self.screen.set_clip(area)\n        marker = self._minimap_marker(game, area)\n        pygame.draw.polygon(self.screen, COLORS[\"minimap_player\"], marker)\n        self.screen.set_clip(clip)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 665,
+          "function": "Renderer._ensure_minimap",
+          "excerpt": "    def _ensure_minimap(self, terrain, size):\n        # 맵 객체를 키에 보관해 새 판의 id 재사용도 이전 지도로 오인하지 않는다.\n        key = (terrain, terrain.version, size)\n        if self._minimap_key == key:\n            return\n        surface = pygame.Surface(size)\n        surface.fill(COLORS[\"minimap_floor\"])\n        width, height = size\n        for row in range(terrain.rows):\n            top = round(row * height / terrain.rows)\n            bottom = round((row + 1) * height / terrain.rows)\n            for col in range(terrain.cols):"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "evolution-10",
+      "name": "Lv.10 전직 카드",
+      "path": "made_by_code/evolution-10.png",
+      "category": "made_by_code",
+      "width": 414,
+      "height": 130,
+      "bytes": 8888,
+      "sha256": "c5f40ef51e8c6a9d448d5e46562ed0b1a9091d313129985eedc42d04a63b59f5",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "우주선 PNG + 코드 패널·기체명·전직 안내.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "screen-rewards",
+      "name": "전직 화면 전체",
+      "path": "made_by_code/screen-rewards.png",
+      "category": "made_by_code",
+      "width": 1280,
+      "height": 800,
+      "bytes": 569466,
+      "sha256": "beef7f50806863ec2d002992a0facd721aede27116585d7b39d67f2a0553e949",
+      "status": "capture",
+      "rendering": "screen",
+      "usage": "Lv.10 네 장의 전직 카드와 기존 HUD 배치.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 355,
+          "function": "Renderer.draw",
+          "excerpt": "    def draw(self, game, debug_lines=None, paused=False, show_ai=False,\n             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):\n        self._tick += 1\n        self._update_camera(game.player)\n        self._track(game)\n        self._ensure_terrain(game.terrain)\n        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔\n        display = self.screen\n        self.screen = scr = self._view\n        scr.fill(COLORS[\"space_top\"])\n        scr.blit(self._floor, (-self.camera_x, -self.camera_y))\n        self._draw_twinkles()"
+        },
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "evolution-20",
+      "name": "Lv.20 전직 카드",
+      "path": "made_by_code/evolution-20.png",
+      "category": "made_by_code",
+      "width": 414,
+      "height": 130,
+      "bytes": 7725,
+      "sha256": "af9823c36e2852b8bb93b4773fba447dc3ac9a8c622ee5914cfd7924932a2845",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "우주선 PNG + 코드 패널·기체명·전직 안내.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "evolution-30",
+      "name": "Lv.30 전직 카드",
+      "path": "made_by_code/evolution-30.png",
+      "category": "made_by_code",
+      "width": 414,
+      "height": 130,
+      "bytes": 4742,
+      "sha256": "2d3807c2a6726e6d0f2da5685857a94fe5580c483f3aa1f897a451cfb7896e5f",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "우주선 PNG + 코드 패널·기체명·전직 안내.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 810,
+          "function": "Renderer._draw_rewards",
+          "excerpt": "    def _draw_rewards(self, game):\n        pending = game.special_reward_levels\n        level = pending[0] if pending else (game.level // 10 + 1) * 10\n        count = len(game.reward_choices)\n        stage = \"최종 진화\" if level == 30 else \"전직\" if level < 30 else \"숙련\"\n        heading = (f\"Lv.{level} {stage} · F2–F{count + 1} / 클릭\" if count > 1\n                   else f\"Lv.{level} {stage} · F2 / 클릭\" if count else f\"다음 성장 Lv.{level}\")\n        self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))\n        cards = game.reward_choices\n        if not cards and game.reward_portrait and game.frame < game.reward_message_until:\n            cards = (SHIPS[game.reward_portrait],)\n        for i, card in enumerate(cards):"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "reward-notice",
+      "name": "전직 적용 알림",
+      "path": "made_by_code/reward-notice.png",
+      "category": "made_by_code",
+      "width": 520,
+      "height": 42,
+      "bytes": 1593,
+      "sha256": "9d5c800e333d99dddcfc0a1f0b41d8ffe8a7ce85499b4af5d8714519910b18b8",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "전직 후 하단 중앙에 잠시 나타나는 적용 완료 메시지.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 705,
+          "function": "Renderer._draw_progression",
+          "excerpt": "    def _draw_progression(self, game, show_notice, stats_collapsed=False):\n        p = game.player\n        W, H = self.size\n        panel = pygame.Rect(W // 2 - 166, H - 100, 332, 84)\n        self._panel(panel)\n        title = f\"Lv.{game.level}  {JOB_NAMES[p.job]}\"\n        text = self.font_body.render(title, True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(midtop=(W // 2, H - 98)))\n        bar = pygame.Rect(W // 2 - 160, H - 67, 320, 18)\n        pygame.draw.rect(self.screen, COLORS[\"hp_bg\"], bar, border_radius=9)\n        fill = bar.copy()\n        fill.width = int(bar.width * game.xp / game.xp_to_next_level)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "debug-panel",
+      "name": "디버그 수치 패널",
+      "path": "made_by_code/debug-panel.png",
+      "category": "made_by_code",
+      "width": 407,
+      "height": 218,
+      "bytes": 15692,
+      "sha256": "6cf9f2fd1accfb45d6365d8d86ab5fc9272d93b1bdb6acf957fc3e89f7a1bb9f",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "관찰 벡터·행동·위치·AI 상태. F1 또는 설정에서 표시.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 835,
+          "function": "Renderer._draw_debug",
+          "excerpt": "    def _draw_debug(self, lines):\n        lh = 16\n        w = max(self.font_mono.size(l)[0] for l in lines) + 24\n        rect = pygame.Rect(self.size[0] - w - 14, 14, w, 14 + lh * len(lines))\n        self._panel(rect, 200)\n        for i, line in enumerate(lines):\n            col = (140, 220, 255) if i == 0 else (215, 222, 240)\n            self.screen.blit(self.font_mono.render(line, True, col), (rect.x + 12, rect.y + 8 + lh * i))"
+        },
+        {
+          "path": "main.py",
+          "line": 37,
+          "function": "debug_lines",
+          "excerpt": "def debug_lines(game, obs_cfg, action):\n    obs = build_vector(game, obs_cfg)\n    f = lambda v: f\"{v:+.2f}\"\n    lines = [f\"vector obs {obs.size} (+ terrain grid)   action {action}   frame {game.frame}\",\n             \"self x,y \" + f(obs[0]) + \" \" + f(obs[1]) + \"  v \" + f(obs[2]) + \" \" + f(obs[3]),\n             \"self hp \" + f(obs[4]) + \"  sin/cos \" + f(obs[5]) + \" \" + f(obs[6]) + \"  rl \" + f(obs[7]),\n             f\"map {game.terrain.name}   enemies seeing you: {sum(e.alive and e.ai_can_see for e in game.enemies)}\"]\n    i = obs_cfg.SELF_DIM\n    for n in range(obs_cfg.n_enemies):\n        e = obs[i:i + obs_cfg.ENEMY_DIM]\n        lines.append(f\"enemy{n} ex{e[0]:.0f} d({f(e[1])},{f(e[2])}) hp{e[5]:.2f}\")\n        i += obs_cfg.ENEMY_DIM"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "world-hp",
+      "name": "개체 체력바",
+      "path": "made_by_code/world-hp.png",
+      "category": "made_by_code",
+      "width": 438,
+      "height": 54,
+      "bytes": 485,
+      "sha256": "7f2ca49234a122862895e9ac870831a101ce71bdd9e28a92596348c97215375c",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "플레이어·적·천체 위의 작은 체력바. 피해를 입었을 때만 표시.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 556,
+          "function": "Renderer._hp_bar",
+          "excerpt": "    def _hp_bar(self, cx, y, w, ratio, h=6):\n        if not self._visible(cx, y):\n            return\n        cx, y = self.world_to_view(cx, y)\n        x = int(cx - w / 2)\n        w = int(w)\n        pygame.draw.rect(self.screen, COLORS[\"hp_bg\"], (x - 1, y - 1, w + 2, h + 2), border_radius=(h + 2) // 2)\n        fill = max(h, int(w * ratio))\n        pygame.draw.rect(self.screen, _hp_color(ratio), (x, y, fill, h), border_radius=h // 2)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "ship-teams",
+      "name": "플레이어 · 적 · 엘리트",
+      "path": "made_by_code/ship-teams.png",
+      "category": "made_by_code",
+      "width": 610,
+      "height": 205,
+      "bytes": 17883,
+      "sha256": "e8a2df5be293f71d71f9eecd8abff408b0d655ea42b926371dcdf7b2914249fe",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "같은 기체 PNG를 사용하고 적은 붉게, 엘리트는 금색으로 변환.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "sprite_assets.py",
+          "line": 71,
+          "function": "SpriteAssets._source",
+          "excerpt": "    def _source(self, path):\n        for suffix, tint in HULL_TINTS.items():\n            if path.endswith(suffix):\n                return _recolor_hull(self._source(path[:-len(suffix)]), tint)\n        image = pygame.image.load(resource_path(f\"assets/{path}.png\")).convert_alpha()\n        if path in BARREL_OVERRIDES:\n            image = _redraw_barrel(image, *BARREL_OVERRIDES[path])\n        return image"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "guardian-barrel",
+      "name": "가디언 · 원본 / 런타임 포신",
+      "path": "made_by_code/guardian-barrel.png",
+      "category": "made_by_code",
+      "width": 550,
+      "height": 250,
+      "bytes": 5714,
+      "sha256": "b9c3e671723af11b0f14473cfb7895be9987d3752f39765352e0fa4617a7215a",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "왼쪽은 원본 PNG, 오른쪽은 코드로 대구경 포신을 다시 그린 결과.",
+      "rendering_code": [
+        {
+          "path": "sprite_assets.py",
+          "line": 71,
+          "function": "SpriteAssets._source",
+          "excerpt": "    def _source(self, path):\n        for suffix, tint in HULL_TINTS.items():\n            if path.endswith(suffix):\n                return _recolor_hull(self._source(path[:-len(suffix)]), tint)\n        image = pygame.image.load(resource_path(f\"assets/{path}.png\")).convert_alpha()\n        if path in BARREL_OVERRIDES:\n            image = _redraw_barrel(image, *BARREL_OVERRIDES[path])\n        return image"
+        },
+        {
+          "path": "sprite_assets.py",
+          "line": 35,
+          "function": "_redraw_barrel",
+          "excerpt": "def _redraw_barrel(image, forward, inner):\n    \"\"\"원본의 작은 회색 포신을 지우고 같은 그림체의 굵은 포신을 선체 아래에 그린다.\"\"\"\n    rgb = pygame.surfarray.array3d(image).astype(np.int16)\n    alpha = pygame.surfarray.array_alpha(image)\n    xs, ys = np.where(_hull_mask(rgb, alpha))\n    cx, cy = (xs.min() + xs.max() + 1) / 2, (ys.min() + ys.max() + 1) / 2\n    radius = max(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1) / 2\n    hull = image.copy()\n    gray = (np.abs(rgb[:, :, 0] - rgb[:, :, 1]) < 25) & (np.abs(rgb[:, :, 1] - rgb[:, :, 2]) < 25)\n    hull_alpha = pygame.surfarray.pixels_alpha(hull)\n    hull_alpha[gray & (alpha > 0)] = 0\n    del hull_alpha"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "ship-hit",
+      "name": "기체 피격 · 밝기 변화",
+      "path": "made_by_code/ship-hit.png",
+      "category": "made_by_code",
+      "width": 200,
+      "height": 210,
+      "bytes": 5064,
+      "sha256": "9135e39b5df1dfecc1f130200e2fc6a8ab0fece675c0d1a2ed0f99f7274b152c",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "피격 시 원본 이미지에 밝은 색상을 가산하는 순간 상태.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "ship-spawn",
+      "name": "기체 등장 · 확대 중",
+      "path": "made_by_code/ship-spawn.png",
+      "category": "made_by_code",
+      "width": 200,
+      "height": 210,
+      "bytes": 3264,
+      "sha256": "a41e03104bdaec97b0e05c5458bdd12a5a1de17c2c4d7db4f71e3f784b73a193",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "등장 후 14프레임 동안 원본 이미지의 크기를 변화시킵니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 519,
+          "function": "Renderer._draw_ship",
+          "excerpt": "    def _draw_ship(self, t, f, is_player=False):\n        x, y = self.world_to_view(t.x, t.y)\n        scale = self._spawn_scale(t.id, f)\n        if scale < 0.08:\n            return\n        # 적도 같은 진화 그림을 쓰되 선체를 붉은색(엘리트는 금색)으로 바꿔 구분한다.\n        suffix = \"\" if is_player else ELITE_SUFFIX if t.elite else ENEMY_SUFFIX\n        path = SHIPS[t.job].asset + suffix\n        image = self.assets.ship_image(path, t.radius * 2 * scale, -math.degrees(t.angle))\n        if self._flash_on and f - t.last_hit_frame < FLASH_FRAMES:\n            image = image.copy()\n            image.fill((90, 90, 90, 0), special_flags=pygame.BLEND_RGBA_ADD)"
+        },
+        {
+          "path": "renderer.py",
+          "line": 287,
+          "function": "Renderer._spawn_scale",
+          "excerpt": "    def _spawn_scale(self, oid, frame):\n        t = (frame - self._first_seen.get(oid, -999)) / SPAWN_FRAMES\n        if t >= 1:\n            return 1.0\n        t = max(0.0, t)\n        return 1 - (1 - t) ** 3  # ease-out"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "twinkles",
+      "name": "배경 별 · 반짝임",
+      "path": "made_by_code/twinkles.png",
+      "category": "made_by_code",
+      "width": 450,
+      "height": 70,
+      "bytes": 461,
+      "sha256": "dd73910e2a6b9f16afadedd5c87227b855200099014cc2ad1552a0b2dbea6f95",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "배경 PNG 위에 작은 원을 그리고 밝기를 시간에 따라 바꿉니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 151,
+          "function": "Renderer._draw_twinkles",
+          "excerpt": "    def _draw_twinkles(self):\n        for x, y, phase, speed in self._twinkles:\n            b = 0.5 + 0.5 * math.sin(self._tick * speed + phase)\n            c = int(90 + 165 * b)\n            sx, sy = self.world_to_view(x, y)\n            if -2 <= sx <= self.view_width + 2 and -2 <= sy <= self.view_height + 2:\n                pygame.draw.circle(self.screen, (c, c, min(255, c + 20)), (int(sx), int(sy)), 1 if b < 0.7 else 2)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "score-popup",
+      "name": "점수 획득 · 떠오르는 숫자",
+      "path": "made_by_code/score-popup.png",
+      "category": "made_by_code",
+      "width": 450,
+      "height": 150,
+      "bytes": 5906,
+      "sha256": "92d24ac9e42b382dc3959e51e5dbc9ddfe377a78d79ea5058a540055fc49abff",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "+점수 텍스트에 그림자·확대·상승·페이드가 적용됩니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 423,
+          "function": "Renderer._draw_score_text",
+          "excerpt": "    def _draw_score_text(self, game):\n        \"\"\"줌과 관계없이 읽히도록 \"+점수\"는 화면 좌표에 고정 크기로 그린다.\"\"\"\n        for _, frame, x, y, amount, kind in game.score_popups:\n            age = game.frame - frame\n            if age > SCORE_TEXT_FRAMES or not self._visible(x, y):\n                continue\n            t = age / SCORE_TEXT_FRAMES\n            # 처음엔 살짝 커졌다가 위로 떠오르며 사라진다.\n            pop = 1 + 0.35 * max(0.0, 1 - age / 8)\n            font = self.font_score_big if amount >= 100 else self.font_score\n            color = (255, 230, 120) if kind != \"elite\" else (255, 190, 60)\n            text = font.render(f\"+{amount}\", True, color)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "score-sparks",
+      "name": "점수 획득 · 불꽃",
+      "path": "made_by_code/score-sparks.png",
+      "category": "made_by_code",
+      "width": 450,
+      "height": 150,
+      "bytes": 9049,
+      "sha256": "72db3a8dd29810fd09be31d0ca5ebde1d004003cc47a9f32d80006364be876d2",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "점수 위치에서 바깥으로 퍼지는 작은 발광 입자.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 414,
+          "function": "Renderer._draw_score_effects",
+          "excerpt": "    def _draw_score_effects(self, game):\n        for x, y, _, _, age, life, color in self._sparks:\n            if not self._visible(x, y):\n                continue\n            k = 1 - age / life\n            sx, sy = self.world_to_view(x, y)\n            self._blit_glow(self.screen, sx, sy, 5 + 9 * k, color, round(k * 4) / 4)\n            pygame.draw.circle(self.screen, color, (round(sx), round(sy)), max(1, round(4.5 * k)))"
+        },
+        {
+          "path": "renderer.py",
+          "line": 119,
+          "function": "Renderer._glow",
+          "excerpt": "    def _glow(self, radius, color, intensity=1.0):\n        radius = max(2, int(radius))\n        key = (radius, color, round(intensity, 2))\n        surf = self._glow_cache.get(key)\n        if surf is None:\n            surf = pygame.Surface((radius * 2, radius * 2))\n            surf.fill((0, 0, 0))\n            for r in range(radius, 0, -1):\n                k = (1 - r / radius) ** 2 * intensity\n                pygame.draw.circle(surf, tuple(min(255, int(c * k)) for c in color), (radius, radius), r)\n            if len(self._glow_cache) > 600:\n                self._glow_cache.clear()"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "ship-explosion",
+      "name": "우주선 파괴 · 원형 발광",
+      "path": "made_by_code/ship-explosion.png",
+      "category": "made_by_code",
+      "width": 320,
+      "height": 300,
+      "bytes": 19956,
+      "sha256": "4301cadce0e8edcc38a99c5a402a7fb7b58680b26c9662cda0c32f290f589b91",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "커지는 원형 폭발과 발광으로 구성된 파괴 애니메이션.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 539,
+          "function": "Renderer._draw_ghost",
+          "excerpt": "    def _draw_ghost(self, g):\n        \"\"\"파괴 연출: 천체는 커지며 사라지고, 우주선은 폭발.\"\"\"\n        t = g[\"age\"] / DEATH_FRAMES\n        x, y = self.world_to_view(g[\"x\"], g[\"y\"])\n        if g[\"kind\"] == \"ship\":\n            r = g[\"r\"] * (1 + 2.2 * t)\n            self._blit_glow(self.screen, x, y, r * 1.4, (255, 170, 80), round((1 - t) * 8) / 8 * 1.2)\n            ring = _mix(g[\"color\"], (255, 255, 255), 0.4)\n            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r), (*ring, int(255 * (1 - t))))\n            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r) - 1, (*ring, int(200 * (1 - t))))\n            return\n        sprite = self._shape_sprites[g[\"kind\"]][1]"
+        },
+        {
+          "path": "renderer.py",
+          "line": 119,
+          "function": "Renderer._glow",
+          "excerpt": "    def _glow(self, radius, color, intensity=1.0):\n        radius = max(2, int(radius))\n        key = (radius, color, round(intensity, 2))\n        surf = self._glow_cache.get(key)\n        if surf is None:\n            surf = pygame.Surface((radius * 2, radius * 2))\n            surf.fill((0, 0, 0))\n            for r in range(radius, 0, -1):\n                k = (1 - r / radius) ** 2 * intensity\n                pygame.draw.circle(surf, tuple(min(255, int(c * k)) for c in color), (radius, radius), r)\n            if len(self._glow_cache) > 600:\n                self._glow_cache.clear()"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "object-fade",
+      "name": "천체 파괴 · 확대와 페이드",
+      "path": "made_by_code/object-fade.png",
+      "category": "made_by_code",
+      "width": 260,
+      "height": 260,
+      "bytes": 26876,
+      "sha256": "bc406692ab04a68fdc81ee9b903421882ba552fe970916b50a35c1275d1850ff",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "천체 PNG를 확대·회전·페이드하고 코드 발광을 더합니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 539,
+          "function": "Renderer._draw_ghost",
+          "excerpt": "    def _draw_ghost(self, g):\n        \"\"\"파괴 연출: 천체는 커지며 사라지고, 우주선은 폭발.\"\"\"\n        t = g[\"age\"] / DEATH_FRAMES\n        x, y = self.world_to_view(g[\"x\"], g[\"y\"])\n        if g[\"kind\"] == \"ship\":\n            r = g[\"r\"] * (1 + 2.2 * t)\n            self._blit_glow(self.screen, x, y, r * 1.4, (255, 170, 80), round((1 - t) * 8) / 8 * 1.2)\n            ring = _mix(g[\"color\"], (255, 255, 255), 0.4)\n            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r), (*ring, int(255 * (1 - t))))\n            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r) - 1, (*ring, int(200 * (1 - t))))\n            return\n        sprite = self._shape_sprites[g[\"kind\"]][1]"
+        },
+        {
+          "path": "renderer.py",
+          "line": 201,
+          "function": "Renderer._make_shape_sprite",
+          "excerpt": "    def _make_shape_sprite(self, kind):\n        from config import SHAPE_TYPES\n        path = {\n            \"square\": \"star_fragment\", \n            \"triangle\": \"rock_planet\", \n            \"pentagon\": \"ring_planet\"\n        }[kind]\n        sprite = self.assets.image(\"objects/\" + path, SHAPE_TYPES[kind][\"radius\"] * 2.8)\n        flash = sprite.copy()\n        flash.fill((100, 100, 100, 0), special_flags=pygame.BLEND_RGBA_ADD)\n        return sprite, flash"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "object-spawn",
+      "name": "천체 등장 · 페이드인",
+      "path": "made_by_code/object-spawn.png",
+      "category": "made_by_code",
+      "width": 260,
+      "height": 260,
+      "bytes": 13948,
+      "sha256": "cd66ff07336099a6ff3b727a6df97e7b35e08c92237cb6f444aaef6bdd2ee8e7",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "새 천체는 60프레임에 걸쳐 선명해집니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 494,
+          "function": "Renderer._draw_shape",
+          "excerpt": "    def _draw_shape(self, s, f):\n        sprite, flash = self._shape_sprites[s.kind]\n        img = flash if self._flash_on and f - self._hit_frame.get(s.id, -999) < FLASH_FRAMES else sprite\n        # 투명한 상태에서 살짝 작게 시작해 천천히 선명해진다 (갑자기 튀어나오지 않게).\n        t = min(1.0, max(0.0, (f - self._first_seen.get(s.id, -999)) / SHAPE_FADE_FRAMES))\n        ease = t * t * (3 - 2 * t)\n        if ease <= 0.02:\n            return\n        img = pygame.transform.rotozoom(img, -math.degrees(s.angle), 0.85 + 0.15 * ease)\n        if ease < 1:\n            img.set_alpha(round(255 * ease))\n        x, y = self.world_to_view(s.x, s.y)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "ai-path",
+      "name": "AI 경로 · 시야 · 목표점",
+      "path": "made_by_code/ai-path.png",
+      "category": "made_by_code",
+      "width": 470,
+      "height": 195,
+      "bytes": 1254,
+      "sha256": "e4fa006740bdc4a11e1a59c4667eca4e173770de0bc838f3d04ffda80338b19b",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "노란 경로와 목표점, 초록 시야선.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 566,
+          "function": "Renderer._draw_ai_debug",
+          "excerpt": "    def _draw_ai_debug(self, game):\n        tm = game.terrain\n        p = game.player\n        for e in game.enemies:\n            if not e.alive:\n                continue\n            if e.ai_path:\n                pts = [self.world_to_view(e.x, e.y)] + [self.world_to_view(*tm.center(c, r)) for c, r in e.ai_path]\n                pygame.draw.lines(self.screen, (235, 190, 40), False, pts, 2)\n            if e.ai_can_see:\n                pygame.draw.line(self.screen, (60, 220, 110), self.world_to_view(e.x, e.y), self.world_to_view(p.x, p.y), 2)\n            if e.ai_goal:"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "terrain-walls",
+      "name": "연결형 장벽",
+      "path": "made_by_code/terrain-walls.png",
+      "category": "made_by_code",
+      "width": 210,
+      "height": 165,
+      "bytes": 15703,
+      "sha256": "1ef93308ee79b9cbe98adb33e54ea2ea641c925079fd9709b38b195cd457ca2b",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "사각 타일을 연결하고 노출된 면에만 테두리를 그립니다.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 162,
+          "function": "Renderer._ensure_terrain",
+          "excerpt": "    def _ensure_terrain(self, tm):\n        key = (id(tm), tm.version)\n        if key == self._terrain_key:\n            return\n        self._terrain_key = key\n        tile = tm.tile\n        floor = self._bg.copy()\n        solids = (WALL, BREAKABLE)\n        for row in range(tm.rows):\n            for col in range(tm.cols):\n                kind = tm.tiles[row][col]\n                rect = pygame.Rect(col * tile, row * tile, tile, tile)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "terrain-breakable",
+      "name": "파괴 가능한 장벽",
+      "path": "made_by_code/terrain-breakable.png",
+      "category": "made_by_code",
+      "width": 210,
+      "height": 165,
+      "bytes": 16009,
+      "sha256": "2bbefeafd7f11109d168f0498a552efb809f2cbb00dd8b0ba67207bc88ebc2da",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "갈색 벽, 노출 테두리와 피해량에 따른 균열선. --stage2 옵션.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 162,
+          "function": "Renderer._ensure_terrain",
+          "excerpt": "    def _ensure_terrain(self, tm):\n        key = (id(tm), tm.version)\n        if key == self._terrain_key:\n            return\n        self._terrain_key = key\n        tile = tm.tile\n        floor = self._bg.copy()\n        solids = (WALL, BREAKABLE)\n        for row in range(tm.rows):\n            for col in range(tm.cols):\n                kind = tm.tiles[row][col]\n                rect = pygame.Rect(col * tile, row * tile, tile, tile)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "terrain-gravity",
+      "name": "중력장 · 실제 배치",
+      "path": "made_by_code/terrain-gravity.png",
+      "category": "made_by_code",
+      "width": 160,
+      "height": 150,
+      "bytes": 20306,
+      "sha256": "19cae89d4d4fbe39cf3b40135f5e731b51d62e767e83472a6a021beeec362a78",
+      "status": "capture",
+      "rendering": "mixed",
+      "usage": "중력장 PNG를 타일 크기의 1.25배로 배치. --stage2 옵션.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 162,
+          "function": "Renderer._ensure_terrain",
+          "excerpt": "    def _ensure_terrain(self, tm):\n        key = (id(tm), tm.version)\n        if key == self._terrain_key:\n            return\n        self._terrain_key = key\n        tile = tm.tile\n        floor = self._bg.copy()\n        solids = (WALL, BREAKABLE)\n        for row in range(tm.rows):\n            for col in range(tm.cols):\n                kind = tm.tiles[row][col]\n                rect = pygame.Rect(col * tile, row * tile, tile, tile)"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "beam-dormant",
+      "name": "빔 · 렌더링 지원만 존재",
+      "path": "made_by_code/beam-dormant.png",
+      "category": "made_by_code",
+      "width": 460,
+      "height": 80,
+      "bytes": 439,
+      "sha256": "0490272aff57f7cd464792947b6ed3d4cc72a8bbfdc85ce0d804311b822eef03",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "현재 발사 로직에서는 생성하지 않는 빔을 시연 상태로 촬영.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 447,
+          "function": "Renderer._draw_combat_effects",
+          "excerpt": "    def _draw_combat_effects(self, game):\n        for beam in game.beams:\n            start = self.world_to_view(beam.x, beam.y)\n            end = self.world_to_view(beam.end_x, beam.end_y)\n            pygame.draw.line(self.screen, (30, 105, 125), start, end, 10)\n            pygame.draw.line(self.screen, (95, 245, 255), start, end, 5)\n            pygame.draw.line(self.screen, (240, 255, 255), start, end, 2)\n        for explosion in game.explosions:\n            x, y = self.world_to_view(explosion.x, explosion.y)\n            progress = 1 - explosion.life / 18\n            radius = max(4, int(explosion.radius * (0.2 + 0.8 * progress)))\n            color = _mix((255, 185, 90), (40, 20, 55), progress)"
+        }
+      ],
+      "capture_state": "현재 미생성 · 렌더러 시연",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "blast-dormant",
+      "name": "범위 폭발 · 시연",
+      "path": "made_by_code/blast-dormant.png",
+      "category": "made_by_code",
+      "width": 280,
+      "height": 280,
+      "bytes": 4573,
+      "sha256": "9440df1a6dfe9b4969b35eca17b36da82be2ffbda3f4fa3557179c6c65efce50",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "폭발 반경이 있는 탄환용 효과. 현재 발사되는 탄환의 폭발 반경은 0.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 447,
+          "function": "Renderer._draw_combat_effects",
+          "excerpt": "    def _draw_combat_effects(self, game):\n        for beam in game.beams:\n            start = self.world_to_view(beam.x, beam.y)\n            end = self.world_to_view(beam.end_x, beam.end_y)\n            pygame.draw.line(self.screen, (30, 105, 125), start, end, 10)\n            pygame.draw.line(self.screen, (95, 245, 255), start, end, 5)\n            pygame.draw.line(self.screen, (240, 255, 255), start, end, 2)\n        for explosion in game.explosions:\n            x, y = self.world_to_view(explosion.x, explosion.y)\n            progress = 1 - explosion.life / 18\n            radius = max(4, int(explosion.radius * (0.2 + 0.8 * progress)))\n            color = _mix((255, 185, 90), (40, 20, 55), progress)"
+        }
+      ],
+      "capture_state": "현재 미생성 · 렌더러 시연",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "screen-stats",
+      "name": "능력치 화면 전체",
+      "path": "made_by_code/screen-stats.png",
+      "category": "made_by_code",
+      "width": 1280,
+      "height": 800,
+      "bytes": 576245,
+      "sha256": "4eb45788568a43ea74302d73720ccce224a8df4cd9303a4f148ba1992514c7fa",
+      "status": "capture",
+      "rendering": "screen",
+      "usage": "Tab 상세 패널과 다른 HUD의 관계.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 355,
+          "function": "Renderer.draw",
+          "excerpt": "    def draw(self, game, debug_lines=None, paused=False, show_ai=False,\n             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):\n        self._tick += 1\n        self._update_camera(game.player)\n        self._track(game)\n        self._ensure_terrain(game.terrain)\n        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔\n        display = self.screen\n        self.screen = scr = self._view\n        scr.fill(COLORS[\"space_top\"])\n        scr.blit(self._floor, (-self.camera_x, -self.camera_y))\n        self._draw_twinkles()"
+        },
+        {
+          "path": "renderer.py",
+          "line": 737,
+          "function": "Renderer._draw_stats_panel",
+          "excerpt": "    def _draw_stats_panel(self, game):\n        rect = pygame.Rect(self.size[0] // 2 - 230, self.size[1] // 2 - 220, 460, 440)\n        self._panel(rect, 175, 16)\n        title = self.font_card.render(\"나의 능력치\", True, COLORS[\"white\"])\n        self.screen.blit(title, (rect.x + 24, rect.y + 18))\n        ship = self.font_body.render(f\"Lv.{game.level} · {JOB_NAMES[game.player.job]}\", True, COLORS[\"player\"])\n        self.screen.blit(ship, (rect.x + 24, rect.y + 52))\n        for i, (label, value) in enumerate(player_stat_summary(game)):\n            y = rect.y + 92 + i * 31\n            name = self.font_body.render(label, True, COLORS[\"text\"])\n            number = self.font_body.render(value, True, COLORS[\"white\"])\n            self.screen.blit(name, (rect.x + 24, y))"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "screen-pause",
+      "name": "일시정지 화면 전체",
+      "path": "made_by_code/screen-pause.png",
+      "category": "made_by_code",
+      "width": 1280,
+      "height": 800,
+      "bytes": 198785,
+      "sha256": "53b1ca2e3d0a9d60c34ec6002653c08107340207a4c492752e3381b7097fddf0",
+      "status": "capture",
+      "rendering": "screen",
+      "usage": "전투 화면 위에 어두운 오버레이와 설정 패널.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 355,
+          "function": "Renderer.draw",
+          "excerpt": "    def draw(self, game, debug_lines=None, paused=False, show_ai=False,\n             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):\n        self._tick += 1\n        self._update_camera(game.player)\n        self._track(game)\n        self._ensure_terrain(game.terrain)\n        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔\n        display = self.screen\n        self.screen = scr = self._view\n        scr.fill(COLORS[\"space_top\"])\n        scr.blit(self._floor, (-self.camera_x, -self.camera_y))\n        self._draw_twinkles()"
+        },
+        {
+          "path": "renderer.py",
+          "line": 465,
+          "function": "Renderer._draw_menu",
+          "excerpt": "    def _draw_menu(self, buttons, title, selected, main=False):\n        W, H = self.size\n        shade = pygame.Surface((W, H), pygame.SRCALPHA)\n        shade.fill((0, 0, 15, 170 if main else 215))\n        self.screen.blit(shade, (0, 0))\n        if not main:\n            self._panel(pygame.Rect(W // 2 - 225, H // 2 - 276, 450, 552), 240, 20)\n        font = self.font_big if main else self.font_card\n        text = font.render(title, True, COLORS[\"white\"])\n        self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 - (188 if main else 224))))\n        sub = \"당신의 우주선을 지휘하세요\" if main else \"설정을 클릭해 변경 · ESC / P로 계속하기\"\n        text = self.font_body.render(sub, True, COLORS[\"text\"])"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "game-over",
+      "name": "게임 오버 카드",
+      "path": "made_by_code/game-over.png",
+      "category": "made_by_code",
+      "width": 448,
+      "height": 240,
+      "bytes": 11453,
+      "sha256": "35a146217c2fe51b2759bd457fd642984b5db8cc8695c1f908b091ad0828bc7c",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "GAME OVER, 점수·처치·생존시간과 재시작 안내.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 872,
+          "function": "Renderer._draw_game_over",
+          "excerpt": "    def _draw_game_over(self, game):\n        secs = game.frame / self.cfg.fps\n        self._draw_card([\"GAME OVER\"], [\"Enter: 새 게임 · ESC: 메뉴\"],\n                        stats=[(\"SCORE\", f\"{game.score:,}\"), (\"KILLS\", str(game.kills)),\n                               (\"TIME\", f\"{int(secs) // 60}:{int(secs) % 60:02d}\")])"
+        },
+        {
+          "path": "renderer.py",
+          "line": 844,
+          "function": "Renderer._draw_card",
+          "excerpt": "    def _draw_card(self, titles, subs, stats=None):\n        W, H = self.size\n        shade = pygame.Surface((W, H), pygame.SRCALPHA)\n        shade.fill((0, 0, 10, 130))\n        self.screen.blit(shade, (0, 0))\n        ch = 140 + (70 if stats else 0)\n        card = pygame.Rect(0, 0, 420, ch)\n        card.center = (W / 2, H / 2)\n        self._panel(card, 225, 18)\n        y = card.y + 22\n        for t in titles:\n            s = self.font_big.render(t, True, COLORS[\"white\"])"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "pause-card",
+      "name": "일시정지 · 공통 카드",
+      "path": "made_by_code/pause-card.png",
+      "category": "made_by_code",
+      "width": 448,
+      "height": 160,
+      "bytes": 6336,
+      "sha256": "d48b995965e4956c52a9d6ee97064857cb544012db6ce9be648c8497a309f304",
+      "status": "capture",
+      "rendering": "code",
+      "usage": "Renderer.draw(paused=True)에서 메뉴 없이 표시하는 간단 카드.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 844,
+          "function": "Renderer._draw_card",
+          "excerpt": "    def _draw_card(self, titles, subs, stats=None):\n        W, H = self.size\n        shade = pygame.Surface((W, H), pygame.SRCALPHA)\n        shade.fill((0, 0, 10, 130))\n        self.screen.blit(shade, (0, 0))\n        ch = 140 + (70 if stats else 0)\n        card = pygame.Rect(0, 0, 420, ch)\n        card.center = (W / 2, H / 2)\n        self._panel(card, 225, 18)\n        y = card.y + 22\n        for t in titles:\n            s = self.font_big.render(t, True, COLORS[\"white\"])"
+        },
+        {
+          "path": "renderer.py",
+          "line": 355,
+          "function": "Renderer.draw",
+          "excerpt": "    def draw(self, game, debug_lines=None, paused=False, show_ai=False,\n             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):\n        self._tick += 1\n        self._update_camera(game.player)\n        self._track(game)\n        self._ensure_terrain(game.terrain)\n        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔\n        display = self.screen\n        self.screen = scr = self._view\n        scr.fill(COLORS[\"space_top\"])\n        scr.blit(self._floor, (-self.camera_x, -self.camera_y))\n        self._draw_twinkles()"
+        }
+      ],
+      "capture_state": "렌더러 지원 · 앱 ESC는 설정 메뉴 사용",
+      "mode": "RGB",
+      "transparent_background": false
+    },
+    {
+      "id": "screen-game-over",
+      "name": "게임 오버 화면 전체",
+      "path": "made_by_code/screen-game-over.png",
+      "category": "made_by_code",
+      "width": 1280,
+      "height": 800,
+      "bytes": 400386,
+      "sha256": "543c385e854b9344e796599d6b4cca814393af8406d8e0f22dc72ff56aa52d0f",
+      "status": "capture",
+      "rendering": "screen",
+      "usage": "정지된 전투 화면 위의 결과 카드.",
+      "rendering_code": [
+        {
+          "path": "renderer.py",
+          "line": 355,
+          "function": "Renderer.draw",
+          "excerpt": "    def draw(self, game, debug_lines=None, paused=False, show_ai=False,\n             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):\n        self._tick += 1\n        self._update_camera(game.player)\n        self._track(game)\n        self._ensure_terrain(game.terrain)\n        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔\n        display = self.screen\n        self.screen = scr = self._view\n        scr.fill(COLORS[\"space_top\"])\n        scr.blit(self._floor, (-self.camera_x, -self.camera_y))\n        self._draw_twinkles()"
+        },
+        {
+          "path": "renderer.py",
+          "line": 872,
+          "function": "Renderer._draw_game_over",
+          "excerpt": "    def _draw_game_over(self, game):\n        secs = game.frame / self.cfg.fps\n        self._draw_card([\"GAME OVER\"], [\"Enter: 새 게임 · ESC: 메뉴\"],\n                        stats=[(\"SCORE\", f\"{game.score:,}\"), (\"KILLS\", str(game.kills)),\n                               (\"TIME\", f\"{int(secs) // 60}:{int(secs) % 60:02d}\")])"
+        }
+      ],
+      "capture_state": "실제 렌더러 · 시연용 상태",
+      "mode": "RGB",
+      "transparent_background": false
     }
-  ]
+  ],
+  "updated": "2026-10-16",
+  "gallery": "index.html",
+  "counts": {
+    "active": 30,
+    "archived": 22,
+    "capture": 48
+  },
+  "capture_note": "Actual Pygame Renderer, SDL dummy, 1280x800. Scripted demonstration states, not natural gameplay. Captures are documentation only."
 }

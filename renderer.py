@@ -200,7 +200,11 @@ class Renderer:
     # ------------------------------------------------------------------
     def _make_shape_sprite(self, kind):
         from config import SHAPE_TYPES
-        path = {"square": "star_fragment", "triangle": "rock_planet", "pentagon": "ring_planet"}[kind]
+        path = {
+            "square": "star_fragment", 
+            "triangle": "rock_planet", 
+            "pentagon": "ring_planet"
+        }[kind]
         sprite = self.assets.image("objects/" + path, SHAPE_TYPES[kind]["radius"] * 2.8)
         flash = sprite.copy()
         flash.fill((100, 100, 100, 0), special_flags=pygame.BLEND_RGBA_ADD)

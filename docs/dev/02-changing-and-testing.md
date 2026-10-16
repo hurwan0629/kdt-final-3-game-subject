@@ -10,10 +10,13 @@
 python -m unittest discover -s tests -v
 python random_agent_test.py
 python docs/dev/render_screens.py
+python docs/dev/build_asset_gallery.py
 ```
 
 GUI 없는 테스트는 SDL dummy 드라이버로 실행합니다. 검증은 포인트 누적·5개 고정 행·1~5 키·클릭·전직 순서·21종 공격 패턴·순차 연사 시간차·헌터/프레데터 단발·탄 크기·첫 대상 타격과 벽 차단·잔탄과 재장전·2배 기체와 포신별 탄환 크기·최대 반경96px 기체의 전체 미로 통행·미니맵 위치/방향/파괴갱신/입력차단·관찰 크기·seed 재현성을 포함합니다.
 
 문서용 화면은 실제 Renderer를 사용하지만 경험치와 전직 등 일부 상태를 직접 설정해 촬영합니다. 자연 플레이 기록은 아닙니다. 제공 우주선 PNG 원본은 수정하지 않습니다.
+
+디자이너용 [에셋 갤러리](../../assets/index.html)는 `build_asset_gallery.py`와 `asset_gallery_template.html`에서 만듭니다. 게임이 로드하는 PNG, 코드로 그린 UI, 혼합 요소, 전체 화면, 미사용 보관 자료를 구분합니다. 출력 PNG는 `assets/made_by_code/`의 문서용 캡처이며 실행 시 로드하지 않습니다. 생성기는 승인된 미사용 원본 22개를 `assets/trash/`로 보존하고, 원본 해시·파일 목록·카탈로그·HTML 링크를 검증합니다.
 
 [목차](../README.md)

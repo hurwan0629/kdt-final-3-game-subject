@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Space Skirmish · 디자인 에셋 가이드</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0a0e18;--panel:#111827;--text:#eef3ff;--muted:#a5b3cc;--line:#28354a;--accent:#80dbff;--input:#111b2c;--preview:#080d18}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 'Malgun Gothic','Apple SD Gothic Neo',sans-serif}a{color:var(--accent);text-underline-offset:3px}button,input,select{font:inherit}button,select{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+    header,main,footer{max-width:1540px;margin:auto;padding:0 36px}header{padding-top:62px;padding-bottom:30px}.eyebrow{font-size:12px;letter-spacing:3px;color:var(--accent);font-weight:800}h1{font-size:clamp(30px,4vw,52px);line-height:1.2;letter-spacing:-1.5px;margin:16px 0}header>p{max-width:900px;color:var(--muted)}.topline{display:flex;justify-content:space-between;align-items:center;gap:20px}.small-button{border:1px solid var(--line);color:var(--text);background:var(--panel);border-radius:8px;padding:8px 13px}
+    .stats{display:flex;gap:12px;margin:28px 0;flex-wrap:wrap}.stat{flex:1;min-width:155px;border:1px solid var(--line);padding:14px 20px;border-radius:12px;background:var(--panel)}.stat strong{font-size:30px;margin-right:10px}.stat span{color:var(--muted)}
+    .guide{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.guide>div{border-left:3px solid var(--line);padding:0 16px}.guide b{display:block}.guide p{color:var(--muted);font-size:13px;margin:5px 0}.guide .image-guide{border-color:#70c7ff}.guide .code-guide{border-color:#b5a2ff}.guide .mixed-guide{border-color:#ffd080}.note{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-top:24px;color:var(--muted);font-size:13px}.note b{color:var(--text)}
+    .toolbar{position:sticky;top:0;z-index:3;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0 14px;margin-bottom:24px}.filter-row,.search-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.search-row{margin-top:14px}.filter{background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:24px;padding:8px 16px}.filter[aria-pressed=true]{color:#07111c;background:var(--accent);border-color:var(--accent);font-weight:800}label{font-size:13px;color:var(--muted)}input,select{color:var(--text);background:var(--input);border:1px solid var(--line);border-radius:8px;padding:9px 12px}input{width:min(470px,100%)}select{max-width:200px}.result{color:var(--muted);font-size:13px;margin-left:auto}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}.asset-card{border:1px solid var(--line);background:var(--panel);border-radius:14px;overflow:hidden;min-width:0;box-shadow:0 12px 28px #0000000c}.asset-card[hidden]{display:none}.preview{position:relative;display:flex;align-items:center;justify-content:center;height:235px;padding:18px;background:var(--preview);border-bottom:1px solid var(--line);overflow:hidden}.preview.source{background-color:#131c2b;background-image:linear-gradient(45deg,#ffffff06 25%,transparent 25%),linear-gradient(-45deg,#ffffff06 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ffffff06 75%),linear-gradient(-45deg,transparent 75%,#ffffff06 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}.preview img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transition:transform .18s}.preview:hover img{transform:scale(1.035)}.zoom{position:absolute;right:10px;bottom:10px;background:#070c17d9;color:#b9cbe5;font-size:11px;padding:2px 8px;border-radius:5px}.card-body{padding:19px 20px 20px}.badges{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.badge{font-size:11px;font-weight:800;border-radius:5px;padding:2px 8px}.badge.image{color:#9cdcff;background:#183449}.badge.code{color:#d0beff;background:#2a244a}.badge.mixed{color:#ffe0a1;background:#40321c}.badge.screen{color:#9ee8cf;background:#143a31}.badge.unused{color:#bfc8d7;background:#2b303b}.group-label{font-size:11px;color:var(--muted)}h3{font-size:18px;line-height:1.5;margin:12px 0 4px;overflow-wrap:anywhere}.state{font-size:11px;color:var(--muted);margin:0 0 12px}.card-body>p{font-size:13px;margin-top:10px}.design{border-top:1px solid var(--line);padding-top:13px;color:var(--muted)}.design b{display:block;color:var(--text);font-size:11px;margin-bottom:4px}.extra{color:#e5c78d}.file-path{display:block;font:11px/1.7 Consolas,monospace;overflow-wrap:anywhere;margin-top:14px}.code-links{display:flex;flex-direction:column;gap:3px;margin-top:10px;font:11px/1.65 Consolas,monospace;color:var(--muted);overflow-wrap:anywhere}.code-links a{color:var(--muted)}details{margin-top:12px;font-size:11px}summary{cursor:pointer;color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);padding:10px;border-radius:6px;font:11px/1.6 Consolas,monospace;max-height:270px;overflow:auto}.empty{text-align:center;padding:60px;color:var(--muted)}footer{padding-top:36px;padding-bottom:44px;color:var(--muted);font-size:12px}footer p{margin:4px 0}dialog{padding:0;border:1px solid var(--line);background:var(--panel);color:var(--text);max-width:94vw;max-height:94vh;width:min(1300px,94vw);border-radius:14px}dialog::backdrop{background:#02050be8}.dialog-top{display:flex;gap:15px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}.dialog-top strong{font-size:14px}.dialog-image{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;object-fit:contain;margin:20px auto;background:var(--preview)}.dialog-meta{padding:0 20px 16px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}.dialog-meta a{margin-left:12px}
+    body.light{color-scheme:light;--bg:#f2f5fa;--panel:#fff;--text:#18243b;--muted:#53647e;--line:#d7dfec;--accent:#096187;--input:#fff;--preview:#e5ebf4}body.light .filter[aria-pressed=true]{background:#096187;color:white}body.light .preview.source{background-color:#e0e6ef;background-image:linear-gradient(45deg,#00000007 25%,transparent 25%),linear-gradient(-45deg,#00000007 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#00000007 75%),linear-gradient(-45deg,transparent 75%,#00000007 75%)}body.light .extra{color:#795311}
+    @media(min-width:1450px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.preview{height:218px}}@media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide{grid-template-columns:1fr}.result{margin-left:0}.toolbar{position:static}}@media(max-width:600px){header,main,footer{padding-left:18px;padding-right:18px}header{padding-top:30px}.grid{grid-template-columns:1fr}.stats{gap:8px}.stat{min-width:135px;padding:10px 14px}.stat strong{font-size:24px}.search-row input{width:100%}.preview{height:255px}.topline{align-items:flex-start}.filter{font-size:12px;padding:7px 12px}.dialog-top{padding:12px}.dialog-top strong{max-width:70%}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topline"><span class="eyebrow">SPACE SKIRMISH / DESIGN HANDOFF</span><button id="theme" class="small-button" type="button" aria-pressed="false">밝은 배경</button></div>
+    <h1>게임의 모든 시각 요소,<br>한 곳에서 확인하세요.</h1>
+    <p>현재 게임의 PNG 원본과 실제 코드 렌더링을 나란히 확인하는 디자인 가이드입니다. 컨셉을 맞출 때 어떤 요소를 새 이미지로 만들지, 어떤 부분을 동적으로 유지할지 구분할 수 있습니다.</p>
+    <div class="stats"><div class="stat"><strong>30</strong><span>사용 PNG 원본</span></div><div class="stat"><strong>{{CAPTURE_COUNT}}</strong><span>실제 렌더러 캡처</span></div><div class="stat"><strong>22</strong><span>미사용 PNG 보관</span></div></div>
+    <div class="guide">
+      <div class="image-guide"><b>이미지 기반</b><p>실제 로드하는 PNG 원본입니다. 확대·회전·색상 보정은 코드에서 적용할 수 있습니다.</p></div>
+      <div class="code-guide"><b>코드 기반</b><p>사각형·선·원·폰트로 그립니다. 이미지로 교체할 수 있지만 수치·채움·상태 변화는 따로 고려해야 합니다.</p></div>
+      <div class="mixed-guide"><b>이미지 + 코드</b><p>PNG와 코드로 그린 레이어를 합칩니다. 각 카드에 어느 부분이 이미지이고 코드인지 적었습니다.</p></div>
+    </div>
+    <div class="note"><b>캡처 읽는 법</b> · 기본 창 1280 × 800에서 실제 Pygame 렌더러로 촬영했습니다. UI 상태는 검토를 위해 설정한 시연 상태이며 자연 플레이 기록은 아닙니다. 개별 캡처의 어두운 바탕과 여백은 캡처용입니다. 배치는 ‘전체 화면’에서 확인하세요. 발광·등장·페이드는 한 순간을 촬영했습니다.<br><b>폴더 읽는 법</b> · <code>made_by_code/</code>는 문서용 캡처이며 게임에서 불러오는 새 스프라이트가 아닙니다. <code>trash/</code>는 삭제하지 않고 보관한 원본입니다. 갤러리와 같은 폴더 구조를 유지하면 서버 없이 열 수 있습니다.</div>
+  </header>
+  <main>
+    <section class="toolbar" aria-label="시각 요소 검색과 필터">
+      <div class="filter-row" role="group" aria-label="렌더링 방식">
+        <button class="filter" type="button" data-filter="active" aria-pressed="true">현재 사용 + 시연</button>
+        <button class="filter" type="button" data-filter="image" aria-pressed="false">이미지 기반</button>
+        <button class="filter" type="button" data-filter="code" aria-pressed="false">코드 기반</button>
+        <button class="filter" type="button" data-filter="mixed" aria-pressed="false">이미지 + 코드</button>
+        <button class="filter" type="button" data-filter="screen" aria-pressed="false">전체 화면</button>
+        <button class="filter" type="button" data-filter="unused" aria-pressed="false">미사용 · trash</button>
+      </div>
+      <div class="search-row"><label for="search">검색</label><input id="search" type="search" placeholder="이름, 파일명, 함수명으로 검색" autocomplete="off"><label for="group">종류</label><select id="group"><option value="">모든 종류</option><!-- GROUPS --></select><span id="result" class="result" role="status" aria-live="polite"></span></div>
+    </section>
+    <noscript><p class="note">JavaScript가 꺼져 있어 모든 카드가 표시됩니다. 이미지 원본 링크와 코드 미리보기는 그대로 사용할 수 있습니다.</p></noscript>
+    <div class="grid" id="gallery"><!-- CARDS --></div>
+    <p class="empty" id="empty" hidden>일치하는 요소가 없습니다. 검색어나 필터를 바꿔주세요.</p>
+  </main>
+  <footer>
+    <p>확인 기준: 2026-10-16 · PNG 원본 52개 보존 · 현재 발사되지 않는 미사일·지뢰는 trash에 보관 · 중력장과 파괴 가능한 벽은 --stage2 옵션</p>
+    <p>코드 위치는 생성 시점의 실제 함수 시작 줄입니다. 브라우저의 소스 파일 링크는 편집기와 표시 방식이 다를 수 있어 함수 이름과 코드 미리보기를 함께 제공합니다.</p>
+    <p>목록: <a href="catalog.json">catalog.json</a> · 참고 구조도: <a href="trash/references/%EC%9A%B0%EC%A3%BC%EC%84%A0_%EC%A7%84%ED%99%94%ED%8A%B8%EB%A6%AC.png">우주선 진화 트리</a> · 제작 기록: <a href="references/generation-prompts.json">generation-prompts.json</a></p>
+    <p>재생성: 프로젝트 루트에서 <code>python docs/dev/build_asset_gallery.py</code> · 게임 의존성인 pygame·numpy만 사용합니다.</p>
+  </footer>
+  <dialog id="viewer" aria-labelledby="viewer-title"><div class="dialog-top"><strong id="viewer-title"></strong><button id="close-viewer" class="small-button" type="button">닫기 · ESC</button></div><img id="viewer-image" class="dialog-image" alt=""><div class="dialog-meta"><span id="viewer-info"></span><a id="viewer-original" href="#" target="_blank" rel="noopener">원본 열기 ↗</a></div></dialog>
+  <script>
+    const cards = [...document.querySelectorAll('.asset-card')];
+    const buttons = [...document.querySelectorAll('[data-filter]')];
+    const search = document.querySelector('#search'), group = document.querySelector('#group');
+    let mode = 'active';
+    function filterCards() {
+      const query = search.value.trim().toLocaleLowerCase();
+      let visible = 0;
+      for (const card of cards) {
+        const matches = (mode === 'active' ? card.dataset.kind !== 'unused' : card.dataset.kind === mode)
+          && (!group.value || card.dataset.group === group.value)
+          && (!query || card.dataset.search.toLocaleLowerCase().includes(query));
+        card.hidden = !matches;
+        if (matches) visible++;
+      }
+      document.querySelector('#result').textContent = `${visible}개 표시 / 전체 ${cards.length}개`;
+      document.querySelector('#empty').hidden = visible !== 0;
+    }
+    buttons.forEach(button => button.addEventListener('click', () => {
+      mode = button.dataset.filter;
+      buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      filterCards();
+    }));
+    search.addEventListener('input', filterCards);
+    group.addEventListener('change', filterCards);
+    const theme = document.querySelector('#theme');
+    theme.addEventListener('click', () => {
+      const light = document.body.classList.toggle('light');
+      theme.textContent = light ? '어두운 배경' : '밝은 배경';
+      theme.setAttribute('aria-pressed', String(light));
+    });
+    const viewer = document.querySelector('#viewer');
+    document.querySelectorAll('[data-viewer]').forEach(link => link.addEventListener('click', event => {
+      event.preventDefault();
+      const card = link.closest('.asset-card'), image = link.querySelector('img');
+      document.querySelector('#viewer-title').textContent = card.querySelector('h3').textContent;
+      const large = document.querySelector('#viewer-image');
+      large.src = image.src; large.alt = image.alt;
+      document.querySelector('#viewer-info').textContent = card.querySelector('.state').textContent;
+      document.querySelector('#viewer-original').href = link.href;
+      viewer.showModal();
+    }));
+    document.querySelector('#close-viewer').addEventListener('click', () => viewer.close());
+    viewer.addEventListener('click', event => {if(event.target === viewer){const r=viewer.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)viewer.close();}});
+    filterCards();
+  </script>
+</body>
+</html>

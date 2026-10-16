@@ -13,6 +13,7 @@ import argparse
 import sys
 
 import pygame
+from renderer import Renderer
 
 from config import GameConfig, ObsConfig
 from env import build_vector
@@ -58,27 +59,41 @@ def debug_lines(game, obs_cfg, action):
 
 class GameApplication:
     """메뉴와 사람 입력을 관리한다. 열린 메뉴에서는 게임 시간을 진행하지 않는다."""
-    def __init__(self, game, renderer, seed=None):
+    def __init__(self, game: GameCore, renderer: Renderer, seed=None):
         self.game, self.renderer, self.seed = game, renderer, seed
         self.cfg = game.cfg
+        # 현재 화면 상태 (main, playing, pause)
         self.mode = "main"
+        # 게임 프로그램 실행 여부. False면 종료
         self.running = True
         self.show_debug = False
         self.show_controls = True
         self.show_stats = False
         self.auto_pause = True
         self.selected = 0
+        # 경과 시간을 누적해 고정 프레임(1/60초)마다 게임을 업데이트하기 위한 변수
         self.acc = 0.0
+        # 플레이어 이동·회전 행동을 인코딩한 정수
         self.action = 0
+        # 마우스 클릭으로 발사가 요청되었는지
         self.click_requested = False
+        # 메뉴 클릭 등이 실제 총알 발사로 이어지지 않도록 차단
         self.suppress_fire = True
+        # 스탯 패널을 마지막으로 조작하거나 마우스를 올린 게임 프레임
         self.stat_touch_frame = 0      # 스탯 창을 마지막으로 건드린 게임 프레임
+        # 마지막으로 확인한 강화 포인트 수. 새 포인트 획득 감지용
         self.stat_points_seen = 0
+        # N 키를 눌렀을 때 순환할 맵 목록 (txt 경로)
         self.map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
 
     def buttons(self):
-        return menu_buttons(self.mode, self.cfg, self.show_debug, self.show_controls, self.auto_pause,
-                            getattr(self.renderer, "fullscreen", False), self.size)
+        return menu_buttons(
+          self.mode, self.cfg, 
+          self.show_debug, 
+          self.show_controls, 
+          self.auto_pause,
+          getattr(self.renderer, "fullscreen", False), self.size
+        )
 
     @property
     def size(self):
@@ -121,6 +136,7 @@ class GameApplication:
             self.auto_pause = not self.auto_pause
 
     def handle_event(self, ev):
+        # 창의 크기가 변경될 떄
         if ev.type == pygame.VIDEORESIZE:
             self.renderer.resize(ev.size)
             self.acc = 0.0
@@ -138,7 +154,8 @@ class GameApplication:
         if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_ESCAPE, pygame.K_p):
             if self.mode == "playing":
                 self.mode = "pause"
-                self.selected = next(i for i, b in enumerate(self.buttons()) if b.key == "resume")
+                self.selected = next(
+                    i for i, b in enumerate(self.buttons()) if b.key == "resume")
                 self.acc = 0.0
                 self.click_requested = False
                 self.suppress_fire = True
@@ -296,7 +313,6 @@ def main():
     if args.map:
         tc.map_name = args.map
     obs_cfg = ObsConfig()
-    from renderer import Renderer
     renderer = Renderer(cfg)
     game = GameCore(cfg, seed=args.seed)
     app = GameApplication(game, renderer, args.seed)
