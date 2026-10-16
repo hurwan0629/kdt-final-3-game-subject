@@ -73,8 +73,6 @@ class EnemyAIConfig:
     # 적 능력치 강화: 플레이어가 스탯 카드를 찍을 때마다 같은 항목을 적에게도 반영한다.
     # 비율이 1보다 작을수록 적이 플레이어보다 약하게 성장한다(다수이므로).
     stat_mirror_ratio: float = 0.6
-    # 적은 가능하면 플레이어 화면 밖에서 (재)생성된다. 화면 경계 바깥으로 이만큼 더 띄운다.
-    spawn_offscreen_margin: float = 80.0
 
 
 @dataclass

@@ -24,7 +24,6 @@ class MenusReloadTests(unittest.TestCase):
         self.game = GameCore(cfg, seed=2)
         self.renderer = SimpleNamespace(
             _update_camera=Mock(), screen_to_world=lambda x, y: (2000, 1100),
-            view_width=cfg.window_width, view_height=cfg.window_height,
             set_zoom=Mock(side_effect=lambda zoom: setattr(cfg, "camera_zoom", zoom)))
         self.app = GameApplication(self.game, self.renderer, seed=2)
 

@@ -257,7 +257,6 @@ class GameApplication:
         self.acc = min(self.acc + elapsed, dt * MAX_FRAMES_PER_TICK)
         while self.acc >= dt:
             self.renderer._update_camera(self.game.player)
-            self.game.set_viewport(self.renderer.view_width, self.renderer.view_height)
             self.action, target, want_fire = read_player_input(keys, self.renderer, mouse_pos, buttons)
             fire = (want_fire or self.click_requested) and not self.suppress_fire and not self.pointer_over_rewards(mouse_pos)
             self.game.step(self.action, want_fire=fire, aim_position=target)

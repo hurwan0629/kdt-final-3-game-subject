@@ -86,21 +86,13 @@ class EnemyGrowthTests(unittest.TestCase):
         for e in game.enemies:
             self.assertEqual(sum(e.stat_levels.values()), new_budget)
 
-    def test_enemies_respawn_off_screen_when_possible_but_never_fail_to_spawn(self):
+    def test_enemies_respawn_away_from_player_and_other_enemies(self):
         game = open_game(enemies=1, seed=3, mercy_seconds=0)
         e = game.enemies[0]
-
-        # 화면을 작게 잡으면 화면 밖(+여유)에서 다시 태어나야 한다.
-        game.set_viewport(400, 300)
         for _ in range(20):
             game._respawn_enemy(e)
-            self.assertTrue(game._is_offscreen(e.x, e.y))
-
-        # 화면이 맵보다 커서 "화면 밖"이 아예 없어도 스폰 자체는 실패하면 안 된다.
-        game.set_viewport(10 ** 6, 10 ** 6)
-        game._respawn_enemy(e)
-        self.assertTrue(game.terrain.circle_fits(e.x, e.y, e.radius))
-        self.assertGreaterEqual(math.hypot(e.x - game.player.x, e.y - game.player.y), 300.0 - 1e-6)
+            self.assertTrue(game.terrain.circle_fits(e.x, e.y, e.radius))
+            self.assertGreaterEqual(math.hypot(e.x - game.player.x, e.y - game.player.y), 300.0 - 1e-6)
 
     def test_mercy_weakens_early_enemies_and_fades_out(self):
         """초반 mercy_seconds 동안 적이 약하게 시작해 서서히 정상(tier 0) 강도로 돌아온다."""

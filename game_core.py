@@ -187,22 +187,7 @@ class GameCore:
             raise ValueError("player_ammo는 0 이상의 정수여야 합니다.")
         if self.cfg.reload_seconds <= 0 or self.cfg.fps <= 0:
             raise ValueError("reload_seconds와 fps는 양수여야 합니다.")
-        # 렌더러가 매 프레임 실제 화면 크기로 갱신해 준다(set_viewport). 렌더러가 없으면
-        # (헤드리스/강화학습) 설정값 기준 추정치를 그대로 쓴다.
-        self.viewport_w = self.cfg.window_width / self.cfg.camera_zoom
-        self.viewport_h = self.cfg.window_height / self.cfg.camera_zoom
         self.reset(seed)
-
-    def set_viewport(self, width: float, height: float):
-        """렌더러가 실제로 화면에 보여주는 월드 영역 크기(픽셀)를 알려준다."""
-        self.viewport_w, self.viewport_h = width, height
-
-    def _is_offscreen(self, x, y):
-        """플레이어 화면 중심 기준으로 (x, y)가 화면 밖(+여유)인지."""
-        p = self.player
-        margin = self.cfg.enemy_ai.spawn_offscreen_margin
-        return (abs(x - p.x) > self.viewport_w / 2 + margin
-                or abs(y - p.y) > self.viewport_h / 2 + margin)
 
     # ---------------- 초기화 ----------------
     def reset(self, seed: int = None):
@@ -370,7 +355,7 @@ class GameCore:
         e.elite = bool(self.rng.random() < elite_chance)
         self._roll_enemy_stats(e)
         self._apply_enemy_strength(e)
-        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선, 그중에서도 화면 밖을 우선한다.
+        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선 (화면 안이든 밖이든 상관없음).
         others = [o for o in getattr(self, "enemies", []) if o.alive and o is not e]
         starts = []
         for s in tm.enemy_starts:
@@ -380,22 +365,10 @@ class GameCore:
             if (sx - p.x) ** 2 + (sy - p.y) ** 2 >= 300.0 ** 2 and \
                     all((sx - o.x) ** 2 + (sy - o.y) ** 2 >= (2 * e.radius) ** 2 for o in others):
                 starts.append((sx, sy))
-        offscreen_starts = [s for s in starts if self._is_offscreen(*s)]
-        # 맵의 E 지점은 몇 개 안 되는데, 다른 적들이 그 자리를 차지하고 있거나 화면이 월드의
-        # 상당 부분을 덮는 설정에서는 화면 밖 후보가 1~2개로 좁혀져 매번 같은 자리/방향에서
-        # 적이 줄지어 나오게 된다. 후보가 적을 때는 맵 전체의 화면 밖 빈 공간에서 고르게
-        # 뽑아 다양성을 확보한다.
-        if len(offscreen_starts) >= 3:
-            e.x, e.y = offscreen_starts[int(self.rng.integers(len(offscreen_starts)))]
+        if starts:
+            e.x, e.y = starts[int(self.rng.integers(len(starts)))]
         else:
-            offscreen_tiles = tuple(t for t in tm.navigation_tiles(e.radius)
-                                     if self._is_offscreen(*tm.center(*t)))
-            if offscreen_tiles:
-                e.x, e.y = self._random_free_pos(e.radius, 300.0, tiles=offscreen_tiles)
-            elif starts:
-                e.x, e.y = starts[int(self.rng.integers(len(starts)))]
-            else:
-                e.x, e.y = self._random_free_pos(e.radius, 300.0)
+            e.x, e.y = self._random_free_pos(e.radius, 300.0)
         e.vx = e.vy = 0.0
         e.hp = e.max_hp
         e.alive = True
