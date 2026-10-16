@@ -222,8 +222,8 @@ class GameApplication:
         return bool(get_rect is not None and get_rect().collidepoint(pos))
 
     def pointer_over_rewards(self, pos):
-        if self.pointer_over_minimap(pos):
-            return True
+        # 미니맵은 버튼이 없는 표시용이라 마우스가 지나가는 정도로는 발사를 막지 않는다.
+        # 미니맵을 눌러서 발사가 새는 것은 MOUSEBUTTONDOWN에서 suppress_fire로 따로 막는다.
         if not self.cfg.progression_enabled:
             return False
         if not stat_upgrades_visible(self.game):

@@ -114,7 +114,7 @@ class GameConfig:
     height: int = 720
     window_width: int = 1280
     window_height: int = 800
-    world_scale: int = 3             # 2880x2160 전체 미로, 60x45 타일 (반복 배치하지 않음)
+    world_scale: int = 5              # 4800x3600 전체 미로, 100x75 타일 (기존 2880x2160의 약 1.67배)
     camera_zoom: float = 0.6         # 기본 창에서 약 2133x1333 월드 영역 표시
     progression_enabled: bool = True
     level_xp_base: int = 60

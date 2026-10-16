@@ -189,7 +189,7 @@ class WorldTests(unittest.TestCase):
                 cfg.terrain.mud_enabled = cfg.terrain.breakable_enabled = stage2
                 game = GameCore(cfg, seed=1)
                 with self.subTest(map=name, stage2=stage2):
-                    self.assertEqual((game.terrain.cols, game.terrain.rows), (60, 45))
+                    self.assertEqual((game.terrain.cols, game.terrain.rows), (100, 75))
                     self.assertTrue(game.terrain.is_connected())
                     self.assertFalse(game.terrain.is_solid_at(game.player.x, game.player.y))
         cfg.world_scale = 1
@@ -254,7 +254,7 @@ class RendererTests(unittest.TestCase):
         p.x = game.cfg.world_width - p.radius
         p.y = game.cfg.world_height - p.radius
         renderer._update_camera(p)
-        self.assertEqual((renderer.camera_x, renderer.camera_y), (1280, 960))
+        self.assertEqual((renderer.camera_x, renderer.camera_y), (3200, 2400))
         game._add_score(190)
         game.open_rewards()
         renderer.draw(game)
