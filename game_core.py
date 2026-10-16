@@ -180,7 +180,22 @@ class GameCore:
             raise ValueError("player_ammo는 0 이상의 정수여야 합니다.")
         if self.cfg.reload_seconds <= 0 or self.cfg.fps <= 0:
             raise ValueError("reload_seconds와 fps는 양수여야 합니다.")
+        # 렌더러가 매 프레임 실제 화면 크기로 갱신해 준다(set_viewport). 렌더러가 없으면
+        # (헤드리스/강화학습) 설정값 기준 추정치를 그대로 쓴다.
+        self.viewport_w = self.cfg.window_width / self.cfg.camera_zoom
+        self.viewport_h = self.cfg.window_height / self.cfg.camera_zoom
         self.reset(seed)
+
+    def set_viewport(self, width: float, height: float):
+        """렌더러가 실제로 화면에 보여주는 월드 영역 크기(픽셀)를 알려준다."""
+        self.viewport_w, self.viewport_h = width, height
+
+    def _is_offscreen(self, x, y):
+        """플레이어 화면 중심 기준으로 (x, y)가 화면 밖(+여유)인지."""
+        p = self.player
+        margin = self.cfg.enemy_ai.spawn_offscreen_margin
+        return (abs(x - p.x) > self.viewport_w / 2 + margin
+                or abs(y - p.y) > self.viewport_h / 2 + margin)
 
     # ---------------- 초기화 ----------------
     def reset(self, seed: int = None):
@@ -338,9 +353,12 @@ class GameCore:
         tm = self.terrain
         p = self.player
         e.job = self._random_enemy_job()
-        e.elite = bool(self.rng.random() < self.cfg.enemy_ai.elite_chance)
+        ai = self.cfg.enemy_ai
+        mercy = self._mercy_factor()
+        elite_chance = ai.elite_chance * (ai.mercy_elite_chance_scale + (1 - ai.mercy_elite_chance_scale) * mercy)
+        e.elite = bool(self.rng.random() < elite_chance)
         self._apply_enemy_strength(e)
-        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선
+        # 맵의 E 위치 중 플레이어와 멀고 다른 적과 겹치지 않는 곳 우선, 그중에서도 화면 밖을 우선한다.
         others = [o for o in getattr(self, "enemies", []) if o.alive and o is not e]
         starts = []
         for s in tm.enemy_starts:
@@ -350,10 +368,15 @@ class GameCore:
             if (sx - p.x) ** 2 + (sy - p.y) ** 2 >= 300.0 ** 2 and \
                     all((sx - o.x) ** 2 + (sy - o.y) ** 2 >= (2 * e.radius) ** 2 for o in others):
                 starts.append((sx, sy))
-        if starts:
+        offscreen_starts = [s for s in starts if self._is_offscreen(*s)]
+        if offscreen_starts:
+            e.x, e.y = offscreen_starts[int(self.rng.integers(len(offscreen_starts)))]
+        elif starts:
             e.x, e.y = starts[int(self.rng.integers(len(starts)))]
         else:
-            e.x, e.y = self._random_free_pos(e.radius, 300.0)
+            offscreen_tiles = tuple(t for t in tm.navigation_tiles(e.radius)
+                                     if self._is_offscreen(*tm.center(*t)))
+            e.x, e.y = self._random_free_pos(e.radius, 300.0, tiles=offscreen_tiles or None)
         e.vx = e.vy = 0.0
         e.hp = e.max_hp
         e.alive = True
@@ -374,26 +397,54 @@ class GameCore:
         jobs = SHIPS_BY_LEVEL[SHIPS[self.player.job].level]
         return jobs[int(self.rng.integers(len(jobs)))]
 
+    def _mercy_factor(self):
+        """0(게임 시작)~1(mercy_seconds 지남): 초반 적 약화 배율이 정상으로 돌아오는 진행도."""
+        ai = self.cfg.enemy_ai
+        if ai.mercy_seconds <= 0:
+            return 1.0
+        return min(1.0, self.frame / (ai.mercy_seconds * self.cfg.fps))
+
+    def _enemy_stat_level(self, key):
+        """플레이어가 찍은 스탯 카드를 적도 일부(stat_mirror_ratio)만큼 따라간다."""
+        return int(self.stat_levels.get(key, 0) * self.cfg.enemy_ai.stat_mirror_ratio)
+
     def _apply_enemy_strength(self, e: Tank):
-        """시간 단계와 우주선 종류에 맞춰 적 능력치를 다시 계산한다. 현재 체력 비율은 유지."""
+        """시간 단계·우주선 종류·플레이어 스탯 성장에 맞춰 적 능력치를 다시 계산한다.
+        현재 체력 비율은 유지."""
         c, ai, spec = self.cfg, self.cfg.enemy_ai, SHIPS[e.job]
         tier = self.enemy_scale_tier
+        mercy = self._mercy_factor()
+        hp_mercy = ai.mercy_hp_scale + (1 - ai.mercy_hp_scale) * mercy
+        damage_mercy = ai.mercy_damage_scale + (1 - ai.mercy_damage_scale) * mercy
+        fire_rate_mercy = ai.mercy_fire_rate_scale + (1 - ai.mercy_fire_rate_scale) * mercy
         ratio = e.hp / e.max_hp if e.max_hp > 0 else 1.0
         # 대형 선체의 체력 보너스는 플레이어의 절반만 받는다.
         elite_hp, elite_damage = (ai.elite_hp_scale, ai.elite_damage_scale) if e.elite else (1.0, 1.0)
-        e.max_hp = (c.enemy_hp + spec.hp_bonus * 0.5) * (1 + ai.hp_growth * tier) * elite_hp
+        # 플레이어의 upgrade_stat()과 같은 배율을 적용한다(hull은 +25, 나머지는 레벨당 배율).
+        hull_lv = self._enemy_stat_level("hull")
+        damage_lv = self._enemy_stat_level("damage")
+        rapid_lv = self._enemy_stat_level("rapid")
+        speed_lv = self._enemy_stat_level("speed")
+        range_lv = self._enemy_stat_level("range")
+        e.max_hp = ((c.enemy_hp + spec.hp_bonus * 0.5 + 25 * hull_lv)
+                    * (1 + ai.hp_growth * tier) * elite_hp * hp_mercy)
         e.hp = e.max_hp * ratio
         e.radius = c.tank_radius * spec.radius_scale
-        e.damage_scale = (1 + ai.damage_growth * tier) * elite_damage
-        e.fire_cooldown_max = max(ai.min_fire_cooldown, round(ai.fire_cooldown / (1 + ai.fire_rate_growth * tier)))
-        e.accel_scale = 1 + ai.speed_growth * tier
+        e.damage_scale = (1 + ai.damage_growth * tier) * elite_damage * damage_mercy * (1.25 ** damage_lv)
+        rapid_factor = (1 + ai.fire_rate_growth * tier) * fire_rate_mercy * ((1 / 0.95) ** rapid_lv)
+        e.fire_cooldown_max = max(ai.min_fire_cooldown, round(ai.fire_cooldown / rapid_factor))
+        e.accel_scale = (1 + ai.speed_growth * tier) * (1.07 ** speed_lv)
+        e.bullet_speed_scale = 1.2 ** range_lv
+        e.bullet_life_scale = 1.15 ** range_lv
         e.projectiles = len(spec.shots)
 
     def _update_enemy_scaling(self):
         ai = self.cfg.enemy_ai
         tier = min(ai.max_scale_tier, int(self.frame / (ai.scale_interval_seconds * self.cfg.fps)))
-        if tier != self.enemy_scale_tier:
+        tier_changed = tier != self.enemy_scale_tier
+        if tier_changed:
             self.enemy_scale_tier = tier
+        if tier_changed or self.frame <= ai.mercy_seconds * self.cfg.fps:
             for e in self.enemies:
                 self._apply_enemy_strength(e)
 
@@ -507,6 +558,9 @@ class GameCore:
             p.bullet_life_scale *= 1.15
         self.upgrade_points -= 1
         self.stat_levels[key] += 1
+        for e in self.enemies:
+            self._apply_enemy_strength(e)
+            e.cooldown = min(e.cooldown, e.fire_cooldown_max)
         self._reward_notice(next(card.title for card in STAT_UPGRADES if card.key == key))
         self.stat_choices = ()
         self.open_stat_upgrades()

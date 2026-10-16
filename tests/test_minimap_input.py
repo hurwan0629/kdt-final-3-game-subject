@@ -16,7 +16,7 @@ class MinimapInputTests(unittest.TestCase):
         cfg = GameConfig(num_enemies=0, num_shapes=0, progression_enabled=progression)
         cfg.terrain.enabled = False
         game = GameCore(cfg, seed=8)
-        renderer = SimpleNamespace(size=(1280, 800),
+        renderer = SimpleNamespace(size=(1280, 800), view_width=1280, view_height=800,
             minimap_rect=lambda: pygame.Rect(1070, 620, 196, 166),
             _update_camera=lambda player: None,
             screen_to_world=lambda x, y: (game.player.x+500, game.player.y))

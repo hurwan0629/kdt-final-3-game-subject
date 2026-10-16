@@ -43,6 +43,12 @@ class EnemyAIConfig:
     hearing_frames: int = 30         # 발사 후 이 시간 동안 소리가 들린다
     alert_range: float = 700.0       # 플레이어를 본 적이 이 거리 안의 동료에게 위치를 알린다
     alert_start_seconds: float = 120.0  # 동료 호출은 게임 시작 후 이 시간이 지나야 켜진다 (초반 난이도 완화)
+    # 초반 봐주기: 게임 시작 후 mercy_seconds 동안 적이 아래 배율에서 1.0까지 서서히 강해진다
+    mercy_seconds: float = 45.0
+    mercy_hp_scale: float = 0.7
+    mercy_damage_scale: float = 0.55
+    mercy_fire_rate_scale: float = 0.7
+    mercy_elite_chance_scale: float = 0.0   # 0이면 mercy_seconds 동안 엘리트가 등장하지 않음
     lead_aim: float = 0.65           # 이동 예측 조준 비율 (0이면 현재 위치를 조준)
     keep_distance: float = 230.0     # 플레이어와 유지하려는 거리
     respawn_frames: int = 300        # 사망 후 재등장까지 프레임 (5초)
@@ -64,6 +70,11 @@ class EnemyAIConfig:
     elite_damage_scale: float = 1.6
     elite_heal_ratio: float = 0.4    # 처치 시 플레이어 최대 체력의 40% 회복
     elite_score_scale: float = 2.0
+    # 적 능력치 강화: 플레이어가 스탯 카드를 찍을 때마다 같은 항목을 적에게도 반영한다.
+    # 비율이 1보다 작을수록 적이 플레이어보다 약하게 성장한다(다수이므로).
+    stat_mirror_ratio: float = 0.6
+    # 적은 가능하면 플레이어 화면 밖에서 (재)생성된다. 화면 경계 바깥으로 이만큼 더 띄운다.
+    spawn_offscreen_margin: float = 80.0
 
 
 @dataclass

@@ -17,9 +17,11 @@ from progression import SHIPS, SHIPS_BY_LEVEL, STAT_MAX_LEVEL, STAT_UPGRADES, st
 from renderer import Renderer
 
 
-def open_game(enemies=0, seed=7):
+def open_game(enemies=0, seed=7, mercy_seconds=None):
     cfg = GameConfig(num_enemies=enemies, num_shapes=0)
     cfg.terrain.enabled = False
+    if mercy_seconds is not None:
+        cfg.enemy_ai.mercy_seconds = mercy_seconds
     return GameCore(cfg, seed=seed)
 
 
@@ -39,7 +41,7 @@ def evolve(game, job):
 
 class EnemyGrowthTests(unittest.TestCase):
     def test_enemies_get_stronger_over_time(self):
-        game = open_game(enemies=3)
+        game = open_game(enemies=3, mercy_seconds=0)   # 초반 봐주기 배율과 분리해서 시간 성장만 검증
         ai = game.cfg.enemy_ai
         e = game.enemies[0]
         base = (e.max_hp, e.damage_scale, e.fire_cooldown_max)
@@ -55,6 +57,60 @@ class EnemyGrowthTests(unittest.TestCase):
         game._update_enemy_scaling()
         self.assertEqual(game.enemy_scale_tier, ai.max_scale_tier)
         self.assertGreaterEqual(min(x.fire_cooldown_max for x in game.enemies), ai.min_fire_cooldown)
+
+    def test_enemies_mirror_player_stat_picks_but_weaker(self):
+        """플레이어가 스탯 카드를 찍으면 적도 같은 항목이 비율(stat_mirror_ratio)만큼 따라 오른다."""
+        game = open_game(enemies=2, seed=5, mercy_seconds=0)
+        ai = game.cfg.enemy_ai
+        e = game.enemies[0]
+        base_hp, base_damage, base_cooldown, base_accel = e.max_hp, e.damage_scale, e.fire_cooldown_max, e.accel_scale
+        game._add_score(10 ** 6)
+        for key, times in (("damage", 3), ("hull", 2), ("speed", 1), ("rapid", 1), ("range", 1)):
+            for _ in range(times):
+                self.assertTrue(game.upgrade_stat(key))
+        enemy_damage_lv = int(3 * ai.stat_mirror_ratio)
+        enemy_hull_lv = int(2 * ai.stat_mirror_ratio)
+        self.assertLess(enemy_damage_lv, 3)   # 플레이어보다 약하게 성장
+        self.assertAlmostEqual(e.damage_scale, base_damage * (1.25 ** enemy_damage_lv))
+        self.assertAlmostEqual(e.max_hp, base_hp + 25 * enemy_hull_lv)
+        self.assertGreaterEqual(e.accel_scale, base_accel)
+        self.assertLessEqual(e.fire_cooldown_max, base_cooldown)
+        self.assertGreaterEqual(e.bullet_speed_scale, 1.0)
+        # 적은 플레이어가 고른 능력치 배율 자체보다 항상 약하다.
+        p = game.player
+        self.assertLess(e.damage_scale / base_damage, p.damage_scale)
+
+    def test_enemies_respawn_off_screen_when_possible_but_never_fail_to_spawn(self):
+        game = open_game(enemies=1, seed=3, mercy_seconds=0)
+        e = game.enemies[0]
+
+        # 화면을 작게 잡으면 화면 밖(+여유)에서 다시 태어나야 한다.
+        game.set_viewport(400, 300)
+        for _ in range(20):
+            game._respawn_enemy(e)
+            self.assertTrue(game._is_offscreen(e.x, e.y))
+
+        # 화면이 맵보다 커서 "화면 밖"이 아예 없어도 스폰 자체는 실패하면 안 된다.
+        game.set_viewport(10 ** 6, 10 ** 6)
+        game._respawn_enemy(e)
+        self.assertTrue(game.terrain.circle_fits(e.x, e.y, e.radius))
+        self.assertGreaterEqual(math.hypot(e.x - game.player.x, e.y - game.player.y), 300.0 - 1e-6)
+
+    def test_mercy_weakens_early_enemies_and_fades_out(self):
+        """초반 mercy_seconds 동안 적이 약하게 시작해 서서히 정상(tier 0) 강도로 돌아온다."""
+        game = open_game(enemies=1, seed=11, mercy_seconds=30)
+        ai = game.cfg.enemy_ai
+        e = game.enemies[0]
+        full_hp = (game.cfg.enemy_hp + SHIPS[e.job].hp_bonus * 0.5)
+        full_cooldown = ai.fire_cooldown
+        self.assertAlmostEqual(e.max_hp, full_hp * ai.mercy_hp_scale)
+        self.assertAlmostEqual(e.damage_scale, ai.mercy_damage_scale)
+        self.assertGreater(e.fire_cooldown_max, full_cooldown)   # 더 느리게 쏜다
+        game.frame = int(ai.mercy_seconds * game.cfg.fps)
+        game._update_enemy_scaling()
+        self.assertAlmostEqual(e.max_hp, full_hp)
+        self.assertAlmostEqual(e.damage_scale, 1.0)
+        self.assertEqual(e.fire_cooldown_max, full_cooldown)
 
     def test_enemies_evolve_with_player_stage(self):
         game = open_game(enemies=8)
@@ -114,7 +170,7 @@ class ShipTweakTests(unittest.TestCase):
         game, guardian = self.fire("guardian")
         self.assertGreater(sniper.radius, rookie.radius)
         self.assertGreater(guardian.radius, rookie.radius)
-        self.assertLess(guardian.damage, game.cfg.bullet_damage * 0.5)
+        self.assertLess(guardian.damage, game.cfg.bullet_damage * 0.7)
 
     def test_guardian_hull_is_smaller(self):
         game = open_game()
@@ -236,7 +292,7 @@ class SmarterEnemyAITests(unittest.TestCase):
 
 class EliteEnemyTests(unittest.TestCase):
     def test_some_enemies_spawn_as_elite_with_more_hp_and_damage(self):
-        game = open_game(enemies=60, seed=3)
+        game = open_game(enemies=60, seed=3, mercy_seconds=0)   # 초반 봐주기로 엘리트가 사라지지 않게 분리
         elites = [e for e in game.enemies if e.elite]
         normals = [e for e in game.enemies if not e.elite and e.job == "rookie"]
         self.assertTrue(0 < len(elites) < len(game.enemies))

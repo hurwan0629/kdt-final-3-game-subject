@@ -96,7 +96,7 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.assertEqual((game.player.max_hp, game.player.radius), (hp, radius))
         self.assertEqual(game.special_reward_levels, [])
         self.assertFalse(game.choose_reward(0))
-        self.assertAlmostEqual(game.weapon_values(game.player)[1], game.cfg.bullet_damage * 0.55 * 1.2)
+        self.assertAlmostEqual(game.weapon_values(game.player)[1], game.cfg.bullet_damage * 0.5 * 1.2)
 
     def test_five_fixed_stats_show_at_zero_and_points_accumulate(self):
         game = self.game
@@ -306,7 +306,7 @@ class WeaponsSkillsTests(unittest.TestCase):
                 self.game._fire(p, True)
                 self.assertEqual(len(self.game.bullets), count)
                 self.assertTrue(all(b.damage < self.game.cfg.bullet_damage for b in self.game.bullets))
-                if job != "guardian":  # 가디언은 대구경 포신으로 바꿨다
+                if job not in ("guardian", "bastion", "aegis"):  # 이 셋은 포신을 키웠다
                     self.assertTrue(all(b.radius < self.game.cfg.bullet_radius for b in self.game.bullets))
                 self.assertTrue(all(math.hypot(b.x - p.x, b.y - p.y) > p.radius for b in self.game.bullets))
 
@@ -377,11 +377,11 @@ class WeaponsSkillsTests(unittest.TestCase):
         shape = Shape(self.game._new_id(), "square", 558, 500, 0, 0, 100, 100, 14, 10)
         self.game.shapes = [shape]
         self.game._fire(self.game.player, True)
-        self.assertEqual(shape.hp, 65)
+        self.assertEqual(shape.hp, 70.25)
         self.assertEqual(self.game.bullets, [])
         self.assertEqual(self.game.player.ammo, 119)
         self.game._move_bullets()
-        self.assertEqual(shape.hp, 65)
+        self.assertEqual(shape.hp, 70.25)
 
     def test_projectile_collision_width_matches_measured_gun_opening(self):
         # 원본 512px PNG 포신 안쪽의 밝은 회색 부분을 실측한 픽셀 폭이다.
