@@ -51,12 +51,14 @@
 | `backgrounds/main.png` | 메인 메뉴 전용 배경 |
 | `objects/star_fragment.png`, `rock_planet.png`, `ring_planet.png` | 별 조각·암석 행성·고리 행성 |
 | `objects/gravity_field.png` | 선택 기능인 중력장 (이전 이미지와 동일) |
-| `etc/guard_01.png` ~ `guard_04.png` | 벽 타일 4종. 파괴 가능한 벽은 갈색으로 구분하고 손상 표시 유지 |
+| `etc/guard_01.png` ~ `guard_04.png` | 벽 이미지 4종. 꽉 찬 8×8 영역은 큰 이미지 한 장, 나머지는 타일별 표시 |
 | `etc/boom_effect_01.png` ~ `boom_effect_08.png` | 우주선·천체 파괴 및 범위 폭발의 순차 연출 |
 | `etc/home_selected.png`, `home_selected_normal.png` | 메인·일시정지 메뉴 버튼의 선택·일반 상태 |
 | `projectiles/player_plasma.png`, `enemy_plasma.png`, `cannon_shell.png` | 일반 탄환·저격탄 |
 
 장애물·버튼의 투명 여백은 로더에서 제외하고 기존 타일·클릭 영역 크기에 맞춰 표시합니다. 폭발 8장은 원본 비율을 유지한 공통 캔버스에 정렬합니다. 이미지 교체는 충돌·피해·성장·입력 판정에 영향을 주지 않습니다.
+
+벽의 큰 이미지 표시는 생성 블록 크기가 8일 때만 적용합니다. 64칸 모두 일반 벽 또는 파괴 가능한 벽이어야 하며, 빈칸이 하나라도 있으면 그 블록 전체를 작은 이미지로 표시합니다. 벽 일부가 파괴되어 빈칸이 생기면 다음 지형 갱신 때 자동 전환됩니다. 파괴 가능한 영역의 갈색 구분과 타일별 손상 표시는 유지합니다.
 
 교체 전 이미지와 기존 미사용 PNG 29장은 원래 폴더 구분을 유지해 [pre/v2/](pre/v2/README.md)에 보관했습니다. `new-images/`에는 제공된 ZIP 원본 3개가 남아 있으며 게임은 이 ZIP을 읽지 않습니다.
 

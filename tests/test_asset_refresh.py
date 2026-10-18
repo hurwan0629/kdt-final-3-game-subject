@@ -81,6 +81,62 @@ class AssetRefreshTests(unittest.TestCase):
                 self.assertTrue({"etc/home_selected", "etc/home_selected_normal"} <= paths)
                 self.assertEqual(pygame.image.tobytes(normal, "RGBA"), before)
 
+    def test_only_fully_solid_8x8_regions_use_one_large_image(self):
+        tiles = [[WALL] * 16 for _ in range(8)]
+        tiles[0][8] = EMPTY  # 오른쪽 블록에 빈칸 하나: 남은 63칸은 작은 이미지로 처리한다.
+        terrain = TileMap(tiles, self.cfg.terrain.tile_size, (8, 0), [], "blocks", self.cfg.terrain)
+        before = copy.deepcopy((terrain.tiles, terrain.hp, terrain.version))
+        with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+            self.renderer._ensure_terrain(terrain)
+        sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+        self.assertEqual(sizes.count(8 * terrain.tile), 1)
+        self.assertEqual(sizes.count(terrain.tile), 63)
+        self.assertEqual((terrain.tiles, terrain.hp, terrain.version), before)
+
+    def test_large_blocks_follow_random_map_center_offset(self):
+        tiles = [[EMPTY] * 19 for _ in range(13)]
+        # 생성기와 동일한 가운데 정렬: (19 % 8) // 2, (13 % 8) // 2 = (1, 2).
+        for row in range(2, 10):
+            for col in range(1, 9):
+                tiles[row][col] = WALL
+        terrain = TileMap(tiles, self.cfg.terrain.tile_size, (0, 0), [], "random", self.cfg.terrain)
+        with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+            self.renderer._ensure_terrain(terrain)
+        sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+        self.assertEqual(sizes, [8 * terrain.tile])
+
+    def test_destroying_one_tile_switches_the_whole_block_to_small_images(self):
+        cfg = self.cfg.terrain
+        old_flag = cfg.breakable_enabled
+        cfg.breakable_enabled = True
+        try:
+            tiles = [[BREAKABLE] * 8 for _ in range(8)]
+            tiles[0][0] = WALL  # 두 벽 종류가 섞여도 빈칸이 없으면 큰 이미지 하나를 사용한다.
+            terrain = TileMap(tiles, cfg.tile_size, (0, 0), [], "breakable-block", cfg)
+            for destroyed in (False, True):
+                if destroyed:
+                    self.assertTrue(terrain.damage_tile(3, 3, cfg.breakable_hp))
+                with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+                    self.renderer._ensure_terrain(terrain)
+                sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+                self.assertEqual(sizes.count(8 * terrain.tile), 0 if destroyed else 1)
+                self.assertEqual(sizes.count(terrain.tile), 63 if destroyed else 0)
+        finally:
+            cfg.breakable_enabled = old_flag
+
+    def test_other_block_sizes_keep_small_images(self):
+        cfg = self.cfg.terrain
+        old_size = cfg.block_tiles
+        cfg.block_tiles = 5
+        try:
+            terrain = TileMap([[WALL] * 8 for _ in range(8)], cfg.tile_size, (0, 0), [], "other", cfg)
+            with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+                self.renderer._ensure_terrain(terrain)
+            sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+            self.assertEqual(sizes, [terrain.tile] * 64)
+        finally:
+            cfg.block_tiles = old_size
+
     def test_explosion_finishes_after_game_over_without_advancing_simulation(self):
         game = GameCore(self.cfg, seed=17)
         self.renderer._last_frame = -1

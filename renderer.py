@@ -185,6 +185,32 @@ class Renderer:
     # ------------------------------------------------------------------
     # 지형 (지형이 바뀔 때만 다시 그림)
     # ------------------------------------------------------------------
+    def _draw_full_wall_blocks(self, floor, tm):
+        """빈칸이 없는 8×8 벽 영역을 큰 이미지로 그리고 처리한 타일 좌표를 반환한다."""
+        block = max(self.cfg.terrain.block_tiles,
+                    2 * math.ceil(self.cfg.terrain.navigation_radius / tm.tile) + 1)
+        covered = set()
+        if block != 8:
+            return covered  # 다른 크기의 생성 블록은 기존 타일별 렌더링을 사용한다.
+        # 랜덤 생성기의 가운데 정렬을 따르고, 파일 맵은 첫 타일부터 검사한다.
+        off_c, off_r = ((tm.cols % block) // 2, (tm.rows % block) // 2) if tm.name == "random" else (0, 0)
+        for row in range(off_r, tm.rows - block + 1, block):
+            for col in range(off_c, tm.cols - block + 1, block):
+                cells = [(c, r) for r in range(row, row + block) for c in range(col, col + block)]
+                if not all(tm.tiles[r][c] in (WALL, BREAKABLE) for c, r in cells):
+                    continue
+                variant = (col // block * 3 + row // block * 5) % 4 + 1
+                image = self.assets.image(f"etc/guard_{variant:02d}", block * tm.tile)
+                breakable = [(c, r) for c, r in cells if tm.tiles[r][c] == BREAKABLE]
+                if breakable:
+                    image = image.copy()  # 일반 벽과 섞여 있어도 파괴 가능한 영역만 착색한다.
+                    for c, r in breakable:
+                        area = pygame.Rect((c - col) * tm.tile, (r - row) * tm.tile, tm.tile, tm.tile)
+                        image.fill((230, 175, 130, 255), area, special_flags=pygame.BLEND_RGBA_MULT)
+                floor.blit(image, (col * tm.tile, row * tm.tile))
+                covered.update(cells)
+        return covered
+
     def _ensure_terrain(self, tm):
         key = (id(tm), tm.version)
         if key == self._terrain_key:
@@ -192,6 +218,7 @@ class Renderer:
         self._terrain_key = key
         tile = tm.tile
         floor = self._bg.copy()
+        covered = self._draw_full_wall_blocks(floor, tm)
         solids = (WALL, BREAKABLE)
         for row in range(tm.rows):
             for col in range(tm.cols):
@@ -202,13 +229,14 @@ class Renderer:
                     image = self.assets.image("objects/gravity_field", tile * 1.25)
                     floor.blit(image, image.get_rect(center=center))
                 elif kind in solids:
-                    # 타일 좌표로 무늬를 선택해 게임 난수열과 충돌 영역을 바꾸지 않는다.
-                    variant = (col * 3 + row * 5) % 4 + 1
-                    image = self.assets.image(f"etc/guard_{variant:02d}", tile)
-                    if kind == BREAKABLE:
-                        image = image.copy()
-                        image.fill((230, 175, 130, 255), special_flags=pygame.BLEND_RGBA_MULT)
-                    floor.blit(image, rect)
+                    if (col, row) not in covered:
+                        # 빈칸이 있는 블록·가장자리·다른 블록 크기는 작은 이미지로 그린다.
+                        variant = (col * 3 + row * 5) % 4 + 1
+                        image = self.assets.image(f"etc/guard_{variant:02d}", tile)
+                        if kind == BREAKABLE:
+                            image = image.copy()
+                            image.fill((230, 175, 130, 255), special_flags=pygame.BLEND_RGBA_MULT)
+                        floor.blit(image, rect)
                     if kind == BREAKABLE and tm.hp[(col, row)] < tm.breakable_hp_max:
                         ratio = tm.hp[(col, row)] / tm.breakable_hp_max
                         pygame.draw.line(floor, (255, 170, 90), (center[0] - 16, center[1] + 16),
