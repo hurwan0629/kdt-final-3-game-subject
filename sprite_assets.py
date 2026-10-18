@@ -73,6 +73,9 @@ class SpriteAssets:
             if path.endswith(suffix):
                 return _recolor_hull(self._source(path[:-len(suffix)]), tint)
         image = pygame.image.load(resource_path(f"assets/{path}.png")).convert_alpha()
+        if path.startswith(("etc/guard_", "etc/home_")):
+            # 장애물·버튼은 큰 투명 여백을 제외한 실제 그림을 표시 영역에 맞춘다.
+            image = image.subsurface(image.get_bounding_rect()).copy()
         if path in BARREL_OVERRIDES:
             image = _redraw_barrel(image, *BARREL_OVERRIDES[path])
         return image

@@ -164,10 +164,23 @@ class GameApplication:
                         break
             elif ev.type == pygame.KEYDOWN:
                 enabled = [i for i, button in enumerate(buttons) if button.enabled]
-                if ev.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_TAB):
-                    direction = -1 if ev.key == pygame.K_UP else 1
-                    index = enabled.index(self.selected) if self.selected in enabled else 0
-                    self.selected = enabled[(index + direction) % len(enabled)]
+                if ev.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_TAB):
+                    direction = -1 if ev.key in (pygame.K_UP, pygame.K_LEFT) else 1
+                    targets = enabled
+                    if self.mode == "main":
+                        difficulties = [i for i in enabled if buttons[i].key.startswith("difficulty_")]
+                        if ev.key in (pygame.K_LEFT, pygame.K_RIGHT):
+                            # 좌우는 난이도 행 안에서만 순환한다.
+                            targets = difficulties if self.selected in difficulties else [self.selected]
+                        elif ev.key in (pygame.K_UP, pygame.K_DOWN) and difficulties:
+                            # 상하는 난이도 행을 하나로 묶고, 다시 들어오면 확정한 난이도에 둔다.
+                            focus = self.selected if self.selected in difficulties else next(
+                                (i for i in difficulties if buttons[i].checked), difficulties[0])
+                            targets = [i for i in enabled if i not in difficulties or i == focus]
+                    elif ev.key in (pygame.K_LEFT, pygame.K_RIGHT):
+                        targets = [self.selected]
+                    index = targets.index(self.selected) if self.selected in targets else 0
+                    self.selected = targets[(index + direction) % len(targets)]
                 elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
                     self.activate(buttons[self.selected].key)
                 elif ev.key == pygame.K_q and self.mode == "pause":

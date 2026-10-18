@@ -1,0 +1,147 @@
+﻿[
+    {
+        "original_path":  "backgrounds/deep_space.png",
+        "archived_path":  "pre/v2/backgrounds/deep_space.png",
+        "sha256":  "6e9bfd39ee8d227f73310cfad4700777ddf9bef99d177c4bad293c52d4a47638"
+    },
+    {
+        "original_path":  "backgrounds/nebula.png",
+        "archived_path":  "pre/v2/backgrounds/nebula.png",
+        "sha256":  "4327b5d9f184839554c5e86a9b9d836274ab1a6073e8b6c53b1b023839d5563b"
+    },
+    {
+        "original_path":  "enemies/fighter.png",
+        "archived_path":  "pre/v2/enemies/fighter.png",
+        "sha256":  "3b5c0a7fd691fea97f80efcda8a8dcc70638709b02701208cb25a29d16eea9d4"
+    },
+    {
+        "original_path":  "enemies/heavy.png",
+        "archived_path":  "pre/v2/enemies/heavy.png",
+        "sha256":  "d6a1ae3c479b1036d991c42ccb42e3ea479b2c80a7acc58f25334b732cb3e176"
+    },
+    {
+        "original_path":  "enemies/scout.png",
+        "archived_path":  "pre/v2/enemies/scout.png",
+        "sha256":  "c9b2059a7ec5d95deeb0314ae21c355ac262076e49429e1cc70a11bd81480f94"
+    },
+    {
+        "original_path":  "objects/asteroid_wall.png",
+        "archived_path":  "pre/v2/objects/asteroid_wall.png",
+        "sha256":  "7a4c49be14cc49865f9500f06e13aec434f438fa59adfe06ad974b10e9551af6"
+    },
+    {
+        "original_path":  "objects/breakable_asteroid.png",
+        "archived_path":  "pre/v2/objects/breakable_asteroid.png",
+        "sha256":  "79816636a34164671cd9354b0273214d18be7bf12a9b9a0fc70586d811c3ab97"
+    },
+    {
+        "original_path":  "objects/gas_cloud.png",
+        "archived_path":  "pre/v2/objects/gas_cloud.png",
+        "sha256":  "6172ce36904c6ebcd4ee470bebf9e51c9bf62f1aa9fb8e2ed06fc7208b4b938f"
+    },
+    {
+        "original_path":  "objects/gravity_field.png",
+        "archived_path":  "pre/v2/objects/gravity_field.png",
+        "sha256":  "312e9ebad7e02821c866d7b5e7fac0d31f8b0b5f64af4af91ade7728b4c591a2"
+    },
+    {
+        "original_path":  "objects/ring_planet.png",
+        "archived_path":  "pre/v2/objects/ring_planet.png",
+        "sha256":  "8b4fa866733177946eb3484177703a1931cc3ab509be9549ede84d3f26777bec"
+    },
+    {
+        "original_path":  "objects/rock_planet.png",
+        "archived_path":  "pre/v2/objects/rock_planet.png",
+        "sha256":  "da4275d485555ea0f4849cb1ffdcdecbeed0d04e57121a64af709db4badbe8b9"
+    },
+    {
+        "original_path":  "objects/star_fragment.png",
+        "archived_path":  "pre/v2/objects/star_fragment.png",
+        "sha256":  "be8c1ca78b259101551c0edba24d5b77a9e767590ef8b8ba8fe2be5e6d6fdf2e"
+    },
+    {
+        "original_path":  "projectiles/homing_missile.png",
+        "archived_path":  "pre/v2/projectiles/homing_missile.png",
+        "sha256":  "53a542e07269647c80c08677307d10ddd77dc220756bb014c6ebcbfdffc18caa"
+    },
+    {
+        "original_path":  "projectiles/mine.png",
+        "archived_path":  "pre/v2/projectiles/mine.png",
+        "sha256":  "a44d4ad62dc2201031ec2cf953b93c2477b7e12985481d24a61f7a2c7f65992a"
+    },
+    {
+        "original_path":  "references/우주선_진화트리.png",
+        "archived_path":  "pre/v2/references/우주선_진화트리.png",
+        "sha256":  "8c78d0676479a69a281ae0612f86ec1e20916e90707bb134317d439753f934ba"
+    },
+    {
+        "original_path":  "ships/booster.png",
+        "archived_path":  "pre/v2/ships/booster.png",
+        "sha256":  "78f5fdf0c8d395dc2ba8624dcc1aad258c9d4c4c6d1949a5a9aab3c772c533c7"
+    },
+    {
+        "original_path":  "ships/cross.png",
+        "archived_path":  "pre/v2/ships/cross.png",
+        "sha256":  "fa9b2f888a4d011daf4513f5b7faab7e60872e13d9c3630362d7048100e236b1"
+    },
+    {
+        "original_path":  "ships/gatling.png",
+        "archived_path":  "pre/v2/ships/gatling.png",
+        "sha256":  "cd3a848000db488e925477f6efe115c0955ef468b196402039c84df26237db34"
+    },
+    {
+        "original_path":  "ships/guardian.png",
+        "archived_path":  "pre/v2/ships/guardian.png",
+        "sha256":  "a92d47a6563f60dbc7d99bf602592f3e7f1cc9ec990c6ea63aec4acade264ac7"
+    },
+    {
+        "original_path":  "ships/homing.png",
+        "archived_path":  "pre/v2/ships/homing.png",
+        "sha256":  "fd61849a702515a8c4929345a8f37d356261cab33f6bb91722ac4bbb4ff1a9a3"
+    },
+    {
+        "original_path":  "ships/minelayer.png",
+        "archived_path":  "pre/v2/ships/minelayer.png",
+        "sha256":  "a8e5df197f25a50c4e5a6c9a4f744b645e6d907e8903220e4a83c3b3cebfc895"
+    },
+    {
+        "original_path":  "ships/railgun.png",
+        "archived_path":  "pre/v2/ships/railgun.png",
+        "sha256":  "681e2a7e5c75cd91fcbd2e0ab5430a42cc42c51c1dc04ae38db10c3596e72f39"
+    },
+    {
+        "original_path":  "ships/ram.png",
+        "archived_path":  "pre/v2/ships/ram.png",
+        "sha256":  "cd146e7e555591e36971e71579a4b332572e4ca0c58091c6637f1c84c5b8def0"
+    },
+    {
+        "original_path":  "ships/rookie.png",
+        "archived_path":  "pre/v2/ships/rookie.png",
+        "sha256":  "32ac434e0c4867362f64f6d877d113ce2634c31d48667a81bbfd76da91e52b8f"
+    },
+    {
+        "original_path":  "ships/shotgun.png",
+        "archived_path":  "pre/v2/ships/shotgun.png",
+        "sha256":  "d82b362274acd2ab9276887e8c6c9280000d242d8fe1b205fc573cf8263467dd"
+    },
+    {
+        "original_path":  "ships/sniper.png",
+        "archived_path":  "pre/v2/ships/sniper.png",
+        "sha256":  "e7b3e70ea3030bb959228a61eea6404c4c9085e2878098a8041d90564c4bace6"
+    },
+    {
+        "original_path":  "ships/triple.png",
+        "archived_path":  "pre/v2/ships/triple.png",
+        "sha256":  "af8a47d232341ccd8a351464a5c61e24355698272675bf056f0e453a43eb361e"
+    },
+    {
+        "original_path":  "ships/twin.png",
+        "archived_path":  "pre/v2/ships/twin.png",
+        "sha256":  "2cd67abf3fe17cfcf6ba7c18e0f25080b72e32e8b1e7f95f442879d0e622fa0f"
+    },
+    {
+        "original_path":  "ships/우주선_진화트리.png",
+        "archived_path":  "pre/v2/ships/우주선_진화트리.png",
+        "sha256":  "8c78d0676479a69a281ae0612f86ec1e20916e90707bb134317d439753f934ba"
+    }
+]

@@ -3,7 +3,7 @@
 우주 컨셉으로 그린다 (게임 규칙 이름 → 화면 표현):
   탱크 → 우주선 (포신 방향 = 기수 방향)
   도형 square / triangle / pentagon → 별 조각 / 작은 암석 행성 / 고리 행성
-  지형 WALL → 연결된 우주 장벽, MUD → 중력장, BREAKABLE → 금이 간 장벽
+  지형 WALL → 회색 장애물 타일, MUD → 중력장, BREAKABLE → 손상 표시가 있는 갈색 장애물
 연출(별 반짝임, 등장/폭발 애니메이션 등)은 렌더러 내부 기록과 렌더러 전용 random만 쓴다
 → 게임 결과/재현성에 영향 없음.
 """
@@ -11,7 +11,6 @@ import math
 import random
 
 import pygame
-import pygame.gfxdraw
 
 from config import GameConfig
 from terrain import WALL, MUD, BREAKABLE
@@ -73,6 +72,7 @@ class Renderer:
         self.windowed_size = (cfg.window_width, cfg.window_height)
         self.screen = pygame.display.set_mode(self.windowed_size, pygame.RESIZABLE)
         self.assets = SpriteAssets()
+        self._explosion_frames = self._make_explosion_frames()  # 중심과 캔버스를 맞춘 폭발 8단계
         self.set_zoom(cfg.camera_zoom)
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
@@ -115,6 +115,31 @@ class Renderer:
         self._xp_flash_frame = -999
 
     # ------------------------------------------------------------------
+    # 폭발 프레임: 서로 다른 원본 크기를 공통 캔버스에 정렬
+    # ------------------------------------------------------------------
+    def _make_explosion_frames(self):
+        """폭발 원본 8장의 비율을 유지하며 같은 크기·중심의 표면으로 정렬한다."""
+        sources = [self.assets._source(f"etc/boom_effect_{i:02d}") for i in range(1, 9)]
+        side = max(max(image.get_size()) for image in sources)
+        frames = []
+        for source in sources:
+            frame = pygame.Surface((side, side), pygame.SRCALPHA)
+            frame.blit(source, source.get_rect(center=(side // 2, side // 2)))
+            frames.append(frame)
+        return tuple(frames)
+
+    def _draw_explosion(self, x, y, diameter, progress):
+        """월드 좌표의 폭발을 진행도(0~1)에 해당하는 이미지로 그린다."""
+        if not 0 <= progress < 1:
+            return
+        frame = self._explosion_frames[min(len(self._explosion_frames) - 1,
+                                           int(progress * len(self._explosion_frames)))]
+        side = max(8, round(diameter))
+        image = pygame.transform.smoothscale(frame, (side, side))
+        center = tuple(round(value) for value in self.world_to_view(x, y))
+        self.screen.blit(image, image.get_rect(center=center))
+
+    # ------------------------------------------------------------------
     # 빛 번짐 스프라이트 (BLEND_ADD로 더해서 발광 효과)
     # ------------------------------------------------------------------
     def _glow(self, radius, color, intensity=1.0):
@@ -146,7 +171,7 @@ class Renderer:
         haze = self.assets.image("backgrounds/nebula", size).copy()
         haze.set_alpha(35)
         surf.blit(haze, (0, 0))
-        surf.fill((120, 125, 145), special_flags=pygame.BLEND_RGB_MULT)
+        surf.fill((205, 215, 230), special_flags=pygame.BLEND_RGB_MULT)
         return surf
 
     def _draw_twinkles(self):
@@ -177,19 +202,13 @@ class Renderer:
                     image = self.assets.image("objects/gravity_field", tile * 1.25)
                     floor.blit(image, image.get_rect(center=center))
                 elif kind in solids:
-                    # 연결 면의 테두리를 생략해 여러 타일이 하나의 두꺼운 장벽으로 보인다.
-                    color = (35, 52, 72) if kind == WALL else (74, 57, 49)
-                    edge = (102, 160, 195) if kind == WALL else (199, 145, 89)
-                    pygame.draw.rect(floor, color, rect)
-                    neighbors = ((-1, 0, rect.topleft, rect.bottomleft),
-                                 (1, 0, rect.topright, rect.bottomright),
-                                 (0, -1, rect.topleft, rect.topright),
-                                 (0, 1, rect.bottomleft, rect.bottomright))
-                    for dc, dr, start, finish in neighbors:
-                        nc, nr = col + dc, row + dr
-                        adjacent = 0 <= nc < tm.cols and 0 <= nr < tm.rows and tm.tiles[nr][nc] in solids
-                        if not adjacent:
-                            pygame.draw.line(floor, edge, start, finish, 3)
+                    # 타일 좌표로 무늬를 선택해 게임 난수열과 충돌 영역을 바꾸지 않는다.
+                    variant = (col * 3 + row * 5) % 4 + 1
+                    image = self.assets.image(f"etc/guard_{variant:02d}", tile)
+                    if kind == BREAKABLE:
+                        image = image.copy()
+                        image.fill((230, 175, 130, 255), special_flags=pygame.BLEND_RGBA_MULT)
+                    floor.blit(image, rect)
                     if kind == BREAKABLE and tm.hp[(col, row)] < tm.breakable_hp_max:
                         ratio = tm.hp[(col, row)] / tm.breakable_hp_max
                         pygame.draw.line(floor, (255, 170, 90), (center[0] - 16, center[1] + 16),
@@ -470,20 +489,17 @@ class Renderer:
             pygame.draw.line(self.screen, (95, 245, 255), start, end, 5)
             pygame.draw.line(self.screen, (240, 255, 255), start, end, 2)
         for explosion in game.explosions:
-            x, y = self.world_to_view(explosion.x, explosion.y)
-            progress = 1 - explosion.life / 18
-            radius = max(4, int(explosion.radius * (0.2 + 0.8 * progress)))
-            color = _mix((255, 185, 90), (40, 20, 55), progress)
-            self._blit_glow(self.screen, x, y, radius, color, round(1 - progress, 1))
-            pygame.draw.circle(self.screen, color, (int(x), int(y)), radius, 3)
+            self._draw_explosion(explosion.x, explosion.y, explosion.radius * 2,
+                                 1 - explosion.life / 18)
+
     def draw_main_menu(self, buttons, selected=0):
-        pygame.transform.smoothscale(self._bg, self.size, self.screen)
+        self.screen.blit(self.assets.image("backgrounds/main", self.size), (0, 0))
         self._draw_menu(buttons, "SPACE SKIRMISH", selected, main=True)
 
     def _draw_menu(self, buttons, title, selected, main=False):
         W, H = self.size
         shade = pygame.Surface((W, H), pygame.SRCALPHA)
-        shade.fill((0, 0, 15, 170 if main else 215))
+        shade.fill((0, 0, 15, 100 if main else 215))
         self.screen.blit(shade, (0, 0))
         if not main:
             self._panel(pygame.Rect(W // 2 - 225, H // 2 - 276, 450, 552), 240, 20)
@@ -496,20 +512,18 @@ class Renderer:
         mouse = pygame.mouse.get_pos()
         for i, button in enumerate(buttons):
             active = button.enabled and (i == selected or button.rect.collidepoint(mouse))
-            color = (32, 65, 95) if active else (20, 29, 51)
-            edge = COLORS["player"] if active else COLORS["panel_edge"]
-            border_width = 2 if active else 1
             difficulty_choice = main and button.key.startswith("difficulty_")
-            if difficulty_choice:
-                color = (32, 65, 95) if button.checked else (26, 40, 64) if active else (20, 29, 51)
-                edge = COLORS["player"] if button.checked else COLORS["text"] if active else COLORS["panel_edge"]
-                border_width = 2 if button.checked else 1
+            highlighted = button.enabled and (active or (difficulty_choice and button.checked))
+            path = "etc/home_selected" if highlighted else "etc/home_selected_normal"
+            image = self.assets.image(path, button.rect.size)
             if not button.enabled:
-                color, edge = (21, 23, 35), (48, 51, 66)
-            pygame.draw.rect(self.screen, color, button.rect, border_radius=10)
-            pygame.draw.rect(self.screen, edge, button.rect, border_width, border_radius=10)
-            text_color = COLORS["white"] if button.enabled else (94, 100, 120)
+                image = image.copy()
+                image.fill((100, 100, 100, 255), special_flags=pygame.BLEND_RGBA_MULT)
+            self.screen.blit(image, button.rect)
+            text_color = (48, 30, 20) if highlighted else (12, 32, 42) if button.enabled else (145, 150, 160)
             font = self.font_hud if difficulty_choice else self.font_card if main else self.font_body
+            if difficulty_choice and button.checked:
+                pygame.draw.circle(self.screen, text_color, (button.rect.left + 20, button.rect.centery), 3)
             label = font.render(button.label, True, text_color)
             self.screen.blit(label, label.get_rect(center=button.rect.center))
         hint = "클릭 또는 ↑↓ / Enter로 선택" if main else "새 게임은 진행도를 초기화합니다 · 설정은 이번 실행 동안 유지됩니다"
@@ -531,13 +545,9 @@ class Renderer:
         self.screen.blit(img, img.get_rect(center=(int(x), int(y))))
 
     def _draw_bullet(self, b):
-        path = ("mine" if b.kind == "mine" else "homing_missile" if b.kind == "missile"
-                else "cannon_shell" if b.kind == "shell" else "enemy_plasma" if b.team == "enemy" else "player_plasma")
-        angle = None if b.kind == "mine" and not b.arming_frames else -90 - math.degrees(math.atan2(b.vy, b.vx))
-        if b.kind == "mine":
-            image = self.assets.image("projectiles/" + path, 24, angle)
-        else:
-            image = self.assets.projectile_image("projectiles/" + path, b.radius * 2, angle)
+        path = "cannon_shell" if b.kind == "shell" else "enemy_plasma" if b.team == "enemy" else "player_plasma"
+        angle = -90 - math.degrees(math.atan2(b.vy, b.vx))
+        image = self.assets.projectile_image("projectiles/" + path, b.radius * 2, angle)
         x, y = self.world_to_view(b.x, b.y)
         if b.kind == "shell":
             # 저격 계열 포탄은 금속 회색이라 우주 배경에 묻히므로 발광을 더해 눈에 띄게 한다.
@@ -566,21 +576,8 @@ class Renderer:
             self.screen.blit(label, label.get_rect(center=(x, y - t.radius - 20)))
 
     def _draw_ghost(self, g):
-        """파괴 연출: 천체는 커지며 사라지고, 우주선은 폭발."""
-        t = g["age"] / DEATH_FRAMES
-        x, y = self.world_to_view(g["x"], g["y"])
-        if g["kind"] == "ship":
-            r = g["r"] * (1 + 2.2 * t)
-            self._blit_glow(self.screen, x, y, r * 1.4, (255, 170, 80), round((1 - t) * 8) / 8 * 1.2)
-            ring = _mix(g["color"], (255, 255, 255), 0.4)
-            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r), (*ring, int(255 * (1 - t))))
-            pygame.gfxdraw.aacircle(self.screen, int(x), int(y), int(r) - 1, (*ring, int(200 * (1 - t))))
-            return
-        sprite = self._shape_sprites[g["kind"]][1]
-        img = pygame.transform.rotozoom(sprite, -math.degrees(g["angle"]), 1 + 0.7 * t)
-        img.set_alpha(int(255 * (1 - t) ** 1.5))
-        self.screen.blit(img, img.get_rect(center=(int(x), int(y))))
-        self._blit_glow(self.screen, x, y, g["r"] * 2, g["color"], round((1 - t) * 8) / 8 * 0.6)
+        """우주선·천체 파괴 시 공통 폭발 8단계를 순서대로 재생한다."""
+        self._draw_explosion(g["x"], g["y"], g["r"] * 3, g["age"] / DEATH_FRAMES)
 
     def _hp_bar(self, cx, y, w, ratio, h=6):
         if not self._visible(cx, y):

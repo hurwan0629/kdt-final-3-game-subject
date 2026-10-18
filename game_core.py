@@ -193,7 +193,7 @@ class Bullet:  # 탄환의 이동·피해·충돌·관통 상태
     prev_x: float = None             # 이동 구간 충돌 판정의 시작 가로 좌표 (None이면 현재 위치 사용)
     prev_y: float = None             # 이동 구간 충돌 판정의 시작 세로 좌표
     kind: str = "plasma"             # 표시할 탄환 종류 (plasma / shell / mine / missile)
-    arming_frames: int = 0           # 이전 지뢰의 무장 대기 프레임 (현재는 렌더링 분기에만 사용)
+    arming_frames: int = 0           # 이전 지뢰의 무장 대기 프레임 (현재 미사용)
     homing: bool = False             # 이전 유도탄의 추적 여부 (현재 미사용)
     pierce: int = 0                  # 명중 후 탄환을 유지할 수 있는 남은 관통 횟수
     hit_ids: set = field(default_factory=set)  # 이미 맞힌 대상 번호 집합 (관통 중 중복 피해 방지)

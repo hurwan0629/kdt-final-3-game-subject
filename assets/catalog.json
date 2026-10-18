@@ -1,15 +1,17 @@
 {
   "created": "2026-10-15",
-  "generator": "user-supplied player ships; built-in image_gen for other existing assets",
-  "square_images": true,
-  "direction": "player ships face right; enemies and directional projectiles face up",
+  "updated": "2026-10-18",
+  "generator": "user-supplied replacement art and player ships; retained projectile art",
+  "square_images": false,
+  "direction": "ships face right; directional projectiles face up",
   "categories": {
-    "ships": 21,
-    "backgrounds": 2,
-    "objects": 7,
-    "enemies": 3,
-    "projectiles": 5
+    "backgrounds": 3,
+    "etc": 14,
+    "objects": 4,
+    "projectiles": 3,
+    "ships": 21
   },
+  "archive": "pre/v2/manifest.json",
   "assets": [
     {
       "id": "background_deep",
@@ -18,11 +20,15 @@
       "path": "backgrounds/deep_space.png",
       "width": 1254,
       "height": 1254,
-      "mode": "RGB",
+      "mode": "RGBA",
       "transparent_background": false,
-      "alpha_extrema": null,
-      "bytes": 2379761,
-      "sha256": "6e9bfd39ee8d227f73310cfad4700777ddf9bef99d177c4bad293c52d4a47638"
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "bytes": 1331694,
+      "sha256": "1a64133fa6afc067faca785342baac40f2d1bdafc47ec0e3fafe77653acd1768",
+      "source": "user-supplied new-images"
     },
     {
       "id": "background_nebula",
@@ -31,59 +37,253 @@
       "path": "backgrounds/nebula.png",
       "width": 1254,
       "height": 1254,
-      "mode": "RGB",
+      "mode": "RGBA",
       "transparent_background": false,
-      "alpha_extrema": null,
-      "bytes": 2192131,
-      "sha256": "4327b5d9f184839554c5e86a9b9d836274ab1a6073e8b6c53b1b023839d5563b"
+      "alpha_extrema": [
+        255,
+        255
+      ],
+      "bytes": 1097701,
+      "sha256": "2b23abdf00707526076e6d8605dfbb48492f32b33b2a0850346ab17f36d07857",
+      "source": "user-supplied new-images"
     },
     {
-      "id": "object_asteroid",
-      "name": "소행성 벽",
-      "category": "objects",
-      "path": "objects/asteroid_wall.png",
-      "width": 1254,
-      "height": 1254,
+      "id": "boom_effect_01",
+      "name": "boom_effect_01",
+      "category": "etc",
+      "path": "etc/boom_effect_01.png",
+      "width": 281,
+      "height": 370,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
         255
       ],
-      "bytes": 2076097,
-      "sha256": "7a4c49be14cc49865f9500f06e13aec434f438fa59adfe06ad974b10e9551af6"
+      "bytes": 40663,
+      "sha256": "84e2e741235a3a6241e4a3320f2aa4ffaa3ff0ab25eeb992038d10060aff52b0",
+      "source": "user-supplied new-images"
     },
     {
-      "id": "object_breakable",
-      "name": "파괴 가능한 소행성",
-      "category": "objects",
-      "path": "objects/breakable_asteroid.png",
-      "width": 1254,
-      "height": 1254,
+      "id": "boom_effect_02",
+      "name": "boom_effect_02",
+      "category": "etc",
+      "path": "etc/boom_effect_02.png",
+      "width": 305,
+      "height": 341,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
         255
       ],
-      "bytes": 1934669,
-      "sha256": "79816636a34164671cd9354b0273214d18be7bf12a9b9a0fc70586d811c3ab97"
+      "bytes": 76419,
+      "sha256": "44a3a191df13d2792b7197a07c2dbb8fb93be393cc1c92a8ff095e5845d8fd91",
+      "source": "user-supplied new-images"
     },
     {
-      "id": "object_gas",
-      "name": "은폐 가스 구름",
-      "category": "objects",
-      "path": "objects/gas_cloud.png",
-      "width": 1254,
-      "height": 1254,
+      "id": "boom_effect_03",
+      "name": "boom_effect_03",
+      "category": "etc",
+      "path": "etc/boom_effect_03.png",
+      "width": 358,
+      "height": 363,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
-        253
+        255
       ],
-      "bytes": 1497770,
-      "sha256": "6172ce36904c6ebcd4ee470bebf9e51c9bf62f1aa9fb8e2ed06fc7208b4b938f"
+      "bytes": 94853,
+      "sha256": "b6687fabf3abd3f302ffd1a50fb8f78c7db9ea9b4609a3d00e4bf1c1ee0b51db",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "boom_effect_04",
+      "name": "boom_effect_04",
+      "category": "etc",
+      "path": "etc/boom_effect_04.png",
+      "width": 288,
+      "height": 332,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 76895,
+      "sha256": "6a2efecc49c0e6aed7aed892f01665c65c59725b2f10b3321c913baae1752db5",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "boom_effect_05",
+      "name": "boom_effect_05",
+      "category": "etc",
+      "path": "etc/boom_effect_05.png",
+      "width": 253,
+      "height": 317,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 55510,
+      "sha256": "a33feda647ed1702d1706bc41305794d55aa7664ee5da80031293d0b9a3814b8",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "boom_effect_06",
+      "name": "boom_effect_06",
+      "category": "etc",
+      "path": "etc/boom_effect_06.png",
+      "width": 251,
+      "height": 287,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 40987,
+      "sha256": "37b5147cedddcfbd26ec2ba44c92785279513a7d9795af02fca0a470cba67030",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "boom_effect_07",
+      "name": "boom_effect_07",
+      "category": "etc",
+      "path": "etc/boom_effect_07.png",
+      "width": 246,
+      "height": 237,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 24637,
+      "sha256": "c06786d9f8bd6588be42e8264f7734f6b42b010f5f5826daad77b883fa0b8472",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "boom_effect_08",
+      "name": "boom_effect_08",
+      "category": "etc",
+      "path": "etc/boom_effect_08.png",
+      "width": 201,
+      "height": 215,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 9297,
+      "sha256": "5027826bde9b3e91b6b3d33eac564090109be26447cae4e4352a9335a3f99c67",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "guard_01",
+      "name": "guard_01",
+      "category": "etc",
+      "path": "etc/guard_01.png",
+      "width": 4724,
+      "height": 4724,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 208992,
+      "sha256": "fedd2a7aceba869f829b64c41a27aac027989a6b91951606e3c79d933b8403a2",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "guard_02",
+      "name": "guard_02",
+      "category": "etc",
+      "path": "etc/guard_02.png",
+      "width": 4724,
+      "height": 4724,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 192069,
+      "sha256": "c75afb1b82070e13a4dd4359cc28f95fa0d438ef354c43dc86f003fcd2292932",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "guard_03",
+      "name": "guard_03",
+      "category": "etc",
+      "path": "etc/guard_03.png",
+      "width": 4724,
+      "height": 4724,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 192678,
+      "sha256": "bf36111c29bc38c3246c20de44f84f12b6ae71924a863e06c27c2cbcca335674",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "guard_04",
+      "name": "guard_04",
+      "category": "etc",
+      "path": "etc/guard_04.png",
+      "width": 4724,
+      "height": 4724,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 188151,
+      "sha256": "4f6c92804bae2cb69c9d1e8419bca05c1ffb4d9c98e6540e18258600fd7093fa",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "home_selected",
+      "name": "home_selected",
+      "category": "etc",
+      "path": "etc/home_selected.png",
+      "width": 419,
+      "height": 91,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 12434,
+      "sha256": "aa3c6a5e1db3ef7d201d9e1b82c1a770f3e6cbb3528310e8a5018f55066dc10e",
+      "source": "user-supplied new-images"
+    },
+    {
+      "id": "home_selected_normal",
+      "name": "home_selected_normal",
+      "category": "etc",
+      "path": "etc/home_selected_normal.png",
+      "width": 386,
+      "height": 64,
+      "mode": "RGBA",
+      "transparent_background": true,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "bytes": 3018,
+      "sha256": "5e2c075e1c8e6da3d44c94312f554d760e20c17f59666c0e76aca0ffbac90ea4",
+      "source": "user-supplied new-images"
     },
     {
       "id": "object_gravity",
@@ -99,39 +299,8 @@
         253
       ],
       "bytes": 2028685,
-      "sha256": "312e9ebad7e02821c866d7b5e7fac0d31f8b0b5f64af4af91ade7728b4c591a2"
-    },
-    {
-      "id": "object_fragment",
-      "name": "별 조각",
-      "category": "objects",
-      "path": "objects/star_fragment.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 814614,
-      "sha256": "be8c1ca78b259101551c0edba24d5b77a9e767590ef8b8ba8fe2be5e6d6fdf2e"
-    },
-    {
-      "id": "object_planet",
-      "name": "암석 행성",
-      "category": "objects",
-      "path": "objects/rock_planet.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 2176894,
-      "sha256": "da4275d485555ea0f4849cb1ffdcdecbeed0d04e57121a64af709db4badbe8b9"
+      "sha256": "312e9ebad7e02821c866d7b5e7fac0d31f8b0b5f64af4af91ade7728b4c591a2",
+      "source": "user-supplied new-images"
     },
     {
       "id": "object_ring",
@@ -146,14 +315,15 @@
         0,
         255
       ],
-      "bytes": 1284247,
-      "sha256": "8b4fa866733177946eb3484177703a1931cc3ab509be9549ede84d3f26777bec"
+      "bytes": 68274,
+      "sha256": "2de2e480802d7ac324346a6667cab5ddacd391b5511735dcb6a7f41a0c3ebcb0",
+      "source": "user-supplied new-images"
     },
     {
-      "id": "enemy_scout",
-      "name": "적 정찰선",
-      "category": "enemies",
-      "path": "enemies/scout.png",
+      "id": "object_planet",
+      "name": "암석 행성",
+      "category": "objects",
+      "path": "objects/rock_planet.png",
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
@@ -162,14 +332,15 @@
         0,
         255
       ],
-      "bytes": 928400,
-      "sha256": "c9b2059a7ec5d95deeb0314ae21c355ac262076e49429e1cc70a11bd81480f94"
+      "bytes": 46757,
+      "sha256": "cd716138ececbc19d8aaad3dca628481555f6aa055be69114b79095516275749",
+      "source": "user-supplied new-images"
     },
     {
-      "id": "enemy_fighter",
-      "name": "적 전투선",
-      "category": "enemies",
-      "path": "enemies/fighter.png",
+      "id": "object_fragment",
+      "name": "별 조각",
+      "category": "objects",
+      "path": "objects/star_fragment.png",
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
@@ -178,56 +349,9 @@
         0,
         255
       ],
-      "bytes": 1275923,
-      "sha256": "3b5c0a7fd691fea97f80efcda8a8dcc70638709b02701208cb25a29d16eea9d4"
-    },
-    {
-      "id": "enemy_heavy",
-      "name": "적 중장갑선",
-      "category": "enemies",
-      "path": "enemies/heavy.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 1565164,
-      "sha256": "d6a1ae3c479b1036d991c42ccb42e3ea479b2c80a7acc58f25334b732cb3e176"
-    },
-    {
-      "id": "projectile_plasma",
-      "name": "플레이어 플라즈마 탄",
-      "category": "projectiles",
-      "path": "projectiles/player_plasma.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        254
-      ],
-      "bytes": 189115,
-      "sha256": "05e7f50b1d8c62568b097f3e0fae2c17fdb786a8f9591ec73dfec07aedffced1"
-    },
-    {
-      "id": "projectile_enemy",
-      "name": "적 플라즈마 탄",
-      "category": "projectiles",
-      "path": "projectiles/enemy_plasma.png",
-      "width": 1254,
-      "height": 1254,
-      "mode": "RGBA",
-      "transparent_background": true,
-      "alpha_extrema": [
-        0,
-        255
-      ],
-      "bytes": 205754,
-      "sha256": "ef2a75b6173fb11009cdd147d503253d16e8b025c930fb4d1da5c13c75eaf643"
+      "bytes": 46544,
+      "sha256": "98dc42f082260dec6f4d0ae06de40567d619c7ebed0a8aee525f7302385bde7d",
+      "source": "user-supplied new-images"
     },
     {
       "id": "projectile_shell",
@@ -246,10 +370,10 @@
       "sha256": "214e7c6e605301f706cca797533c9685af4f48fbd6a6cc17c1e9cc8498bae4bd"
     },
     {
-      "id": "projectile_missile",
-      "name": "유도 미사일",
+      "id": "projectile_enemy",
+      "name": "적 플라즈마 탄",
       "category": "projectiles",
-      "path": "projectiles/homing_missile.png",
+      "path": "projectiles/enemy_plasma.png",
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
@@ -258,24 +382,24 @@
         0,
         255
       ],
-      "bytes": 343122,
-      "sha256": "53a542e07269647c80c08677307d10ddd77dc220756bb014c6ebcbfdffc18caa"
+      "bytes": 205754,
+      "sha256": "ef2a75b6173fb11009cdd147d503253d16e8b025c930fb4d1da5c13c75eaf643"
     },
     {
-      "id": "projectile_mine",
-      "name": "기뢰",
+      "id": "projectile_plasma",
+      "name": "플레이어 플라즈마 탄",
       "category": "projectiles",
-      "path": "projectiles/mine.png",
+      "path": "projectiles/player_plasma.png",
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
       "transparent_background": true,
       "alpha_extrema": [
         0,
-        255
+        254
       ],
-      "bytes": 1234587,
-      "sha256": "a44d4ad62dc2201031ec2cf953b93c2477b7e12985481d24a61f7a2c7f65992a"
+      "bytes": 189115,
+      "sha256": "05e7f50b1d8c62568b097f3e0fae2c17fdb786a8f9591ec73dfec07aedffced1"
     },
     {
       "id": "Lv10_가디언",
@@ -1233,6 +1357,20 @@
           "lateral": -0.0061
         }
       ]
+    },
+    {
+      "id": "background_main",
+      "name": "Main menu background",
+      "category": "backgrounds",
+      "path": "backgrounds/main.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "transparent_background": false,
+      "alpha_extrema": null,
+      "bytes": 1708612,
+      "sha256": "bb37a2d8ac90b3fe426e9b959341b050afbbb6dd0d2b3350f183f50168ceac91",
+      "source": "user-supplied main menu background"
     }
   ]
 }
