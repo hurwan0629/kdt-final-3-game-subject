@@ -116,7 +116,6 @@ class GameApplication:
         self.suppress_fire = True
         self.stat_touch_frame = 0      # 스탯 창을 마지막으로 건드린 게임 프레임
         self.stat_points_seen = 0
-        self.map_cycle = [("map", m) for m in list_maps()] + [("random", None), ("empty", None)]
 
     def buttons(self):
         return menu_buttons(self.mode, self.cfg, self.show_debug, self.show_controls, self.auto_pause,
@@ -247,12 +246,11 @@ class GameApplication:
                 self.show_debug = not self.show_debug
             elif ev.key == pygame.K_n:
                 tc = self.cfg.terrain
-                cur = ("empty", None) if not tc.enabled else ("random", None) if tc.random_map else ("map", tc.map_name)
-                kind, name = self.map_cycle[(self.map_cycle.index(cur) + 1) % len(self.map_cycle)] \
-                    if cur in self.map_cycle else self.map_cycle[0]
-                tc.enabled, tc.random_map = kind != "empty", kind == "random"
-                if name:
-                    tc.map_name = name
+                # N은 파일 맵 순환 대신 8×8 블록 지형으로 새 판을 만든다.
+                tc.enabled = tc.random_map = True
+                tc.block_tiles = 8
+                if self.seed is not None:
+                    self.seed += 1  # 고정 시드도 다음 맵으로 이동하고, 재시작은 현재 맵을 유지한다.
                 self.activate("restart")
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             if self.cfg.progression_enabled:

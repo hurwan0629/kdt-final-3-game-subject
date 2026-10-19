@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "dev/01-structure.md",
+                "file": "dev/classes/Combat.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "01-structure"
+              "title": "Combat"
             }
           }
         ]
@@ -190,8 +190,8 @@
   },
   "active": "3c47a43530498af9",
   "lastOpenFiles": [
-    "dev/classes/Combat.md",
     "dev/01-structure.md",
+    "dev/classes/Combat.md",
     "dev/classes/Tank.md",
     "dev/classes/Renderer.md",
     "dev/classes/EnemyController.md",

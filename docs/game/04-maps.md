@@ -12,7 +12,7 @@
 
 벽 두께는 기본 4칸(192px), 주요 통로는 6칸(288px)입니다. 2배로 커진 최대 선체 반경 96px의 시타델도 통과하도록 연결성을 확인합니다. 경로 탐색과 스폰은 점이 아닌 실제 선체 반지름을 고려합니다. 벽과 직접 닿아도 피해는 없습니다.
 
-`drift`, `ring`, `belt`, `hello-world`는 각각 다른 연결된 미로입니다. N으로 순환하고 이후 랜덤 맵과 빈 월드로 바뀝니다. 맵 변경은 새 게임입니다. `--map belt`, `--random-map`, `--no-terrain`, `--stage2`로 실행 조건을 고릅니다.
+`drift`, `ring`, `belt`, `hello-world`는 각각 다른 연결된 미로입니다. 기존 파일과 로딩 방식은 유지하며 `--map belt`로 선택할 수 있습니다. N은 이름별 맵·빈 월드를 순환하지 않고 새 8×8 랜덤 블록 지형을 생성해 새 게임을 시작합니다. `--random-map`, `--no-terrain`, `--stage2` 실행 옵션도 유지합니다.
 
 ![drift](assets/map-drift.png)
 ![ring](assets/map-ring.png)

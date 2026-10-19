@@ -164,6 +164,47 @@ class MouseControlTests(unittest.TestCase):
         self.assertEqual(self.game.combat.bullets, [])
         self.assertEqual(self.game.frame, 1)
 
+    def test_n_uses_8x8_random_blocks_without_loading_named_maps(self):
+        app = GameApplication(self.game, self.renderer, seed=7)
+        app.mode = "playing"
+        cfg = self.game.cfg.terrain
+        cfg.map_name = "belt"
+        cfg.random_map = False
+        cfg.block_tiles = 5
+        self.game.progression._add_score(190)
+        with patch("game_core.load_map", side_effect=AssertionError("N must not load a named map")):
+            app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n))
+        self.assertTrue(cfg.enabled)
+        self.assertTrue(cfg.random_map)
+        self.assertEqual(cfg.block_tiles, 8)
+        self.assertEqual(cfg.map_name, "belt")
+        self.assertEqual(self.game.terrain.name, "random")
+        self.assertTrue(self.game.terrain.is_connected(96))
+        self.assertEqual((self.game.frame, self.game.progression.score), (0, 0))
+
+        # 가장자리의 남는 영역을 제외하면 8×8 블록마다 바닥 또는 벽으로 채워진다.
+        tm = self.game.terrain
+        off_c, off_r = (tm.cols % 8) // 2, (tm.rows % 8) // 2
+        for row in range(off_r, tm.rows - 7, 8):
+            for col in range(off_c, tm.cols - 7, 8):
+                kinds = {tm.solid[r][c] for r in range(row, row + 8) for c in range(col, col + 8)}
+                self.assertEqual(len(kinds), 1)
+
+    def test_n_changes_seeded_maps_and_restart_replays_current_map(self):
+        app = GameApplication(self.game, self.renderer, seed=7)
+        app.mode = "playing"
+        key = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n)
+        app.handle_event(key)
+        first = [row[:] for row in self.game.terrain.tiles]
+        app.handle_event(key)
+        second = [row[:] for row in self.game.terrain.tiles]
+        self.assertNotEqual(first, second)
+        self.assertEqual(app.seed, 9)
+        app.activate("restart")
+        self.assertEqual(self.game.terrain.tiles, second)
+        self.game.reset(8)
+        self.assertEqual(self.game.terrain.tiles, first)
+
 
 if __name__ == "__main__":
     unittest.main()

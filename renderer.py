@@ -51,6 +51,7 @@ SHAPE_FADE_FRAMES = 60  # 천체는 1초 동안 서서히 떠오른다
 SCORE_TEXT_FRAMES = 50  # "+점수" 글자가 떠오르는 시간
 DEATH_FRAMES = 22   # 파괴/폭발 애니메이션 길이
 FLASH_FRAMES = 5    # 피격 깜빡임 길이
+MIN_BULLET_SCREEN_DIAMETER = 4  # 줌아웃해도 탄체 폭을 화면 기준 최소 4px로 표시
 MINIMAP_ALPHA = 165  # 우하단 미니맵 반투명도 (0=완전 투명, 255=불투명)
 
 def _mix(a, b, t):
@@ -579,12 +580,14 @@ class Renderer:
     def _draw_bullet(self, b):
         path = "cannon_shell" if b.kind == "shell" else "enemy_plasma" if b.team == "enemy" else "player_plasma"
         angle = -90 - math.degrees(math.atan2(b.vy, b.vx))
-        image = self.assets.projectile_image("projectiles/" + path, b.radius * 2, angle)
+        # 표시 크기만 보정한다. 탄환의 실제 충돌 반지름과 포구 계산은 유지한다.
+        diameter = max(b.radius * 2, math.ceil(MIN_BULLET_SCREEN_DIAMETER / self.effective_zoom))
+        image = self.assets.projectile_image("projectiles/" + path, diameter, angle)
         x, y = self.world_to_view(b.x, b.y)
         if b.kind == "shell":
             # 저격 계열 포탄은 금속 회색이라 우주 배경에 묻히므로 발광을 더해 눈에 띄게 한다.
             glow = COLORS["enemy_shot"] if b.team == "enemy" else COLORS["player_shot"]
-            self._blit_glow(self.screen, x, y, b.radius * 2.2, glow, 0.9)
+            self._blit_glow(self.screen, x, y, diameter * 1.1, glow, 0.9)
         self.screen.blit(image, image.get_rect(center=(round(x), round(y))))
 
     def _draw_ship(self, t, f, is_player=False):

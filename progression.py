@@ -82,7 +82,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
               damage=0.8, cooldown=1.2),  # 탄환 피해 0.8배, 발사 간격 1.2배
     ShipClass("sniper", "스나이퍼", "전직", ("장거리 고속 단발 저격",), level=10,
               asset="ships/Lv10_스나이퍼", shots=(ShotSpec(forward=1.8144, caliber=22/167*0.9*2),),
-              damage=1.9, cooldown=1.7, speed=1.8, life=1.4),  # 피해·탄속·수명을 높이는 대신 발사 간격 증가
+              damage=1.9, cooldown=1.7, speed=1.71, life=1.4),  # 저격 계열 탄속 5% 감소; 피해·수명·발사 간격 유지
     ShipClass("flank", "플랭크", "전직", ("전후방 2방향 동시 사격",), level=10,
               asset="ships/Lv10_플랭크", shots=(ShotSpec(forward=1.5714, caliber=26/147*0.9), ShotSpec(angle=math.pi, forward=1.5170, caliber=24/147*0.9)), damage=0.72),  # 정면·후면 동시 발사, 탄환당 피해 감소
     ShipClass("guardian", "가디언", "전직", ("장갑 선체 · 전방 대구경포", "체력 +100 · 받는 피해 -20%"), level=10,
@@ -100,11 +100,11 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
     ShipClass("railgunner", "레일거너", "전직", ("고속 저격탄 · 벽 차단",),
               parent="sniper", level=20, asset="ships/Lv20_레일거너",
               shots=(ShotSpec(forward=1.8842, caliber=16/190*0.9),), damage=2.15, cooldown=1.8,
-              speed=2.4, life=1.6),  # 탄속 2.4배·수명 1.6배로 사거리 증가
+              speed=2.28, life=1.6),  # 탄속 2.28배·수명 1.6배로 사거리 증가
     ShipClass("hunter", "헌터", "전직", ("장거리 단발 저격",),
               parent="sniper", level=20, asset="ships/Lv20_헌터",
               shots=(ShotSpec(forward=1.8621, caliber=19/174*0.9),),
-              damage=2.3, cooldown=1.65, speed=1.9, life=1.5),  # 고피해 장거리 단발, 긴 발사 간격
+              damage=2.3, cooldown=1.65, speed=1.805, life=1.5),  # 고피해 장거리 단발, 긴 발사 간격
     ShipClass("quad_wing", "쿼드 윙", "전직", ("전후좌우 4방향 동시 사격",),
               parent="flank", level=20, asset="ships/Lv20_쿼드 윙", shots=_CARDINAL, damage=0.48),  # 플랭크에서 진화, 공유 4방향 발사 패턴 사용
     ShipClass("twin_flank", "트윈 플랭크", "전직", ("전후방 평행 쌍포 교차 사격",),
@@ -132,11 +132,11 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
     ShipClass("hyper_railgun", "하이퍼 레일건", "전직", ("초장거리 최고속 저격탄",),
               parent="railgunner", level=30, asset="ships/Lv30_하이퍼 레일건",
               shots=(ShotSpec(forward=2.0099, caliber=16/202*0.9),), damage=3.2, cooldown=2.0,
-              speed=3.2, life=2.0),  # 탄속 3.2배·수명 2배의 초장거리 저격
+              speed=3.04, life=2.0),  # 탄속 3.04배·수명 2배의 초장거리 저격
     ShipClass("predator", "프레데터", "전직", ("강한 초장거리 단발 저격",),
               parent="hunter", level=30, asset="ships/Lv30_프레데터",
               shots=(ShotSpec(forward=1.9514, caliber=18/185*0.9),),
-              damage=3.27, cooldown=1.75, speed=2.2, life=1.7),  # 피해 3.27배의 장거리 단발 저격
+              damage=3.27, cooldown=1.75, speed=2.09, life=1.7),  # 피해 3.27배의 장거리 단발 저격
     ShipClass("octa_star", "옥타 스타", "전직", ("45도 간격 8방향 전방위 사격",),
               parent="quad_wing", level=30, asset="ships/Lv30_옥타 스타",
               shots=tuple(ShotSpec(angle=i*math.pi/4, forward=1.3953, caliber=(22 if i%2 == 0 else 19)/172*0.9) for i in range(8)), damage=0.33),  # 45도 간격 8방향 발사, 직선·대각선 포신 구경 구분

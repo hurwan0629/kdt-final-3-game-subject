@@ -11,7 +11,7 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 import pygame
 
 from config import GameConfig, ObsConfig
-from game_core import GameCore
+from game_core import Bullet, GameCore
 from main import GameApplication
 from progression import FAMILIES, SHIPS, STAT_UPGRADES, stat_rows, special_cards
 from renderer import Renderer
@@ -194,6 +194,33 @@ class DisplayAssetsTests(unittest.TestCase):
             self.renderer._draw_ship(p, 100, is_player=True)
             self.assertEqual(image.call_args.args[1], 88)
         self.assertEqual(self.renderer.assets.image(SHIPS["rookie"].asset, 62).get_size(), (62, 62))
+
+    def test_tiny_projectiles_remain_visible_at_every_zoom_without_changing_collision(self):
+        renderer = self.renderer
+        old_zoom = renderer.cfg.camera_zoom
+        try:
+            for zoom in (0.45, 0.6, 0.75, 1.0):
+                renderer.set_zoom(zoom)
+                for team, kind in (("player", "plasma"), ("enemy", "plasma"), ("player", "shell")):
+                    with self.subTest(zoom=zoom, team=team, kind=kind):
+                        bullet = Bullet(500, 500, 9, 0, 70, 1, team, 10, 0.25, kind=kind)
+                        before = vars(bullet).copy()
+                        with patch.object(renderer.assets, "projectile_image", wraps=renderer.assets.projectile_image) as draw:
+                            renderer._draw_bullet(bullet)
+                        image = renderer.assets.projectile_image(*draw.call_args.args)
+                        screen_image = pygame.transform.smoothscale(
+                            image, (max(1, round(image.get_width() * zoom)),
+                                    max(1, round(image.get_height() * zoom))))
+                        core = screen_image.get_bounding_rect(min_alpha=100)
+                        self.assertGreaterEqual(min(core.width, core.height), 3)
+                        self.assertEqual(vars(bullet), before)
+
+                large = Bullet(500, 500, 9, 0, 70, 1, "player", 10, 12)
+                with patch.object(renderer.assets, "projectile_image", wraps=renderer.assets.projectile_image) as draw:
+                    renderer._draw_bullet(large)
+                self.assertEqual(draw.call_args.args[1], 24)
+        finally:
+            renderer.set_zoom(old_zoom)
 
 
 if __name__ == "__main__":
