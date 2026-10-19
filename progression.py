@@ -99,11 +99,11 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
               shots=(_muzzle(-math.pi/8, 1.4085, -0.7113, caliber=21/142*0.9), ShotSpec(forward=1.7746, caliber=24/142*0.9), _muzzle(math.pi/8, 1.4085, 0.7113, caliber=21/142*0.9)), damage=0.7),  # 정면과 양옆 22.5도 방향에 동시 발사
     ShipClass("railgunner", "레일거너", "전직", ("고속 저격탄 · 벽 차단",),
               parent="sniper", level=20, asset="ships/Lv20_레일거너",
-              shots=(ShotSpec(forward=1.8842, caliber=16/190*0.9),), damage=2.15, cooldown=1.8,
+              shots=(ShotSpec(forward=1.8842, caliber=22/167*0.9*2),), damage=2.15, cooldown=1.8,
               speed=2.4, life=1.6),  # 탄속 2.4배·수명 1.6배로 사거리 증가
     ShipClass("hunter", "헌터", "전직", ("장거리 단발 저격",),
               parent="sniper", level=20, asset="ships/Lv20_헌터",
-              shots=(ShotSpec(forward=1.8621, caliber=19/174*0.9),),
+              shots=(ShotSpec(forward=1.8621, caliber=22/167*0.9*2),),
               damage=2.3, cooldown=1.65, speed=1.9, life=1.5),  # 고피해 장거리 단발, 긴 발사 간격
     ShipClass("quad_wing", "쿼드 윙", "전직", ("전후좌우 4방향 동시 사격",),
               parent="flank", level=20, asset="ships/Lv20_쿼드 윙", shots=_CARDINAL, damage=0.48),  # 플랭크에서 진화, 공유 4방향 발사 패턴 사용
@@ -131,11 +131,11 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
                      _muzzle(0.28, 1.3947, 0.5789, caliber=21/152*0.9), _muzzle(0.56, 0.9737, 1.0, caliber=19/152*0.9)), damage=0.6),  # 정면과 ±0.28·±0.56rad 방향에 5발 동시 발사
     ShipClass("hyper_railgun", "하이퍼 레일건", "전직", ("초장거리 최고속 저격탄",),
               parent="railgunner", level=30, asset="ships/Lv30_하이퍼 레일건",
-              shots=(ShotSpec(forward=2.0099, caliber=16/202*0.9),), damage=3.2, cooldown=2.0,
+              shots=(ShotSpec(forward=2.0099, caliber=22/167*0.9*2),), damage=3.2, cooldown=2.0,
               speed=3.2, life=2.0),  # 탄속 3.2배·수명 2배의 초장거리 저격
     ShipClass("predator", "프레데터", "전직", ("강한 초장거리 단발 저격",),
               parent="hunter", level=30, asset="ships/Lv30_프레데터",
-              shots=(ShotSpec(forward=1.9514, caliber=18/185*0.9),),
+              shots=(ShotSpec(forward=1.9514, caliber=22/167*0.9*2),),
               damage=3.27, cooldown=1.75, speed=2.2, life=1.7),  # 피해 3.27배의 장거리 단발 저격
     ShipClass("octa_star", "옥타 스타", "전직", ("45도 간격 8방향 전방위 사격",),
               parent="quad_wing", level=30, asset="ships/Lv30_옥타 스타",
