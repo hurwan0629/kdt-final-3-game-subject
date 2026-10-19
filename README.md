@@ -96,7 +96,11 @@ Q·Space 액티브 스킬은 제거했습니다. 설정 메뉴의 Q 종료 단�
 | 파일 | 역할 |
 |---|---|
 | `main.py` | 입력·메뉴·실행 루프 |
-| `game_core.py` | 화면 독립 규칙·충돌·적 AI·성장·사격 |
+| `game_core.py` | 공통 월드·초기화·프레임 처리 순서 |
+| `gameplay/progression.py` | 점수·레벨·강화·진화 상태와 적용 |
+| `gameplay/combat.py` | 무장·탄환·피해·회복·충돌·전투 연출 |
+| `gameplay/enemies.py` | 적 재등장·성장·AI |
+| `gameplay/entities.py`, `gameplay/actions.py` | 개체 상태 정의·행동 변환 |
 | `progression.py` | 5개 스탯, 21종 기체·포신·진화 정의 |
 | `config.py` | 게임·지형·환경 설정 |
 | `terrain.py`, `maps/` | 맵·충돌·시야·선체 크기를 고려한 경로 탐색 |
@@ -115,7 +119,7 @@ observation, info = env.reset(seed=42)
 observation, reward, terminated, truncated, info = env.step(0)
 ```
 
-중력장·파괴 가능 벽을 모두 켜면 관찰은 483차원입니다. 같은 seed·행동·강화 선택은 같은 결과를 재현합니다. 성장 사용 시 `env.game.upgrade_stat(key)`와 `choose_reward(index)`로 별도 선택합니다.
+중력장·파괴 가능 벽을 모두 켜면 관찰은 483차원입니다. 같은 seed·행동·강화 선택은 같은 결과를 재현합니다. 성장 사용 시 `env.game.progression.upgrade_stat(key)`와 `env.game.progression.choose_reward(index)`로 별도 선택합니다.
 
 ## 실행 파일 만들기
 

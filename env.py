@@ -78,7 +78,7 @@ def build_vector(game: GameCore, oc: ObsConfig) -> np.ndarray:
     i = oc.SELF_DIM + oc.n_enemies * oc.ENEMY_DIM + oc.n_shapes * oc.SHAPE_DIM
 
     # 적 탄환 K × 5
-    for b in nearest([b for b in game.bullets if b.team != "player"], oc.n_bullets):
+    for b in nearest([b for b in game.combat.bullets if b.team != "player"], oc.n_bullets):
         obs[i:i + 5] = (1.0, (b.x - p.x) / W, (b.y - p.y) / H, b.vx / bspd, b.vy / bspd)
         i += oc.BULLET_DIM
     i = oc.vector_size - oc.n_rays
@@ -220,17 +220,17 @@ class TankEnv(_BaseEnv):
         return obs, float(reward), terminated, truncated, self._info(acc)
 
     def _info(self, events):
-        return {"score": self.game.score, "kills": self.game.kills, "map": self.game.terrain.name,
+        return {"score": self.game.progression.score, "kills": self.game.progression.kills, "map": self.game.terrain.name,
                 "frames": self.game.frame, "steps": self.steps, "events": events,
-                "level": self.game.level, "xp": self.game.xp,
-                "pending_rewards": self.game.pending_rewards, "job": self.game.player.job,
+                "level": self.game.progression.level, "xp": self.game.progression.xp,
+                "pending_rewards": self.game.progression.pending_rewards, "job": self.game.player.job,
                 "ammo": self.game.player.ammo if self.game_cfg.limited_ammo else None,
-                "reload_seconds_left": self.game.reload_frames_left / self.game_cfg.fps,
-                "upgrade_points": self.game.upgrade_points,
-                "family": self.game.family,
-                "stat_choices": [card.key for card in self.game.stat_choices],
-                "special_reward_levels": list(self.game.special_reward_levels),
-                "stat_levels": dict(self.game.stat_levels), "special_levels": dict(self.game.special_levels)}
+                "reload_seconds_left": self.game.combat.reload_frames_left / self.game_cfg.fps,
+                "upgrade_points": self.game.progression.upgrade_points,
+                "family": self.game.progression.family,
+                "stat_choices": [card.key for card in self.game.progression.stat_choices],
+                "special_reward_levels": list(self.game.progression.special_reward_levels),
+                "stat_levels": dict(self.game.progression.stat_levels), "special_levels": dict(self.game.progression.special_levels)}
 
     def render(self):
         if self.render_mode != "human":

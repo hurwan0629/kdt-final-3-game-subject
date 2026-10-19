@@ -23,7 +23,7 @@ obs, info = env.reset(seed=42)
 obs, reward, terminated, truncated, info = env.step(0)
 ```
 
-사용자 지정 설정에서 성장을 켜면 `env.game.upgrade_stat(key)`와 `choose_reward(index)`로 별도 선택합니다. 액티브 스킬과 관련 info 항목은 제거했습니다.
+사용자 지정 설정에서 성장을 켜면 `env.game.progression.upgrade_stat(key)`와 `env.game.progression.choose_reward(index)`로 별도 선택합니다. 액티브 스킬과 관련 info 항목은 제거했습니다.
 
 학습 보상은 `RewardConfig`와 `compute_reward()`에서 계산하고, 게임 점수·경험치와 분리합니다. 기본 3000 step은 truncated, 사망은 terminated입니다. 동일 seed·행동·성장 선택은 재현되며 줌은 관찰에 영향을 주지 않습니다.
 

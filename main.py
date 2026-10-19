@@ -25,6 +25,46 @@ from progression import (stat_rows, special_cards, stat_upgrades_visible, stat_p
 MAX_FRAMES_PER_TICK = 5  # 느린 PC에서 업데이트가 밀려 멈추는 것 방지
 
 
+# 읽는 순서: main()에서 실행 준비 → GameApplication.handle_event() → update() → draw().
+# 실제 규칙은 GameCore.step(), 화면 표현은 Renderer에서 처리한다.
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--map", default=None, help=f"맵 이름 ({', '.join(list_maps())})")
+    parser.add_argument("--random-map", action="store_true", help="랜덤 지형 (기본값)")
+    parser.add_argument("--no-terrain", action="store_true", help="벽 없는 빈 경기장")
+    parser.add_argument("--stage2", action="store_true", help="진흙/부서지는 벽 켜기")
+    parser.add_argument("--limited-ammo", action="store_true", help="탄약 제한 켜기 (기본은 무제한)")
+    args = parser.parse_args()
+
+    pygame.init()
+    cfg = GameConfig(limited_ammo=args.limited_ammo)
+    tc = cfg.terrain
+    tc.enabled = not args.no_terrain
+    tc.random_map = args.random_map or not args.map   # --map을 주지 않으면 랜덤 지형
+    tc.mud_enabled = tc.breakable_enabled = args.stage2
+    if args.map:
+        tc.map_name = args.map
+    obs_cfg = ObsConfig()
+    from renderer import Renderer
+    renderer = Renderer(cfg)
+    game = GameCore(cfg, seed=args.seed)
+    app = GameApplication(game, renderer, args.seed)
+    while app.running:
+        for ev in pygame.event.get():
+            app.handle_event(ev)
+            if not app.running:
+                break
+        if not app.running:
+            break
+        app.update(renderer.clock.tick(cfg.fps) / 1000.0, pygame.key.get_pressed(),
+                   pygame.mouse.get_pos(), pygame.mouse.get_pressed())
+        app.draw(obs_cfg)
+        pygame.display.flip()
+    pygame.quit()
+
+
+# 사람 입력을 코어의 행동으로 바꾸거나 디버그 표시용 값으로 읽는 보조 함수.
 def read_player_input(keys, renderer, mouse_pos, buttons):
     target = renderer.screen_to_world(*mouse_pos)
     dx = keys[pygame.K_d] - keys[pygame.K_a]
@@ -56,6 +96,7 @@ def debug_lines(game, obs_cfg, action):
     return lines
 
 
+# 실행 중 상태: 메뉴 선택·입력·시간 누적을 관리하고 코어와 렌더러를 연결한다.
 class GameApplication:
     """메뉴와 사람 입력을 관리한다. 열린 메뉴에서는 게임 시간을 진행하지 않는다."""
     def __init__(self, game, renderer, seed=None):
@@ -191,15 +232,15 @@ class GameApplication:
             specials = (pygame.K_F2, pygame.K_F3, pygame.K_F4, pygame.K_F5)
             if ev.key in stats:
                 self.touch_stat_panel()
-                choices = self.game.open_stat_upgrades()
+                choices = self.game.progression.open_stat_upgrades()
                 if stats.index(ev.key) < len(choices):
-                    self.game.upgrade_stat(choices[stats.index(ev.key)].key)
+                    self.game.progression.upgrade_stat(choices[stats.index(ev.key)].key)
                 return
             if ev.key in specials:
-                self.game.choose_reward(specials.index(ev.key))
+                self.game.progression.choose_reward(specials.index(ev.key))
                 return
             if ev.key == pygame.K_r:
-                self.game.request_reload()
+                self.game.combat.request_reload()
             elif ev.key == pygame.K_RETURN and self.game.game_over:
                 self.activate("restart")
             elif ev.key == pygame.K_F1:
@@ -219,18 +260,18 @@ class GameApplication:
                     self.touch_stat_panel()
                     self.suppress_fire, self.click_requested = True, False
                     return
-                rows = (stat_rows(*self.size, self.game.open_stat_upgrades())
+                rows = (stat_rows(*self.size, self.game.progression.open_stat_upgrades())
                         if stat_upgrades_visible(self.game) and not self.stats_collapsed else [])
                 for card, rect in rows:
                     if pygame.Rect(rect).collidepoint(ev.pos):
                         self.touch_stat_panel()
-                        self.game.upgrade_stat(card.key)
+                        self.game.progression.upgrade_stat(card.key)
                         self.suppress_fire, self.click_requested = True, False
                         return
-                if self.game.reward_choices:
-                    for index, rect in enumerate(special_cards(*self.size, len(self.game.reward_choices))):
+                if self.game.progression.reward_choices:
+                    for index, rect in enumerate(special_cards(*self.size, len(self.game.progression.reward_choices))):
                         if pygame.Rect(rect).collidepoint(ev.pos):
-                            self.game.choose_reward(index)
+                            self.game.progression.choose_reward(index)
                             self.suppress_fire, self.click_requested = True, False
                             return
             if not self.suppress_fire:
@@ -249,9 +290,9 @@ class GameApplication:
         elif self.stats_collapsed:
             rects = [stat_collapsed_rect(*self.size)]
         else:
-            rects = [rect for card, rect in stat_rows(*self.size, self.game.open_stat_upgrades())]
-        if self.game.reward_choices:
-            rects += special_cards(*self.size, len(self.game.reward_choices))
+            rects = [rect for card, rect in stat_rows(*self.size, self.game.progression.open_stat_upgrades())]
+        if self.game.progression.reward_choices:
+            rects += special_cards(*self.size, len(self.game.progression.reward_choices))
         return any(pygame.Rect(rect).collidepoint(pos) for rect in rects)
 
     def update(self, elapsed, keys, mouse_pos, buttons):
@@ -260,9 +301,9 @@ class GameApplication:
         if not buttons[0]:
             self.suppress_fire = False
         # 새 스탯 포인트가 생기거나 마우스를 창 위에 두면 스탯 창을 다시 펼친다.
-        if self.game.upgrade_points > self.stat_points_seen:
+        if self.game.progression.upgrade_points > self.stat_points_seen:
             self.touch_stat_panel()
-        self.stat_points_seen = self.game.upgrade_points
+        self.stat_points_seen = self.game.progression.upgrade_points
         if stat_upgrades_visible(self.game):
             panel = stat_collapsed_rect(*self.size) if self.stats_collapsed else stat_panel_rect(*self.size)
             if pygame.Rect(panel).collidepoint(mouse_pos):
@@ -294,43 +335,6 @@ class GameApplication:
                            show_controls=self.show_controls,
                            menu=self.buttons() if self.mode == "pause" else None, selected=self.selected,
                            show_stats=self.show_stats, stats_collapsed=self.stats_collapsed)
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--map", default=None, help=f"맵 이름 ({', '.join(list_maps())})")
-    parser.add_argument("--random-map", action="store_true", help="랜덤 지형 (기본값)")
-    parser.add_argument("--no-terrain", action="store_true", help="벽 없는 빈 경기장")
-    parser.add_argument("--stage2", action="store_true", help="진흙/부서지는 벽 켜기")
-    parser.add_argument("--limited-ammo", action="store_true", help="탄약 제한 켜기 (기본은 무제한)")
-    args = parser.parse_args()
-
-    pygame.init()
-    cfg = GameConfig(limited_ammo=args.limited_ammo)
-    tc = cfg.terrain
-    tc.enabled = not args.no_terrain
-    tc.random_map = args.random_map or not args.map   # --map을 주지 않으면 랜덤 지형
-    tc.mud_enabled = tc.breakable_enabled = args.stage2
-    if args.map:
-        tc.map_name = args.map
-    obs_cfg = ObsConfig()
-    from renderer import Renderer
-    renderer = Renderer(cfg)
-    game = GameCore(cfg, seed=args.seed)
-    app = GameApplication(game, renderer, args.seed)
-    while app.running:
-        for ev in pygame.event.get():
-            app.handle_event(ev)
-            if not app.running:
-                break
-        if not app.running:
-            break
-        app.update(renderer.clock.tick(cfg.fps) / 1000.0, pygame.key.get_pressed(),
-                   pygame.mouse.get_pos(), pygame.mouse.get_pressed())
-        app.draw(obs_cfg)
-        pygame.display.flip()
-    pygame.quit()
 
 
 if __name__ == "__main__":

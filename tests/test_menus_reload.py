@@ -69,7 +69,7 @@ class MenusReloadTests(unittest.TestCase):
 
     def test_settings_change_without_reset_and_survive_main_menu(self):
         self.click("start")
-        self.game._add_score(190)
+        self.game.progression._add_score(190)
         self.key(pygame.K_ESCAPE)
         self.click("zoom")
         self.assertEqual(self.game.cfg.camera_zoom, 0.75)
@@ -80,11 +80,11 @@ class MenusReloadTests(unittest.TestCase):
         self.assertFalse(self.app.show_controls)
         self.assertTrue(self.app.show_debug)
         self.assertFalse(self.app.auto_pause)
-        self.assertEqual(self.game.score, 190)
+        self.assertEqual(self.game.progression.score, 190)
         self.click("main")
         self.assertEqual(self.app.mode, "main")
         self.click("start")
-        self.assertEqual(self.game.score, 0)
+        self.assertEqual(self.game.progression.score, 0)
         self.assertFalse(self.app.show_controls)
         self.assertEqual(self.game.cfg.camera_zoom, 0.75)
         self.app.handle_event(pygame.event.Event(pygame.WINDOWFOCUSLOST))
@@ -95,10 +95,10 @@ class MenusReloadTests(unittest.TestCase):
         self.assertFalse(self.app.running)
         self.app.running = True
         self.app.activate("start")
-        self.game._add_score(190)
+        self.game.progression._add_score(190)
         self.key(pygame.K_ESCAPE)
         self.click("restart")
-        self.assertEqual((self.app.mode, self.game.score, self.game.level), ("playing", 0, 1))
+        self.assertEqual((self.app.mode, self.game.progression.score, self.game.progression.level), ("playing", 0, 1))
         self.key(pygame.K_ESCAPE)
         self.click("quit")
         self.assertFalse(self.app.running)
@@ -107,52 +107,52 @@ class MenusReloadTests(unittest.TestCase):
         game = self.game
         p = game.player
         p.ammo = 0
-        self.assertTrue(game.request_reload())
-        self.assertFalse(game.request_reload())
-        self.assertEqual(game.reload_frames_left, 150)
+        self.assertTrue(game.combat.request_reload())
+        self.assertFalse(game.combat.request_reload())
+        self.assertEqual(game.combat.reload_frames_left, 150)
         before_x = p.x
         for _ in range(149):
             game.step(9, want_fire=True)
         self.assertGreater(p.x, before_x)
-        self.assertEqual((p.ammo, game.reload_frames_left, len(game.bullets)), (0, 1, 0))
+        self.assertEqual((p.ammo, game.combat.reload_frames_left, len(game.combat.bullets)), (0, 1, 0))
         game.step(0, want_fire=True)
-        self.assertEqual((p.ammo, game.reload_frames_left, len(game.bullets)), (120, 0, 0))
+        self.assertEqual((p.ammo, game.combat.reload_frames_left, len(game.combat.bullets)), (120, 0, 0))
         game.step(0, want_fire=True)
-        self.assertEqual((p.ammo, len(game.bullets)), (119, 1))
-        self.assertTrue(game.request_reload())
+        self.assertEqual((p.ammo, len(game.combat.bullets)), (119, 1))
+        self.assertTrue(game.combat.request_reload())
 
     def test_r_reloads_without_reset_and_menus_freeze_reload_timer(self):
         self.click("start")
-        self.game._add_score(190)
+        self.game.progression._add_score(190)
         self.game.player.ammo = 10
         self.key(pygame.K_r)
-        self.assertEqual((self.game.reload_frames_left, self.game.score, self.game.level), (150, 190, 3))
+        self.assertEqual((self.game.combat.reload_frames_left, self.game.progression.score, self.game.progression.level), (150, 190, 3))
         self.update()
-        self.assertEqual(self.game.reload_frames_left, 149)
+        self.assertEqual(self.game.combat.reload_frames_left, 149)
         self.key(pygame.K_ESCAPE)
         self.update(100)
         self.key(pygame.K_r)
-        self.assertEqual((self.game.reload_frames_left, self.game.score), (149, 190))
+        self.assertEqual((self.game.combat.reload_frames_left, self.game.progression.score), (149, 190))
         self.key(pygame.K_ESCAPE)
-        choice = self.game.stat_choices[0].key
+        choice = self.game.progression.stat_choices[0].key
         self.key(pygame.K_1)
         self.update(100)
-        self.assertEqual(self.game.reload_frames_left, 144)
-        self.assertEqual(self.game.stat_levels[choice], 1)
+        self.assertEqual(self.game.combat.reload_frames_left, 144)
+        self.assertEqual(self.game.progression.stat_levels[choice], 1)
         self.update()
-        self.assertEqual(self.game.reload_frames_left, 143)
+        self.assertEqual(self.game.combat.reload_frames_left, 143)
 
     def test_reload_rejects_full_magazine_death_and_unlimited_mode(self):
         game = self.game
-        self.assertFalse(game.request_reload())
+        self.assertFalse(game.combat.request_reload())
         game.player.ammo = 0
         game.cfg.limited_ammo = False
-        self.assertFalse(game.request_reload())
+        self.assertFalse(game.combat.request_reload())
         game.cfg.limited_ammo = True
         game.game_over = True
-        self.assertFalse(game.request_reload())
+        self.assertFalse(game.combat.request_reload())
         game.reset(2)
-        self.assertEqual((game.player.ammo, game.reload_frames_left), (120, 0))
+        self.assertEqual((game.player.ammo, game.combat.reload_frames_left), (120, 0))
         self.assertNotIn("ammo", {c.key for c in REWARD_CARDS})
 
     def test_real_main_loop_starts_on_main_menu_and_handles_exit(self):

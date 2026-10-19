@@ -14,7 +14,7 @@
               "type": "markdown",
               "state": {
                 "file": "dev/01-structure.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -190,19 +190,31 @@
   },
   "active": "3c47a43530498af9",
   "lastOpenFiles": [
+    "dev/classes/Combat.md",
+    "dev/01-structure.md",
+    "dev/classes/Tank.md",
+    "dev/classes/Renderer.md",
+    "dev/classes/EnemyController.md",
+    "dev/classes/Progression.md",
+    "dev/classes/GameCore.md",
+    "dev/classes/GameApplication.md",
+    "dev/classes",
+    "README.md",
+    "game/02-combat-and-reload.md",
+    "game/01-controls-and-flow.md",
+    "game/04-maps.md",
+    "game/03-rewards.md",
+    "dev/02-changing-and-testing.md",
+    "dev/03-rl-environment.md",
     "game/assets/12-skills.png",
     "game/assets/11-cannon.png",
     "game/assets/10-laser.png",
     "game/assets/09-stats.png",
-    "game/01-controls-and-flow.md",
     "game/assets/01-main-menu.png",
     "game/assets/02-playing.png",
     "game/assets/03-reloading.png",
     "game/assets/05-settings.png",
     "game/assets/map-ring.png",
-    "game/assets/map-hello-world.png",
-    "game/assets/map-drift.png",
-    "game/03-rewards.md",
-    "game/02-combat-and-reload.md"
+    "game/assets/map-hello-world.png"
   ]
 }

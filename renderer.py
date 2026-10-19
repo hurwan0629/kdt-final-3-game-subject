@@ -64,6 +64,7 @@ def _hp_color(ratio):
 
 
 class Renderer:
+    # 읽는 순서: __init__() → draw() / draw_main_menu() → 필요한 세부 그리기 함수.
     def __init__(self, cfg: GameConfig, caption: str = "Space Skirmish - RL Demo"):
         self.cfg = cfg
         if not 0 < cfg.camera_zoom <= 1:
@@ -113,6 +114,79 @@ class Renderer:
         self._sparks = []       # 점수 획득 불꽃: [x, y, vx, vy, age, life, color]
         self._popups_seen = set()
         self._xp_flash_frame = -999
+
+    # ------------------------------------------------------------------
+    # 화면 출력의 진입점: 게임 화면과 메인 메뉴
+    # ------------------------------------------------------------------
+    def draw(self, game, debug_lines=None, paused=False, show_ai=False,
+             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):
+        self._tick += 1
+        self._update_camera(game.player)
+        self._track(game)
+        self._ensure_terrain(game.terrain)
+        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔
+        display = self.screen
+        self.screen = scr = self._view
+        # 맵 밖에도 우주 배경을 채우며 카메라는 가장자리에서도 선체를 따라간다.
+        bg_width, bg_height = self._bg.get_size()
+        offset_x, offset_y = round(-self.camera_x), round(-self.camera_y)
+        start_x, start_y = offset_x % bg_width - bg_width, offset_y % bg_height - bg_height
+        for y in range(start_y, self.view_height, bg_height):
+            for x in range(start_x, self.view_width, bg_width):
+                scr.blit(self._bg, (x, y))
+        scr.blit(self._floor, (offset_x, offset_y))
+        self._draw_twinkles()
+        f = game.frame
+        p = game.player
+
+        for s in game.shapes:
+            if self._visible(s.x, s.y):
+                self._draw_shape(s, f)
+        for e in game.enemies:
+            if e.alive and self._visible(e.x, e.y, e.radius * 3):
+                self._draw_ship(e, f)
+        if p.alive:
+            self._draw_ship(p, f, is_player=True)
+        for b in game.combat.bullets:
+            if self._visible(b.x, b.y):
+                self._draw_bullet(b)
+        self._draw_combat_effects(game)
+        self._draw_score_effects(game)
+        for g in self._ghosts:
+            if self._visible(g["x"], g["y"]):
+                self._draw_ghost(g)
+        # 체력바는 모든 물체 위에 (숨은 적의 체력바는 그리지 않음)
+        for s in game.shapes:
+            if s.hp < s.max_hp:
+                self._hp_bar(s.x, s.y + s.radius + 9, s.radius * 2.2, s.hp / s.max_hp)
+        for e in game.enemies:
+            if e.alive and e.hp < e.max_hp:
+                self._hp_bar(e.x, e.y + e.radius + 12, e.radius * 2.6, e.hp / e.max_hp)
+        if p.alive and p.hp < p.max_hp:
+            self._hp_bar(p.x, p.y + p.radius + 12, p.radius * 2.6, p.hp / p.max_hp)
+        if show_ai:
+            self._draw_ai_debug(game)
+
+        self.screen = display
+        pygame.transform.smoothscale(scr, self.size, display)
+        self._draw_world_boundary()
+        self._draw_score_text(game)
+        self._draw_hud(game, paused, show_notice=menu is None,
+                       show_controls=show_controls, stats_collapsed=stats_collapsed)
+        if debug_lines:
+            self._draw_debug(debug_lines)
+        if show_stats and not paused and menu is None and not game.game_over:
+            self._draw_stats_panel(game)
+        if menu is not None:
+            self._draw_menu(menu, "일시정지 · 설정", selected)
+        elif game.game_over:
+            self._draw_game_over(game)
+        elif paused:
+            self._draw_card(["일시정지"], ["P / ESC: 계속"])
+
+    def draw_main_menu(self, buttons, selected=0):
+        self.screen.blit(self.assets.image("backgrounds/main", self.size), (0, 0))
+        self._draw_menu(buttons, "SPACE SKIRMISH", selected, main=True)
 
     # ------------------------------------------------------------------
     # 폭발 프레임: 서로 다른 원본 크기를 공통 캔버스에 정렬
@@ -307,7 +381,7 @@ class Renderer:
                 spark[3] *= 0.9
             spark[4] += delta
         self._sparks = [spark for spark in self._sparks if spark[4] < spark[5]]
-        for pid, frame, x, y, amount, kind in game.score_popups:
+        for pid, frame, x, y, amount, kind in game.combat.score_popups:
             if pid in self._popups_seen:
                 continue
             self._popups_seen.add(pid)
@@ -320,7 +394,7 @@ class Renderer:
                 self._sparks.append([x, y, math.cos(angle) * speed, math.sin(angle) * speed, 0,
                                      self._rand.randint(18, 32), _mix(color, (255, 255, 255), 0.35)])
         if len(self._popups_seen) > 500:
-            self._popups_seen = {pop[0] for pop in game.score_popups}
+            self._popups_seen = {pop[0] for pop in game.combat.score_popups}
         # 오래된 id 정리
         if len(self._first_seen) > 400:
             live = set(cur) | {e.id for e in game.enemies} | {p.id}
@@ -393,72 +467,6 @@ class Renderer:
         sx, sy = self.world_to_view(x, y)
         return -margin <= sx <= self.view_width + margin and -margin <= sy <= self.view_height + margin
 
-    def draw(self, game, debug_lines=None, paused=False, show_ai=False,
-             show_controls=True, menu=None, selected=-1, show_stats=False, stats_collapsed=False):
-        self._tick += 1
-        self._update_camera(game.player)
-        self._track(game)
-        self._ensure_terrain(game.terrain)
-        self._flash_on = not game.game_over  # 게임오버로 멈춘 화면에서는 깜빡임 끔
-        display = self.screen
-        self.screen = scr = self._view
-        # 맵 밖에도 우주 배경을 채우며 카메라는 가장자리에서도 선체를 따라간다.
-        bg_width, bg_height = self._bg.get_size()
-        offset_x, offset_y = round(-self.camera_x), round(-self.camera_y)
-        start_x, start_y = offset_x % bg_width - bg_width, offset_y % bg_height - bg_height
-        for y in range(start_y, self.view_height, bg_height):
-            for x in range(start_x, self.view_width, bg_width):
-                scr.blit(self._bg, (x, y))
-        scr.blit(self._floor, (offset_x, offset_y))
-        self._draw_twinkles()
-        f = game.frame
-        p = game.player
-
-        for s in game.shapes:
-            if self._visible(s.x, s.y):
-                self._draw_shape(s, f)
-        for e in game.enemies:
-            if e.alive and self._visible(e.x, e.y, e.radius * 3):
-                self._draw_ship(e, f)
-        if p.alive:
-            self._draw_ship(p, f, is_player=True)
-        for b in game.bullets:
-            if self._visible(b.x, b.y):
-                self._draw_bullet(b)
-        self._draw_combat_effects(game)
-        self._draw_score_effects(game)
-        for g in self._ghosts:
-            if self._visible(g["x"], g["y"]):
-                self._draw_ghost(g)
-        # 체력바는 모든 물체 위에 (숨은 적의 체력바는 그리지 않음)
-        for s in game.shapes:
-            if s.hp < s.max_hp:
-                self._hp_bar(s.x, s.y + s.radius + 9, s.radius * 2.2, s.hp / s.max_hp)
-        for e in game.enemies:
-            if e.alive and e.hp < e.max_hp:
-                self._hp_bar(e.x, e.y + e.radius + 12, e.radius * 2.6, e.hp / e.max_hp)
-        if p.alive and p.hp < p.max_hp:
-            self._hp_bar(p.x, p.y + p.radius + 12, p.radius * 2.6, p.hp / p.max_hp)
-        if show_ai:
-            self._draw_ai_debug(game)
-
-        self.screen = display
-        pygame.transform.smoothscale(scr, self.size, display)
-        self._draw_world_boundary()
-        self._draw_score_text(game)
-        self._draw_hud(game, paused, show_notice=menu is None,
-                       show_controls=show_controls, stats_collapsed=stats_collapsed)
-        if debug_lines:
-            self._draw_debug(debug_lines)
-        if show_stats and not paused and menu is None and not game.game_over:
-            self._draw_stats_panel(game)
-        if menu is not None:
-            self._draw_menu(menu, "일시정지 · 설정", selected)
-        elif game.game_over:
-            self._draw_game_over(game)
-        elif paused:
-            self._draw_card(["일시정지"], ["P / ESC: 계속"])
-
     def _draw_world_boundary(self):
         """0.5px 외곽선을 화면 1px의 절반 농도로 표현한다."""
         left, top = (round(value) for value in self.world_to_screen(0, 0))
@@ -487,7 +495,7 @@ class Renderer:
 
     def _draw_score_text(self, game):
         """줌과 관계없이 읽히도록 "+점수"는 화면 좌표에 고정 크기로 그린다."""
-        for _, frame, x, y, amount, kind in game.score_popups:
+        for _, frame, x, y, amount, kind in game.combat.score_popups:
             age = game.frame - frame
             if age > SCORE_TEXT_FRAMES or not self._visible(x, y):
                 continue
@@ -510,19 +518,15 @@ class Renderer:
             self.screen.blit(text, text.get_rect(center=(round(sx), round(sy))))
 
     def _draw_combat_effects(self, game):
-        for beam in game.beams:
+        for beam in game.combat.beams:
             start = self.world_to_view(beam.x, beam.y)
             end = self.world_to_view(beam.end_x, beam.end_y)
             pygame.draw.line(self.screen, (30, 105, 125), start, end, 10)
             pygame.draw.line(self.screen, (95, 245, 255), start, end, 5)
             pygame.draw.line(self.screen, (240, 255, 255), start, end, 2)
-        for explosion in game.explosions:
+        for explosion in game.combat.explosions:
             self._draw_explosion(explosion.x, explosion.y, explosion.radius * 2,
                                  1 - explosion.life / 18)
-
-    def draw_main_menu(self, buttons, selected=0):
-        self.screen.blit(self.assets.image("backgrounds/main", self.size), (0, 0))
-        self._draw_menu(buttons, "SPACE SKIRMISH", selected, main=True)
 
     def _draw_menu(self, buttons, title, selected, main=False):
         W, H = self.size
@@ -652,14 +656,14 @@ class Renderer:
             self._panel(rect)
             color = (255, 130, 100) if p.ammo == 0 else COLORS["white"]
             self.screen.blit(self.font_small.render(ammo, True, color), (rect.x + 14, rect.y + 10))
-            reloading = game.reload_frames_left > 0
-            hint = (f"재장전 {game.reload_frames_left / game.cfg.fps:.1f}초"
+            reloading = game.combat.reload_frames_left > 0
+            hint = (f"재장전 {game.combat.reload_frames_left / game.cfg.fps:.1f}초"
                     if reloading else "R: 재장전")
             self.screen.blit(self.font_small.render(hint, True, COLORS["text"]), (rect.x + 14, rect.y + 33))
             if reloading:
                 bar = pygame.Rect(rect.x + 14, rect.y + 54, rect.width - 28, 6)
                 pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=3)
-                bar.width = int(bar.width * (1 - game.reload_frames_left / game.reload_frames_total))
+                bar.width = int(bar.width * (1 - game.combat.reload_frames_left / game.combat.reload_frames_total))
                 if bar.width:
                     pygame.draw.rect(self.screen, COLORS["player"], bar, border_radius=3)
             if p.ammo == 0 and not game.game_over and not reloading and show_notice:
@@ -669,7 +673,7 @@ class Renderer:
         # 좌상단: 점수/처치/시간
         items = [(self.font_label.render(label, True, COLORS["label"]),
                   self.font_hud.render(value, True, COLORS["white"]))
-                 for label, value in (("SCORE", f"{game.score:,}"), ("KILLS", str(game.kills)),
+                 for label, value in (("SCORE", f"{game.progression.score:,}"), ("KILLS", str(game.progression.kills)),
                                       ("TIME", f"{int(secs) // 60}:{int(secs) % 60:02d}"))]
         width = 10 + sum(l.get_width() + v.get_width() + 18 for l, v in items)
         rect = pygame.Rect(14, 14, width, 40)
@@ -771,13 +775,13 @@ class Renderer:
         W, H = self.size
         panel = pygame.Rect(W // 2 - 166, H - 100, 332, 84)
         self._panel(panel)
-        title = f"Lv.{game.level}  {JOB_NAMES[p.job]}"
+        title = f"Lv.{game.progression.level}  {JOB_NAMES[p.job]}"
         text = self.font_body.render(title, True, COLORS["white"])
         self.screen.blit(text, text.get_rect(midtop=(W // 2, H - 98)))
         bar = pygame.Rect(W // 2 - 160, H - 67, 320, 18)
         pygame.draw.rect(self.screen, COLORS["hp_bg"], bar, border_radius=9)
         fill = bar.copy()
-        fill.width = int(bar.width * game.xp / game.xp_to_next_level)
+        fill.width = int(bar.width * game.progression.xp / game.progression.xp_to_next_level)
         if fill.width:
             pygame.draw.rect(self.screen, COLORS["player"], fill, border_radius=9)
         flash = 1 - (game.frame - self._xp_flash_frame) / 15
@@ -786,7 +790,7 @@ class Renderer:
             pygame.draw.rect(glow, (255, 240, 170, round(150 * flash)), glow.get_rect(), border_radius=9)
             self.screen.blit(glow, bar.topleft)
             pygame.draw.rect(self.screen, (255, 230, 140), bar.inflate(4, 4), 2, border_radius=11)
-        xp = self.font_label.render(f"EXP  {game.xp} / {game.xp_to_next_level}", True, COLORS["white"])
+        xp = self.font_label.render(f"EXP  {game.progression.xp} / {game.progression.xp_to_next_level}", True, COLORS["white"])
         self.screen.blit(xp, xp.get_rect(center=bar.center))
         if stat_upgrades_visible(game):
             if stats_collapsed:
@@ -794,8 +798,8 @@ class Renderer:
             else:
                 self._draw_stat_upgrades(game)
         self._draw_rewards(game)
-        if game.frame < game.reward_message_until and show_notice:
-            text = self.font_small.render(f"{game.last_reward} 적용 완료", True, (160, 240, 220))
+        if game.frame < game.progression.reward_message_until and show_notice:
+            text = self.font_small.render(f"{game.progression.last_reward} 적용 완료", True, (160, 240, 220))
             self.screen.blit(text, text.get_rect(midtop=(W / 2, H - 126)))
 
     def _draw_stats_panel(self, game):
@@ -803,7 +807,7 @@ class Renderer:
         self._panel(rect, 175, 16)
         title = self.font_card.render("나의 능력치", True, COLORS["white"])
         self.screen.blit(title, (rect.x + 24, rect.y + 18))
-        ship = self.font_body.render(f"Lv.{game.level} · {JOB_NAMES[game.player.job]}", True, COLORS["player"])
+        ship = self.font_body.render(f"Lv.{game.progression.level} · {JOB_NAMES[game.player.job]}", True, COLORS["player"])
         self.screen.blit(ship, (rect.x + 24, rect.y + 52))
         for i, (label, value) in enumerate(player_stat_summary(game)):
             y = rect.y + 92 + i * 31
@@ -817,23 +821,23 @@ class Renderer:
         self.screen.blit(hint, (rect.x + 24, rect.bottom - 31))
 
     def _draw_stat_upgrades(self, game):
-        rows = stat_rows(*self.size, game.stat_choices)
+        rows = stat_rows(*self.size, game.progression.stat_choices)
         if not rows:
             return
         top = rows[0][1][1] - 30
         bottom = rows[-1][1][1] + rows[-1][1][3] + 8
         self._panel(pygame.Rect(14, top, 272, bottom - top), 195, 10)
-        title = self.font_small.render(f"남은 스탯 {game.upgrade_points}P · 1–5 / 클릭", True, COLORS["player"])
+        title = self.font_small.render(f"남은 스탯 {game.progression.upgrade_points}P · 1–5 / 클릭", True, COLORS["player"])
         self.screen.blit(title, (22, top + 7))
         for i, (card, coords) in enumerate(rows):
             rect = pygame.Rect(coords)
-            enabled = game.can_upgrade_stat(card.key)
+            enabled = game.progression.can_upgrade_stat(card.key)
             pygame.draw.rect(self.screen, (25, 38, 59) if enabled else (20, 25, 38), rect, border_radius=8)
             pygame.draw.rect(self.screen, (65, 110, 140) if enabled else (44, 53, 70), rect, 1, border_radius=8)
             text = self.font_small.render(f"{i + 1}  {card.title}", True,
                                           COLORS["white"] if enabled else COLORS["label"])
             self.screen.blit(text, (rect.x + 5, rect.y + 2))
-            level = game.stat_levels[card.key]
+            level = game.progression.stat_levels[card.key]
             at_limit = level >= STAT_MAX_LEVEL or (card.key == "rapid" and game.player.fire_cooldown_max <= 4)
             rank = self.font_label.render("MAX" if at_limit else f"{level}/{STAT_MAX_LEVEL}", True, COLORS["player"])
             self.screen.blit(rank, rank.get_rect(topright=(rect.right - 30, rect.y + 3)))
@@ -852,7 +856,7 @@ class Renderer:
         pygame.draw.rect(self.screen, (80, 185, 215), badge, border_radius=7)
         plus = self.font_body.render("+", True, (10, 25, 35))
         self.screen.blit(plus, plus.get_rect(center=badge.center))
-        text = self.font_small.render(f"남은 스탯 {game.upgrade_points}P · 펼치기", True, COLORS["white"])
+        text = self.font_small.render(f"남은 스탯 {game.progression.upgrade_points}P · 펼치기", True, COLORS["white"])
         self.screen.blit(text, text.get_rect(midleft=(badge.right + 9, rect.centery)))
 
     def _tooltip(self, lines, pos, width):
@@ -872,14 +876,14 @@ class Renderer:
         return lines + ([line] if line else [])
 
     def _draw_rewards(self, game):
-        pending = game.special_reward_levels
-        level = pending[0] if pending else (game.level // 10 + 1) * 10
-        count = len(game.reward_choices)
+        pending = game.progression.special_reward_levels
+        level = pending[0] if pending else (game.progression.level // 10 + 1) * 10
+        count = len(game.progression.reward_choices)
         stage = "최종 진화" if level == 30 else "전직" if level < 30 else "숙련"
         heading = (f"Lv.{level} {stage} · F2–F{count + 1} / 클릭" if count > 1
                    else f"Lv.{level} {stage} · F2 / 클릭" if count else f"다음 성장 Lv.{level}")
         self.screen.blit(self.font_small.render(heading, True, (225, 205, 145)), (16, 61))
-        cards = game.reward_choices
+        cards = game.progression.reward_choices
         for i, card in enumerate(cards):
             rect = pygame.Rect(special_cards(*self.size, len(cards))[i])
             self._panel(rect, 205, 10)
@@ -934,7 +938,7 @@ class Renderer:
     def _draw_game_over(self, game):
         secs = game.frame / self.cfg.fps
         self._draw_card(["GAME OVER"], ["Enter: 새 게임 · ESC: 메뉴"],
-                        stats=[("SCORE", f"{game.score:,}"), ("KILLS", str(game.kills)),
+                        stats=[("SCORE", f"{game.progression.score:,}"), ("KILLS", str(game.progression.kills)),
                                ("TIME", f"{int(secs) // 60}:{int(secs) % 60:02d}")])
 
 

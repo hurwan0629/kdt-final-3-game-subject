@@ -18,8 +18,8 @@ from terrain import list_maps
 
 
 def gain_level(game, target):
-    while game.level < target:
-        game._add_score(game.xp_to_next_level - game.xp)
+    while game.progression.level < target:
+        game.progression._add_score(game.progression.xp_to_next_level - game.progression.xp)
 
 
 def evolve(game, target):
@@ -30,7 +30,7 @@ def evolve(game, target):
         key = SHIPS[key].parent or "rookie"
     for key in reversed(chain):
         gain_level(game, SHIPS[key].level)
-        game.choose_reward(next(i for i, c in enumerate(game.reward_choices) if c.key == key))
+        game.progression.choose_reward(next(i for i, c in enumerate(game.progression.reward_choices) if c.key == key))
 
 
 def main():
@@ -52,8 +52,8 @@ def main():
         game.pop_events()
     capture("02-playing.png")
     gain_level(game, 8)
-    game.upgrade_stat("damage")
-    game.upgrade_stat("speed")
+    game.progression.upgrade_stat("damage")
+    game.progression.upgrade_stat("speed")
     capture("09-stats.png")
     # 상태값은 GameApplication의 Tab 입력과 동일한 경로로 적용한다.
     keys = defaultdict(bool)
@@ -63,14 +63,14 @@ def main():
     keys[pygame.K_TAB] = False
     app.update(0, keys, (640, 400), (False, False, False))
     game.player.ammo = 15
-    game.request_reload()
+    game.combat.request_reload()
     capture("03-reloading.png")
     gain_level(game, 10)
     capture("04-rewards.png")
     app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
     capture("05-settings.png")
     app.activate("resume")
-    game._damage_tank(game.player, 100000, by_player=False)
+    game.combat._damage_tank(game.player, 100000, by_player=False)
     game.step(0, want_fire=False)
     capture("06-game-over.png")
     cfg.terrain.map_name = "belt"
@@ -109,7 +109,7 @@ def main():
     evolve(game, "twin")
     gain_level(game, 20)
     capture("14-evolution.png")
-    game.choose_reward(0)
+    game.progression.choose_reward(0)
     gain_level(game, 30)
     capture("15-final-evolution.png")
     overview_cfg = GameConfig(num_shapes=0, num_enemies=0, camera_zoom=1/3,

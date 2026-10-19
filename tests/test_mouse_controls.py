@@ -43,14 +43,14 @@ class MouseControlTests(unittest.TestCase):
         before = game.player.x
         game.step(action, want_fire=fire, aim_position=target)
         self.assertGreater(game.player.x, before)
-        self.assertEqual(game.bullets, [])
+        self.assertEqual(game.combat.bullets, [])
         action, target, fire = read_player_input(key_state(pygame.K_w), renderer, (sx, sy + 100), (True, False, False))
         self.assertEqual(decode_action(action), (1, 0))
         before_y = game.player.y
         game.step(action, want_fire=fire, aim_position=target)
         self.assertLess(game.player.y, before_y)
-        self.assertEqual(len(game.bullets), 1)
-        bullet = game.bullets[0]
+        self.assertEqual(len(game.combat.bullets), 1)
+        bullet = game.combat.bullets[0]
         self.assertAlmostEqual(math.atan2(bullet.vy, bullet.vx), game.player.angle)
         self.assertGreater(bullet.vy, 0)  # 위로 이동하면서 아래로 조준/발사
         self.assertEqual(game.player.ammo, 119)
@@ -70,21 +70,21 @@ class MouseControlTests(unittest.TestCase):
         game, p = self.game, self.game.player
         p.ammo = 2
         p.job, p.projectiles = "triple_wing", 3
-        game._fire(p, True)
-        self.assertEqual(len(game.bullets), 2)
+        game.combat._fire(p, True)
+        self.assertEqual(len(game.combat.bullets), 2)
         self.assertEqual(p.ammo, 0)
         p.cooldown = 0
-        game._fire(p, True)
-        self.assertEqual(len(game.bullets), 2)
+        game.combat._fire(p, True)
+        self.assertEqual(len(game.combat.bullets), 2)
         p.ammo, p.cooldown = 5, 4
-        game._fire(p, True)
+        game.combat._fire(p, True)
         self.assertEqual((p.ammo, p.cooldown), (5, 3))
         p.cooldown = 0
-        game._fire(p, False)
+        game.combat._fire(p, False)
         self.assertEqual(p.ammo, 5)
         enemy = Tank(99, "enemy", p.x + 100, p.y, 60, 60, 22, 36)
-        game._fire(enemy, True)
-        self.assertEqual(len(game.bullets), 3)
+        game.combat._fire(enemy, True)
+        self.assertEqual(len(game.combat.bullets), 3)
 
     def test_restart_restores_ammo_and_training_remains_unlimited(self):
         game = self.game
@@ -93,7 +93,7 @@ class MouseControlTests(unittest.TestCase):
         self.assertEqual(game.player.ammo, 120)
         env = TankEnv()
         self.assertFalse(env.game_cfg.limited_ammo)
-        env.game._fire(env.game.player, True)
+        env.game.combat._fire(env.game.player, True)
         self.assertEqual(env.game.player.ammo, env.game.player.max_ammo)
         self.assertIsNone(env.reset(seed=1)[1]["ammo"])
 
@@ -122,7 +122,7 @@ class MouseControlTests(unittest.TestCase):
         game = self.game
         app = GameApplication(game, self.renderer, seed=1)
         app.activate("start")
-        game._add_score(60)
+        game.progression._add_score(60)
         key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
         key(pygame.K_p)
         state = (game.frame, game.player.x, game.player.ammo)
@@ -139,7 +139,7 @@ class MouseControlTests(unittest.TestCase):
         app.update(0.1, key_state(pygame.K_d), (800, 360), (True, False, False))
         self.assertGreater(game.frame, state[0])
         self.assertGreater(game.player.x, state[1])
-        self.assertEqual(sum(game.stat_levels.values()), 1)
+        self.assertEqual(sum(game.progression.stat_levels.values()), 1)
 
     def test_quick_click_survives_a_frame_without_a_simulation_tick(self):
         app = GameApplication(self.game, self.renderer, seed=1)
@@ -156,12 +156,12 @@ class MouseControlTests(unittest.TestCase):
     def test_q_and_space_do_not_activate_combat_actions(self):
         app = GameApplication(self.game, self.renderer, seed=1)
         app.activate("start")
-        with patch.object(self.game, "request_skill", wraps=self.game.request_skill) as skill:
+        with patch.object(self.game.combat, "request_skill", wraps=self.game.combat.request_skill) as skill:
             for key in (pygame.K_q, pygame.K_SPACE):
                 app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
             app.update(1 / 60, key_state(pygame.K_q, pygame.K_SPACE), (800, 360), (False, False, False))
             skill.assert_not_called()
-        self.assertEqual(self.game.bullets, [])
+        self.assertEqual(self.game.combat.bullets, [])
         self.assertEqual(self.game.frame, 1)
 
 

@@ -197,7 +197,7 @@ def stat_upgrades_visible(game):  # 성장 기능이 켜져 있고 플레이어�
 
 def player_stat_summary(game):  # 플레이어 상태를 화면 표시용 (항목명, 값) 목록으로 변환
     p, c = game.player, game.cfg  # 플레이어 개체와 기본 게임 설정
-    spec, damage, cooldown, speed, life = game.weapon_values(p)  # 강화·우주선·숙련을 반영한 무기 값
+    spec, damage, cooldown, speed, life = game.combat.weapon_values(p)  # 강화·우주선·숙련을 반영한 무기 값
     return (
         ("체력", f"{p.hp:.0f} / {p.max_hp:.0f}"),  # 현재 / 최대 체력
         ("자가 수리", f"{(c.regen_rate * (p.max_hp / c.player_hp) + p.regen_bonus) * c.fps:.1f} / 초"),  # 피격 후 회복 지연이 끝났을 때의 초당 회복량
@@ -206,6 +206,6 @@ def player_stat_summary(game):  # 플레이어 상태를 화면 표시용 (항�
         ("탄속", f"{speed * c.fps:.0f} px / 초"),  # 프레임당 탄속을 초당 속도로 환산
         ("사거리", f"{speed * life:.0f} px"),  # 벽·대상 충돌이 없을 때 탄속 × 수명으로 계산한 기준 거리
         ("탄창", f"{p.ammo} / {p.max_ammo}" if c.limited_ammo else "무제한"),  # 탄약 제한 여부에 따른 잔탄 표시
-        ("재장전 시간", f"{game.reload_frames_total / c.fps:.2f}초"),  # 재장전 프레임 수를 초로 환산
+        ("재장전 시간", f"{game.combat.reload_frames_total / c.fps:.2f}초"),  # 재장전 프레임 수를 초로 환산
         ("최고 이동 속도", f"{c.max_speed * p.accel_scale * c.fps:.0f} px / 초"),  # 기본 최고속도에 강화 배율을 적용한 초당 이동 속도
     )

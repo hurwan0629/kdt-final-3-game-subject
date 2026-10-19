@@ -122,10 +122,10 @@ class DifficultyMenuTests(unittest.TestCase):
                 game, app = self.application(enemies=2)
                 self.click(app, key)
                 self.click(app, "start")
-                game.upgrade_points = 35
+                game.progression.upgrade_points = 35
                 for card in STAT_UPGRADES:
                     for _ in range(7):
-                        self.assertTrue(game.upgrade_stat(card.key))
+                        self.assertTrue(game.progression.upgrade_stat(card.key))
                 expected = sum(int(7 * ratio) for _ in STAT_UPGRADES)
                 self.assertEqual(expected, {.4: 10, .5: 15, .6: 20}[ratio])
                 for enemy in game.enemies:

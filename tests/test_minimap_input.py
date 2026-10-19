@@ -33,13 +33,13 @@ class MinimapInputTests(unittest.TestCase):
                 app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
                 app.update(1/60, defaultdict(bool), pos, (True, False, False))
                 self.assertEqual(game.player.ammo, 119)
-                self.assertEqual(len(game.bullets), 1)
+                self.assertEqual(len(game.combat.bullets), 1)
                 self.assertFalse(app.suppress_fire)
                 self.assertFalse(app.click_requested)
                 for _ in range(game.player.fire_cooldown_max + 5):
                     app.update(1/60, defaultdict(bool), pos, (True, False, False))
                 self.assertLess(game.player.ammo, 119)
-                self.assertGreater(len(game.bullets), 1)
+                self.assertGreater(len(game.combat.bullets), 1)
 
     def test_firing_continues_when_cursor_sweeps_over_the_minimap_mid_hold(self):
         """발사 중 커서가 미니맵 위를 지나가도 사격을 계속한다."""
@@ -48,13 +48,13 @@ class MinimapInputTests(unittest.TestCase):
         app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
         app.update(1/60, defaultdict(bool), pos, (True, False, False))
         self.assertEqual(game.player.ammo, 119)
-        self.assertEqual(len(game.bullets), 1)
+        self.assertEqual(len(game.combat.bullets), 1)
         # 쿨다운이 돌 때까지 월드 쪽을 계속 조준하다, 다 되는 순간 커서가 미니맵 위에 있어도
         # 발사가 막히면 안 된다.
         for _ in range(game.player.fire_cooldown_max + 5):
             app.update(1/60, defaultdict(bool), (1150, 700), (True, False, False))
         self.assertLess(game.player.ammo, 119)
-        self.assertGreater(len(game.bullets), 1)
+        self.assertGreater(len(game.combat.bullets), 1)
 
     def test_pointer_over_rewards_ignores_the_minimap(self):
         game, app = self.application()

@@ -41,14 +41,14 @@ class DisplayAssetsTests(unittest.TestCase):
         self.assertEqual((self.cfg.world_width, self.cfg.world_height), (6432, 4848))
 
     def test_fullscreen_menu_round_trip_preserves_world_and_game_state(self):
-        self.game._add_score(1980)
+        self.game.progression._add_score(1980)
         self.game.player.ammo = 3
-        self.game.request_reload()
+        self.game.combat.request_reload()
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
         self.assertEqual(self.app.mode, "pause")
-        state = (self.game.frame, self.game.score, self.game.player.x, self.game.player.hp,
-                 self.game.player.ammo, self.game.reload_frames_left, self.game.reward_choices,
-                 self.game.stat_choices, id(self.game.terrain))
+        state = (self.game.frame, self.game.progression.score, self.game.player.x, self.game.player.hp,
+                 self.game.player.ammo, self.game.combat.reload_frames_left, self.game.progression.reward_choices,
+                 self.game.progression.stat_choices, id(self.game.terrain))
         for expected in (True, False):
             button = next(b for b in self.app.buttons() if b.key == "fullscreen")
             self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=button.rect.center))
@@ -56,37 +56,37 @@ class DisplayAssetsTests(unittest.TestCase):
             self.assertEqual(bool(self.renderer.screen.get_flags() & pygame.FULLSCREEN), expected)
             self.app.update(100, defaultdict(bool), (0, 0), (False, False, False))
             self.app.draw(ObsConfig())
-            self.assertEqual((self.game.frame, self.game.score, self.game.player.x, self.game.player.hp,
-                              self.game.player.ammo, self.game.reload_frames_left, self.game.reward_choices,
-                              self.game.stat_choices, id(self.game.terrain)), state)
+            self.assertEqual((self.game.frame, self.game.progression.score, self.game.player.x, self.game.player.hp,
+                              self.game.player.ammo, self.game.combat.reload_frames_left, self.game.progression.reward_choices,
+                              self.game.progression.stat_choices, id(self.game.terrain)), state)
             self.assertTrue(pygame.Rect((0, 0), self.renderer.size).contains(self.app.buttons()[-1].rect))
         self.assertEqual(self.renderer.size, (1280, 800))
         self.assertEqual((self.cfg.width, self.cfg.height), (960, 720))
 
     def test_resize_rebuilds_camera_and_click_regions(self):
-        self.game._add_score(1980)
+        self.game.progression._add_score(1980)
         self.app.handle_event(pygame.event.Event(pygame.VIDEORESIZE, size=(1440, 900), w=1440, h=900))
         self.assertEqual(self.renderer.size, (1440, 900))
         self.renderer._update_camera(self.game.player)
         for point in ((0, 0), (720, 450), (1440, 900)):
             self.assertEqual(self.renderer.world_to_screen(*self.renderer.screen_to_world(*point)), point)
-        choice = self.game.stat_choices[0].key
-        row = pygame.Rect(stat_rows(*self.renderer.size, self.game.stat_choices)[0][1])
+        choice = self.game.progression.stat_choices[0].key
+        row = pygame.Rect(stat_rows(*self.renderer.size, self.game.progression.stat_choices)[0][1])
         self.assertTrue(self.app.pointer_over_rewards(row.center))
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=row.center))
-        self.assertEqual(self.game.stat_levels[choice], 1)
+        self.assertEqual(self.game.progression.stat_levels[choice], 1)
         self.app.draw(ObsConfig())
 
     def test_l10_and_l20_use_matching_ship_images_in_compact_cards(self):
-        self.game._add_score(1980)
+        self.game.progression._add_score(1980)
         with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
             self.app.draw(ObsConfig())
             paths = {call.args[0] for call in image.call_args_list}
             self.assertTrue({card.asset for card in FAMILIES}.issubset(paths))
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F5))
         self.assertEqual(self.game.player.job, "guardian")
-        self.game._add_score(7980 - self.game.score)
-        self.assertEqual([c.key for c in self.game.reward_choices], ["bastion", "aegis"])
+        self.game.progression._add_score(7980 - self.game.progression.score)
+        self.assertEqual([c.key for c in self.game.progression.reward_choices], ["bastion", "aegis"])
         with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
             self.app.draw(ObsConfig())
             paths = {call.args[0] for call in image.call_args_list}
@@ -95,20 +95,20 @@ class DisplayAssetsTests(unittest.TestCase):
             self.assertEqual(pygame.Rect(coords).size, (90, 90))
 
     def test_stats_always_show_five_fixed_choices_and_all_number_keys_work(self):
-        choices = self.game.stat_choices
+        choices = self.game.progression.stat_choices
         self.assertEqual(choices, STAT_UPGRADES)
         self.assertEqual([c.title for c in choices], ["체력", "공격력", "사거리 및 탄속도", "발사속도", "이동속도"])
         self.app.draw(ObsConfig())
-        self.game._add_score(1000)
-        points = self.game.upgrade_points
+        self.game.progression._add_score(1000)
+        points = self.game.progression.upgrade_points
         for i, key in enumerate((pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5)):
             self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
-            self.assertEqual(self.game.stat_levels[choices[i].key], 1)
-        self.assertEqual(self.game.upgrade_points, points - 5)
-        self.assertEqual(self.game.stat_choices, choices)
+            self.assertEqual(self.game.progression.stat_levels[choices[i].key], 1)
+        self.assertEqual(self.game.progression.upgrade_points, points - 5)
+        self.assertEqual(self.game.progression.stat_choices, choices)
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
-        self.assertEqual(self.game.stat_choices, choices)
+        self.assertEqual(self.game.progression.stat_choices, choices)
         for coords in (row[1] for row in stat_rows(960, 640)):
             self.assertTrue(pygame.Rect(0, 0, 960, 640).contains(pygame.Rect(coords)))
 

@@ -62,20 +62,20 @@ class StatsPanelTests(unittest.TestCase):
     def test_five_upgrade_rows_remain_visible_without_points_and_points_accumulate(self):
         with patch.object(self.renderer, "_draw_stat_upgrades", wraps=self.renderer._draw_stat_upgrades) as rows:
             self.assertTrue(stat_upgrades_visible(self.game))
-            self.assertEqual(len(self.game.stat_choices), 5)
-            self.assertFalse(any(self.game.can_upgrade_stat(c.key) for c in self.game.stat_choices))
+            self.assertEqual(len(self.game.progression.stat_choices), 5)
+            self.assertFalse(any(self.game.progression.can_upgrade_stat(c.key) for c in self.game.progression.stat_choices))
             self.renderer.draw(self.game)
             rows.assert_called_once_with(self.game)
-            self.game._add_score(190)
-            self.assertEqual(self.game.upgrade_points, 2)
-            self.assertTrue(self.game.upgrade_stat("hull"))
-            self.assertEqual(self.game.upgrade_points, 1)
-            self.assertTrue(self.game.upgrade_stat("damage"))
-            self.assertEqual(self.game.upgrade_points, 0)
+            self.game.progression._add_score(190)
+            self.assertEqual(self.game.progression.upgrade_points, 2)
+            self.assertTrue(self.game.progression.upgrade_stat("hull"))
+            self.assertEqual(self.game.progression.upgrade_points, 1)
+            self.assertTrue(self.game.progression.upgrade_stat("damage"))
+            self.assertEqual(self.game.progression.upgrade_points, 0)
             self.renderer.draw(self.game)
             self.assertEqual(rows.call_count, 2)
-            self.assertEqual(len(self.game.stat_choices), 5)
-            self.assertFalse(self.game.upgrade_stat("speed"))
+            self.assertEqual(len(self.game.progression.stat_choices), 5)
+            self.assertFalse(self.game.progression.upgrade_stat("speed"))
 
     def test_inactive_stat_rows_block_firing_and_clicks_spend_one_point(self):
         pos = pygame.Rect(stat_rows(960, 720)[0][1]).center
@@ -84,12 +84,12 @@ class StatsPanelTests(unittest.TestCase):
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
         self.update(1 / 60, (True, False, False), pos)
         self.assertEqual(self.game.player.ammo, 120)
-        self.assertEqual(self.game.stat_levels["hull"], 0)
-        self.game._add_score(60)
+        self.assertEqual(self.game.progression.stat_levels["hull"], 0)
+        self.game.progression._add_score(60)
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
         self.update(1 / 60, (True, False, False), pos)
-        self.assertEqual(self.game.stat_levels["hull"], 1)
-        self.assertEqual(self.game.upgrade_points, 0)
+        self.assertEqual(self.game.progression.stat_levels["hull"], 1)
+        self.assertEqual(self.game.progression.upgrade_points, 0)
         self.assertEqual(self.game.player.ammo, 120)
         self.assertTrue(self.app.pointer_over_rewards(pos))
         self.update(0, (False, False, False))
@@ -116,9 +116,9 @@ class StatsPanelTests(unittest.TestCase):
 
     def test_displayed_stats_match_five_upgrades_and_actual_weapon_shots(self):
         game = self.game
-        game.upgrade_points = 5
-        for key in game.stat_levels:
-            game.upgrade_stat(key)
+        game.progression.upgrade_points = 5
+        for key in game.progression.stat_levels:
+            game.progression.upgrade_stat(key)
         stats = dict(player_stat_summary(game))
         self.assertEqual(stats["체력"], "125 / 125")
         self.assertEqual(stats["자가 수리"], "3.8 / 초")   # 체력 125/100배만큼 회복도 비례해서 커짐
@@ -127,12 +127,12 @@ class StatsPanelTests(unittest.TestCase):
         for weapon in ("rookie", "triple_wing", "penta_wing", "railgunner", "hyper_railgun"):
             with self.subTest(weapon=weapon):
                 game.player.job = weapon
-                game.special_levels[weapon] = 2
+                game.progression.special_levels[weapon] = 2
                 game.player.cooldown = 0
-                game.bullets.clear()
+                game.combat.bullets.clear()
                 stats = dict(player_stat_summary(game))
-                game._fire(game.player, True)
-                bullet = game.bullets[0]
+                game.combat._fire(game.player, True)
+                bullet = game.combat.bullets[0]
                 self.assertEqual(stats["주무기 피해 · 1발"], f"{bullet.damage:.2f}")
                 self.assertEqual(stats["발사 간격"], f"{(game.player.cooldown + 1) / game.cfg.fps:.2f}초")
                 speed = (bullet.vx ** 2 + bullet.vy ** 2) ** 0.5

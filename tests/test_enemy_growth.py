@@ -35,8 +35,8 @@ def evolve(game, job):
         if level <= SHIPS[game.player.job].level:   # 이미 지난 단계
             continue
         score = sum(game.cfg.level_xp_base + (n - 1) * game.cfg.level_xp_growth for n in range(1, level))
-        game._add_score(score - game.score)
-        game.choose_reward(next(i for i, card in enumerate(game.reward_choices) if card.key == key))
+        game.progression._add_score(score - game.progression.score)
+        game.progression.choose_reward(next(i for i, card in enumerate(game.progression.reward_choices) if card.key == key))
 
 
 class EnemyGrowthTests(unittest.TestCase):
@@ -47,15 +47,15 @@ class EnemyGrowthTests(unittest.TestCase):
         base = (e.max_hp, e.damage_scale, e.fire_cooldown_max)
         e.hp = e.max_hp / 2
         game.frame = int(ai.scale_interval_seconds * game.cfg.fps * 4)
-        game._update_enemy_scaling()
-        self.assertEqual(game.enemy_scale_tier, 4)
+        game.enemy_controller._update_enemy_scaling()
+        self.assertEqual(game.enemy_controller.enemy_scale_tier, 4)
         self.assertAlmostEqual(e.max_hp, base[0] * (1 + 4 * ai.hp_growth))
         self.assertAlmostEqual(e.hp, e.max_hp / 2)
         self.assertGreater(e.damage_scale, base[1])
         self.assertLess(e.fire_cooldown_max, base[2])
         game.frame = 10 ** 7
-        game._update_enemy_scaling()
-        self.assertEqual(game.enemy_scale_tier, ai.max_scale_tier)
+        game.enemy_controller._update_enemy_scaling()
+        self.assertEqual(game.enemy_controller.enemy_scale_tier, ai.max_scale_tier)
         self.assertGreaterEqual(min(x.fire_cooldown_max for x in game.enemies), ai.min_fire_cooldown)
 
     def test_enemies_get_a_random_build_from_a_budget_tied_to_player_picks(self):
@@ -63,14 +63,14 @@ class EnemyGrowthTests(unittest.TestCase):
         그 포인트를 어느 항목에 쓸지는 개체마다 무작위라 build가 서로 다르다."""
         game = open_game(enemies=8, seed=5, mercy_seconds=0)
         ai = game.cfg.enemy_ai
-        game._add_score(10 ** 6)
+        game.progression._add_score(10 ** 6)
         for key, times in (("damage", 3), ("hull", 2), ("speed", 1), ("rapid", 1), ("range", 1)):
             for _ in range(times):
-                self.assertTrue(game.upgrade_stat(key))
-        budget = game._enemy_stat_budget()
+                self.assertTrue(game.progression.upgrade_stat(key))
+        budget = game.enemy_controller._enemy_stat_budget()
         self.assertEqual(budget, sum(int(n * ai.stat_mirror_ratio) for n in (3, 2, 1, 1, 1)))
         self.assertGreater(budget, 0)
-        self.assertLess(budget, sum(game.stat_levels.values()))   # 총량은 플레이어보다 항상 적다
+        self.assertLess(budget, sum(game.progression.stat_levels.values()))   # 총량은 플레이어보다 항상 적다
 
         builds = []
         for e in game.enemies:
@@ -80,8 +80,8 @@ class EnemyGrowthTests(unittest.TestCase):
         self.assertGreater(len(set(builds)), 1)   # 어디에 찍는지는 개체마다 다르다
 
         # 레벨업으로 포인트 총량이 늘면 다시 무작위로 재배분된다.
-        self.assertTrue(game.upgrade_stat("damage"))
-        new_budget = game._enemy_stat_budget()
+        self.assertTrue(game.progression.upgrade_stat("damage"))
+        new_budget = game.enemy_controller._enemy_stat_budget()
         self.assertGreater(new_budget, budget)
         for e in game.enemies:
             self.assertEqual(sum(e.stat_levels.values()), new_budget)
@@ -90,7 +90,7 @@ class EnemyGrowthTests(unittest.TestCase):
         game = open_game(enemies=1, seed=3, mercy_seconds=0)
         e = game.enemies[0]
         for _ in range(20):
-            game._respawn_enemy(e)
+            game.enemy_controller._respawn_enemy(e)
             self.assertTrue(game.terrain.circle_fits(e.x, e.y, e.radius))
             self.assertGreaterEqual(math.hypot(e.x - game.player.x, e.y - game.player.y), 300.0 - 1e-6)
 
@@ -105,7 +105,7 @@ class EnemyGrowthTests(unittest.TestCase):
         self.assertAlmostEqual(e.damage_scale, ai.mercy_damage_scale)
         self.assertGreater(e.fire_cooldown_max, full_cooldown)   # 더 느리게 쏜다
         game.frame = int(ai.mercy_seconds * game.cfg.fps)
-        game._update_enemy_scaling()
+        game.enemy_controller._update_enemy_scaling()
         self.assertAlmostEqual(e.max_hp, full_hp)
         self.assertAlmostEqual(e.damage_scale, 1.0)
         self.assertEqual(e.fire_cooldown_max, full_cooldown)
@@ -121,34 +121,34 @@ class EnemyGrowthTests(unittest.TestCase):
                 self.assertAlmostEqual(e.radius, game.cfg.tank_radius * SHIPS[e.job].radius_scale)
         e = game.enemies[0]
         e.alive = False
-        game._respawn_enemy(e)
+        game.enemy_controller._respawn_enemy(e)
         self.assertIn(e.job, SHIPS_BY_LEVEL[30])
 
     def test_evolved_enemy_takes_reduced_damage_like_player(self):
         game = open_game(enemies=1)
         e = game.enemies[0]
         e.job = "citadel"
-        game._apply_enemy_strength(e)
+        game.enemy_controller._apply_enemy_strength(e)
         hp = e.hp
-        game._damage_tank(e, 10, True)
+        game.combat._damage_tank(e, 10, True)
         self.assertAlmostEqual(e.hp, hp - 10 * SHIPS["citadel"].damage_taken)
 
 
 class StatLimitTests(unittest.TestCase):
     def test_every_stat_stops_at_max_level(self):
         game = open_game()
-        game.upgrade_points = len(STAT_UPGRADES) * STAT_MAX_LEVEL + 3
+        game.progression.upgrade_points = len(STAT_UPGRADES) * STAT_MAX_LEVEL + 3
         for card in STAT_UPGRADES:
             for _ in range(STAT_MAX_LEVEL):
-                self.assertTrue(game.upgrade_stat(card.key))
-            self.assertFalse(game.upgrade_stat(card.key))
-        self.assertEqual(game.upgrade_points, 3)
+                self.assertTrue(game.progression.upgrade_stat(card.key))
+            self.assertFalse(game.progression.upgrade_stat(card.key))
+        self.assertEqual(game.progression.upgrade_points, 3)
 
     def test_speed_and_fire_rate_gains_are_smaller(self):
         game = open_game()
-        game.upgrade_points = 2
-        game.upgrade_stat("speed")
-        game.upgrade_stat("rapid")
+        game.progression.upgrade_points = 2
+        game.progression.upgrade_stat("speed")
+        game.progression.upgrade_stat("rapid")
         self.assertAlmostEqual(game.player.accel_scale, 1.07)
         self.assertEqual(game.player.fire_cooldown_max, 27)
 
@@ -159,8 +159,8 @@ class ShipTweakTests(unittest.TestCase):
         evolve(game, job)
         game.player.x = game.player.y = 1000
         game.player.angle = 0.0
-        game._fire(game.player, True)
-        return game, game.bullets[0]
+        game.combat._fire(game.player, True)
+        return game, game.combat.bullets[0]
 
     def test_sniper_and_guardian_fire_larger_rounds(self):
         _, rookie = self.fire("rookie")
@@ -284,7 +284,7 @@ class SmarterEnemyAITests(unittest.TestCase):
         e.ai_target = ("shape", 999)   # 이미 사라진(다른 적이 파괴한) 천체
         e.ai_timer = 15
         e.ai_path = [(10, 10), (11, 10)]
-        game._enemy_ai(e)
+        game.enemy_controller._enemy_ai(e)
         self.assertIsNone(e.ai_target)
         self.assertEqual(e.ai_timer, 0)
         self.assertEqual(e.ai_path, [])
@@ -346,7 +346,7 @@ class EliteEnemyTests(unittest.TestCase):
         self.assertAlmostEqual(elites[0].damage_scale, normals[0].damage_scale * ai.elite_damage_scale)
         # 시간 성장과 진화 뒤에도 엘리트 배율은 유지된다.
         game.frame = int(ai.scale_interval_seconds * game.cfg.fps * 3)
-        game._update_enemy_scaling()
+        game.enemy_controller._update_enemy_scaling()
         self.assertAlmostEqual(elites[0].max_hp, normals[0].max_hp * ai.elite_hp_scale)
 
     def test_killing_elite_heals_player_and_normal_kill_does_not(self):
@@ -354,16 +354,16 @@ class EliteEnemyTests(unittest.TestCase):
         p, ai = game.player, game.cfg.enemy_ai
         normal, elite = game.enemies
         normal.elite, elite.elite = False, True
-        game._apply_enemy_strength(elite)
+        game.enemy_controller._apply_enemy_strength(elite)
         p.hp = 20
-        game._damage_tank(normal, 10 ** 6, True)
+        game.combat._damage_tank(normal, 10 ** 6, True)
         self.assertEqual(p.hp, 20)
-        game._damage_tank(elite, 10 ** 6, True)
+        game.combat._damage_tank(elite, 10 ** 6, True)
         self.assertAlmostEqual(p.hp, 20 + p.max_hp * ai.elite_heal_ratio)
-        self.assertEqual(game.score, round(game.cfg.enemy_kill_score * (1 + ai.elite_score_scale)))
+        self.assertEqual(game.progression.score, round(game.cfg.enemy_kill_score * (1 + ai.elite_score_scale)))
         p.hp = p.max_hp - 1
         elite.alive, elite.hp = True, elite.max_hp
-        game._damage_tank(elite, 10 ** 6, True)
+        game.combat._damage_tank(elite, 10 ** 6, True)
         self.assertEqual(p.hp, p.max_hp)   # 최대 체력을 넘지 않는다
 
 
@@ -398,7 +398,7 @@ class StatPanelCollapseTests(unittest.TestCase):
         for _ in range(60):
             app.update(0.1, keys, far, (False, False, False))
         self.assertTrue(app.stats_collapsed)
-        game._add_score(100)
+        game.progression._add_score(100)
         app.update(0, keys, far, (False, False, False))
         self.assertFalse(app.stats_collapsed)
 
