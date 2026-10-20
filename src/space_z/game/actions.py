@@ -11,6 +11,7 @@ MOVE_VECTORS = [
 ]
 N_MOVES = 9
 N_ROTS = 3          # 0=유지, 1=왼쪽(반시계), 2=오른쪽(시계)
+# move * N_ROTS + rot
 N_ACTIONS = N_MOVES * N_ROTS
 ROT_DIR = (0.0, -1.0, 1.0)
 

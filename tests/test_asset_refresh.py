@@ -127,7 +127,11 @@ class AssetRefreshTests(unittest.TestCase):
 
         for pointer, focus, easy_active in [(easy.rect.center, 1, True),
                                            (normal.rect.center, 0, False),
-                                           ((-1, -1), 0, True), ((-1, -1), 1, False)]:
+                                           ((-1, -1), 0, True), ((-1, -1), 1, False),
+                                           (buttons[3].rect.center, 0, False),
+                                           (buttons[4].rect.center, 0, False),
+                                           ((-1, -1), 3, False), ((-1, -1), 4, False),
+                                           ((-1, -1), -1, False)]:
             with self.subTest(pointer=pointer, focus=focus):
                 self.renderer.screen.fill((0, 0, 0))
                 with patch("pygame.mouse.get_pos", return_value=pointer), \

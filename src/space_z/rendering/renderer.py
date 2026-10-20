@@ -50,7 +50,7 @@ SPAWN_FRAMES = 14   # 등장 애니메이션 길이
 SHAPE_FADE_FRAMES = 60  # 천체는 1초 동안 서서히 떠오른다
 SCORE_TEXT_FRAMES = 50  # "+점수" 글자가 떠오르는 시간
 SCORE_POPUP_FRAMES = 60  # 점수 팝업 기록을 유지하는 게임 프레임 수
-CONFIRMED_DIFFICULTY_ALPHA = 170  # 확정했지만 현재 가리키지 않는 난이도의 불투명도
+CONFIRMED_DIFFICULTY_ALPHA = 170  # 다른 난이도를 가리킬 때 확정된 난이도의 불투명도
 DEATH_FRAMES = 22   # 파괴/폭발 애니메이션 길이
 FLASH_FRAMES = 5    # 피격 깜빡임 길이
 MIN_BULLET_SCREEN_DIAMETER = 4  # 줌아웃해도 탄체 폭을 화면 기준 최소 4px로 표시
@@ -589,6 +589,11 @@ class Renderer:
         hovered_button_index = next((i for i, button in enumerate(buttons)
                                      if button.enabled and button.rect.collidepoint(mouse)), None)
         focused_button_index = hovered_button_index if hovered_button_index is not None else selected_button_index
+        difficulty_has_focus = (
+            main and 0 <= focused_button_index < len(buttons)
+            and buttons[focused_button_index].enabled
+            and buttons[focused_button_index].key.startswith("difficulty_")
+        )
         for i, button in enumerate(buttons):
             if main:
                 active = button.enabled and i == focused_button_index
@@ -606,7 +611,7 @@ class Renderer:
                 pygame.draw.circle(image, text_color, (20, button.rect.height // 2), 3)
             label = font.render(button.label, True, text_color)
             image.blit(label, label.get_rect(center=(button.rect.width // 2, button.rect.height // 2)))
-            if difficulty_choice and button.checked and not active:
+            if difficulty_has_focus and difficulty_choice and button.checked and not active:
                 image.set_alpha(CONFIRMED_DIFFICULTY_ALPHA)
             self.screen.blit(image, button.rect)
         hint = "클릭 또는 ↑↓ / Enter로 선택" if main else "새 게임은 진행도를 초기화합니다 · 설정은 이번 실행 동안 유지됩니다"

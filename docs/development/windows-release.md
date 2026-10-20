@@ -34,9 +34,9 @@ python scripts/build_windows_release.py
 
 ## 이번 배포본 검증
 
-2026-10-20, Windows 11 x64에서 Python 3.12.10·Pygame 2.6.1·NumPy 2.5.4·PyInstaller 6.22.3으로 만들었습니다. ZIP 크기는 35,648,964바이트(약 34MiB)입니다. 메인 메뉴의 스토리 모드 버튼을 제거하고 게임 나가기를 한 칸 위로 옮긴 변경을 포함합니다.
+2026-10-20, Windows 11 x64에서 Python 3.12.10·Pygame 2.6.1·NumPy 2.5.4·PyInstaller 6.22.3으로 만들었습니다. ZIP 크기는 35,648,431바이트(약 34MiB)입니다. 메인 메뉴의 스토리 모드 버튼을 제거하고 게임 나가기를 한 칸 위로 옮긴 변경을 포함합니다.
 
-점수 획득 기록은 코어, 점수 팝업은 렌더러가 소유하도록 분리했습니다. 메인 메뉴에서 확정된 난이도와 현재 가리키는 버튼이 다르면 확정된 버튼을 반투명하게 표시합니다. 코드·문서·테스트 검증은 [[development/testing-and-changes#점수 획득 기록과 팝업 분리 검증|검증 결과]]에서 확인합니다.
+점수 획득 기록은 코어, 점수 팝업은 렌더러가 소유하도록 분리했습니다. 메인 메뉴에서 다른 난이도에 포커스가 있을 때만 확정된 난이도를 반투명하게 표시하며, 무한 스테이지·게임 나가기에 포커스가 있으면 선명하게 표시합니다. 코드·문서·테스트 검증은 [[development/testing-and-changes#점수 획득 기록과 팝업 분리 검증|검증 결과]]에서 확인합니다.
 
 - ZIP을 프로젝트와 다른 작업 폴더에서 실행하도록 한글·공백이 포함된 별도 경로에 풀었습니다.
 - 자식 프로세스의 Python·가상환경 관련 환경변수를 제거하고 PATH를 Windows 시스템 경로만 남겼습니다.
@@ -47,7 +47,7 @@ python scripts/build_windows_release.py
 SHA256:
 
 ```text
-325c9d229017f89df4804b7089c9ceaa88f982de5c49fb7931d0ddbb407c483e
+b10fd14e73af6bdc23c313c0faacd3e90ceda9a4efd1b84458075330cd883bdd
 ```
 
 [[development/README|개발 목차]] · [[getting-started|소스로 실행하기]] · [[README|문서 목차]]
