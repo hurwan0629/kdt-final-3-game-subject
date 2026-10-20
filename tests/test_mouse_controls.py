@@ -11,11 +11,11 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig
-from env import TankEnv
-from game_core import GameCore, Tank, decode_action
-from main import GameApplication, read_player_input
-from renderer import Renderer
+from space_z.config import GameConfig
+from space_z.rl.environment import TankEnv
+from space_z.game.game_core import GameCore, Tank, decode_action
+from space_z.app import GameApplication, read_player_input
+from space_z.rendering.renderer import Renderer
 
 
 def key_state(*pressed):
@@ -121,7 +121,7 @@ class MouseControlTests(unittest.TestCase):
     def test_pause_focus_loss_freeze_but_stat_selection_keeps_game_running(self):
         game = self.game
         app = GameApplication(game, self.renderer, seed=1)
-        app.activate("start")
+        app.activate_menu_action("start")
         game.progression._add_score(60)
         key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
         key(pygame.K_p)
@@ -143,7 +143,7 @@ class MouseControlTests(unittest.TestCase):
 
     def test_quick_click_survives_a_frame_without_a_simulation_tick(self):
         app = GameApplication(self.game, self.renderer, seed=1)
-        app.activate("start")
+        app.activate_menu_action("start")
         app.update(0, key_state(), (800, 360), (False, False, False))
         app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=(800, 360)))
         app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONUP, button=1, pos=(800, 360)))
@@ -155,7 +155,7 @@ class MouseControlTests(unittest.TestCase):
 
     def test_q_and_space_do_not_activate_combat_actions(self):
         app = GameApplication(self.game, self.renderer, seed=1)
-        app.activate("start")
+        app.activate_menu_action("start")
         with patch.object(self.game.combat, "request_skill", wraps=self.game.combat.request_skill) as skill:
             for key in (pygame.K_q, pygame.K_SPACE):
                 app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
@@ -172,7 +172,7 @@ class MouseControlTests(unittest.TestCase):
         cfg.random_map = False
         cfg.block_tiles = 5
         self.game.progression._add_score(190)
-        with patch("game_core.load_map", side_effect=AssertionError("N must not load a named map")):
+        with patch("space_z.game.game_core.load_map", side_effect=AssertionError("N must not load a named map")):
             app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n))
         self.assertTrue(cfg.enabled)
         self.assertTrue(cfg.random_map)
@@ -200,7 +200,7 @@ class MouseControlTests(unittest.TestCase):
         second = [row[:] for row in self.game.terrain.tiles]
         self.assertNotEqual(first, second)
         self.assertEqual(app.seed, 9)
-        app.activate("restart")
+        app.activate_menu_action("restart")
         self.assertEqual(self.game.terrain.tiles, second)
         self.game.reset(8)
         self.assertEqual(self.game.terrain.tiles, first)

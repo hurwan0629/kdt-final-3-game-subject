@@ -14,12 +14,13 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 import numpy as np
 import pygame
 
-from config import GameConfig, ObsConfig
-from env import TankEnv, build_vector
-from game_core import Bullet, GameCore, encode_action
-from progression import STAT_MAX_LEVEL, STAT_UPGRADES, SPECIAL_REWARDS, special_cards, stat_rows
-from renderer import Renderer
-from terrain import list_maps
+from space_z.config import GameConfig, ObsConfig
+from space_z.rl.environment import TankEnv, build_vector
+from space_z.game.game_core import Bullet, GameCore, encode_action
+from space_z.config.progression_definitions import STAT_MAX_LEVEL, STAT_UPGRADES, SPECIAL_REWARDS
+from space_z.rendering.progression_panel import get_evolution_card_rects, build_stat_upgrade_rows
+from space_z.rendering.renderer import Renderer
+from space_z.game.terrain import list_maps
 
 
 def empty_game(seed=7):
@@ -348,11 +349,11 @@ class RendererTests(unittest.TestCase):
         renderer.draw(game)
 
     def test_rewards_are_selected_in_hud_without_pausing_combat(self):
-        from main import GameApplication
+        from space_z.app import GameApplication
         from collections import defaultdict
         game = empty_game()
         app = GameApplication(game, self.renderer, seed=7)
-        app.activate("start")
+        app.activate_menu_action("start")
         game.progression._add_score(1980)
         key = lambda k: app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
         cards = game.progression.reward_choices
@@ -375,10 +376,10 @@ class RendererTests(unittest.TestCase):
         game.progression._add_score(1980)
         screen = pygame.Rect(0, 0, 960, 720)
         hp_panel = pygame.Rect(314, 620, 332, 84)
-        for _, rect in stat_rows(960, 720):
+        for _, rect in build_stat_upgrade_rows(960, 720):
             self.assertTrue(screen.contains(pygame.Rect(rect)))
             self.assertFalse(hp_panel.colliderect(pygame.Rect(rect)))
-        for rect in special_cards(960, 720):
+        for rect in get_evolution_card_rects(960, 720):
             self.assertTrue(screen.contains(pygame.Rect(rect)))
         self.renderer.draw(game)
 

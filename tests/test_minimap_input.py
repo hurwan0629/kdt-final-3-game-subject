@@ -7,9 +7,9 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 import pygame
-from config import GameConfig
-from game_core import GameCore
-from main import GameApplication
+from space_z.config import GameConfig
+from space_z.game.game_core import GameCore
+from space_z.app import GameApplication
 
 class MinimapInputTests(unittest.TestCase):
     def application(self, progression=True):
@@ -21,7 +21,7 @@ class MinimapInputTests(unittest.TestCase):
             _update_camera=lambda player: None,
             screen_to_world=lambda x, y: (game.player.x+500, game.player.y))
         app = GameApplication(game, renderer, seed=8)
-        app.activate("start")
+        app.activate_menu_action("start")
         app.suppress_fire = False
         return game, app
 

@@ -10,11 +10,11 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig, ObsConfig
-from game_core import GameCore
-from main import GameApplication
-from progression import player_stat_summary, stat_rows, stat_upgrades_visible
-from renderer import Renderer
+from space_z.config import GameConfig, ObsConfig
+from space_z.game.game_core import GameCore
+from space_z.app import GameApplication
+from space_z.rendering.progression_panel import build_player_stat_summary, build_stat_upgrade_rows, can_show_stat_upgrades
+from space_z.rendering.renderer import Renderer
 
 
 class StatsPanelTests(unittest.TestCase):
@@ -33,7 +33,7 @@ class StatsPanelTests(unittest.TestCase):
     def setUp(self):
         self.game = GameCore(self.renderer.cfg, seed=7)
         self.app = GameApplication(self.game, self.renderer, seed=7)
-        self.app.activate("start")
+        self.app.activate_menu_action("start")
         self.keys = defaultdict(bool)
 
     def update(self, elapsed=0, buttons=(False, False, False), pos=(800, 360)):
@@ -61,7 +61,7 @@ class StatsPanelTests(unittest.TestCase):
 
     def test_five_upgrade_rows_remain_visible_without_points_and_points_accumulate(self):
         with patch.object(self.renderer, "_draw_stat_upgrades", wraps=self.renderer._draw_stat_upgrades) as rows:
-            self.assertTrue(stat_upgrades_visible(self.game))
+            self.assertTrue(can_show_stat_upgrades(self.game))
             self.assertEqual(len(self.game.progression.stat_choices), 5)
             self.assertFalse(any(self.game.progression.can_upgrade_stat(c.key) for c in self.game.progression.stat_choices))
             self.renderer.draw(self.game)
@@ -78,7 +78,7 @@ class StatsPanelTests(unittest.TestCase):
             self.assertFalse(self.game.progression.upgrade_stat("speed"))
 
     def test_inactive_stat_rows_block_firing_and_clicks_spend_one_point(self):
-        pos = pygame.Rect(stat_rows(960, 720)[0][1]).center
+        pos = pygame.Rect(build_stat_upgrade_rows(960, 720)[0][1]).center
         self.update()
         self.assertTrue(self.app.pointer_over_rewards(pos))
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos))
@@ -101,15 +101,15 @@ class StatsPanelTests(unittest.TestCase):
         self.update()
         self.assertTrue(self.app.show_stats)
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
-        selected = self.app.selected
+        selected_button_index = self.app.selected_button_index
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_TAB))
-        self.assertNotEqual(self.app.selected, selected)
+        self.assertNotEqual(self.app.selected_button_index, selected_button_index)
         self.update()
         self.assertFalse(self.app.show_stats)
-        self.app.activate("main")
+        self.app.activate_menu_action("main")
         self.update()
         self.assertFalse(self.app.show_stats)
-        self.app.activate("start")
+        self.app.activate_menu_action("start")
         self.game.game_over = True
         self.update()
         self.assertFalse(self.app.show_stats)
@@ -119,7 +119,7 @@ class StatsPanelTests(unittest.TestCase):
         game.progression.upgrade_points = 5
         for key in game.progression.stat_levels:
             game.progression.upgrade_stat(key)
-        stats = dict(player_stat_summary(game))
+        stats = dict(build_player_stat_summary(game))
         self.assertEqual(stats["체력"], "125 / 125")
         self.assertEqual(stats["자가 수리"], "3.8 / 초")   # 체력 125/100배만큼 회복도 비례해서 커짐
         self.assertEqual(stats["탄창"], "120 / 120")
@@ -130,7 +130,7 @@ class StatsPanelTests(unittest.TestCase):
                 game.progression.special_levels[weapon] = 2
                 game.player.cooldown = 0
                 game.combat.bullets.clear()
-                stats = dict(player_stat_summary(game))
+                stats = dict(build_player_stat_summary(game))
                 game.combat._fire(game.player, True)
                 bullet = game.combat.bullets[0]
                 self.assertEqual(stats["주무기 피해 · 1발"], f"{bullet.damage:.2f}")

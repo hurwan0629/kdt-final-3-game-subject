@@ -5,13 +5,12 @@ from unittest.mock import patch
 from pathlib import Path
 from collections import deque
 
-import terrain
+from space_z.game import terrain
 
 import numpy as np
 
-from config import TerrainConfig, GameConfig, ObsConfig
-from terrain import (TileMap, EMPTY, WALL, BREAKABLE, MapError, grid_channels,
-                     list_maps, load_map, parse_map, expand_map, generate_random_map, map_to_text)
+from space_z.config import TerrainConfig, GameConfig, ObsConfig
+from space_z.game.terrain import TileMap, EMPTY, WALL, BREAKABLE, MapError, grid_channels, list_maps, load_map, parse_map, expand_map, generate_random_map, map_to_text
 
 
 class LargeWallLayoutTests(unittest.TestCase):
@@ -216,7 +215,7 @@ class SweptCircleTests(unittest.TestCase):
 
 class RemovedStealthObservationTests(unittest.TestCase):
     def test_flat_and_dict_observations_use_only_current_terrain(self):
-        from env import TankEnv
+        from space_z.rl.environment import TankEnv
         for mode in ("flat", "dict"):
             for stage2 in (False, True):
                 cfg = GameConfig(num_enemies=1, num_shapes=2)

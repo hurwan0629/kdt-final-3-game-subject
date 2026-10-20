@@ -10,10 +10,10 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig
-from game_core import GameCore, Tank
-from renderer import Renderer, COLORS, MINIMAP_ALPHA
-from terrain import TileMap, EMPTY, WALL, BREAKABLE
+from space_z.config import GameConfig
+from space_z.game.game_core import GameCore, Tank
+from space_z.rendering.renderer import Renderer, COLORS, MINIMAP_ALPHA
+from space_z.game.terrain import TileMap, EMPTY, WALL, BREAKABLE
 
 
 class MinimapTests(unittest.TestCase):

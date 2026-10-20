@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -13,11 +14,12 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig
-from game_core import GameCore
-from menus import menu_buttons
-from renderer import DEATH_FRAMES, Renderer
-from terrain import BREAKABLE, EMPTY, MUD, WALL, TileMap
+from space_z.config import GameConfig
+from space_z.game.game_core import GameCore
+from space_z.rendering.menu_layout import build_menu_buttons
+from space_z.rendering.renderer import DEATH_FRAMES, Renderer
+from space_z.resource_paths import resource_path
+from space_z.game.terrain import BREAKABLE, EMPTY, MUD, WALL, TileMap
 
 
 class AssetRefreshTests(unittest.TestCase):
@@ -31,6 +33,25 @@ class AssetRefreshTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pygame.quit()
+
+    def test_resource_paths_work_outside_project_directory(self):
+        project_root = Path(__file__).resolve().parents[1]
+        previous_directory = Path.cwd()
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                for relative in ("maps/belt.txt", "assets/backgrounds/main.png"):
+                    with self.subTest(relative=relative):
+                        resolved = Path(resource_path(relative))
+                        self.assertEqual(resolved, project_root / relative)
+                        self.assertTrue(resolved.is_file())
+            finally:
+                os.chdir(previous_directory)
+
+    def test_resource_paths_use_pyinstaller_bundle_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("space_z.resource_paths.sys._MEIPASS", directory, create=True):
+                self.assertEqual(Path(resource_path("maps/belt.txt")), Path(directory) / "maps/belt.txt")
 
     def test_catalog_and_archive_preserve_every_listed_file(self):
         root = Path(__file__).resolve().parents[1] / "assets"
@@ -69,7 +90,7 @@ class AssetRefreshTests(unittest.TestCase):
     def test_menu_art_preserves_button_rects_and_cached_normal_image(self):
         for mode in ("main", "pause"):
             with self.subTest(menu=mode):
-                buttons = menu_buttons(mode, self.cfg, size=self.renderer.size)
+                buttons = build_menu_buttons(mode, self.cfg, size=self.renderer.size)
                 rects = [button.rect.copy() for button in buttons]
                 normal = self.renderer.assets.image("etc/home_selected_normal", buttons[-1].rect.size)
                 before = pygame.image.tobytes(normal, "RGBA")

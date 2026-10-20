@@ -11,11 +11,11 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig
-from game_core import GameCore
-from main import GameApplication
-from menus import DIFFICULTY_OPTIONS
-from progression import STAT_UPGRADES
+from space_z.config import GameConfig
+from space_z.game.game_core import GameCore
+from space_z.app import GameApplication
+from space_z.rendering.menu_layout import DIFFICULTY_OPTIONS
+from space_z.config.progression_definitions import STAT_UPGRADES
 
 
 class DifficultyMenuTests(unittest.TestCase):
@@ -28,7 +28,7 @@ class DifficultyMenuTests(unittest.TestCase):
         return game, GameApplication(game, renderer, seed=22)
 
     def click(self, app, key):
-        button = next(button for button in app.buttons() if button.key == key)
+        button = next(button for button in app.get_menu_buttons() if button.key == key)
         app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1,
                                            pos=button.rect.center))
 
@@ -37,10 +37,10 @@ class DifficultyMenuTests(unittest.TestCase):
 
     def test_every_launch_defaults_to_normal_with_start_focused(self):
         game, app = self.application()
-        choices = [button for button in app.buttons() if button.key.startswith("difficulty_")]
+        choices = [button for button in app.get_menu_buttons() if button.key.startswith("difficulty_")]
         self.assertEqual([button.label for button in choices], ["쉬움", "보통", "어려움"])
         self.assertEqual([button.key for button in choices if button.checked], ["difficulty_normal"])
-        self.assertEqual(app.buttons()[app.selected].key, "start")
+        self.assertEqual(app.get_menu_buttons()[app.selected_button_index].key, "start")
         self.click(app, "difficulty_hard")
         self.click(app, "start")
         self.assertEqual(game.cfg.enemy_ai.stat_mirror_ratio, .6)
@@ -59,7 +59,7 @@ class DifficultyMenuTests(unittest.TestCase):
                 self.assertEqual(game.frame, 0)
                 self.assertEqual(app.difficulty_ratio, ratio)
                 self.assertEqual(asdict(game.cfg.enemy_ai), old_ai)
-                self.assertEqual([button.key for button in app.buttons() if button.checked], [key])
+                self.assertEqual([button.key for button in app.get_menu_buttons() if button.checked], [key])
                 app.update(100, defaultdict(bool), (0, 0), (False, False, False))
                 self.assertEqual(game.frame, 0)
                 self.click(app, "start")
@@ -72,7 +72,7 @@ class DifficultyMenuTests(unittest.TestCase):
         game, app = self.application()
         for expected in ("difficulty_hard", "difficulty_normal", "difficulty_easy"):
             self.key(app, pygame.K_UP)
-            self.assertEqual(app.buttons()[app.selected].key, expected)
+            self.assertEqual(app.get_menu_buttons()[app.selected_button_index].key, expected)
         self.key(app, pygame.K_RETURN)
         self.assertEqual((app.mode, app.difficulty_ratio), ("main", .4))
         self.key(app, pygame.K_TAB)
@@ -82,8 +82,8 @@ class DifficultyMenuTests(unittest.TestCase):
         self.key(app, pygame.K_RETURN)
         self.assertEqual((app.mode, app.difficulty_ratio), ("main", .6))
         self.key(app, pygame.K_DOWN)
-        self.assertEqual(app.buttons()[app.selected].key, "start")
-        self.assertTrue(next(button for button in app.buttons()
+        self.assertEqual(app.get_menu_buttons()[app.selected_button_index].key, "start")
+        self.assertTrue(next(button for button in app.get_menu_buttons()
                              if button.key == "difficulty_hard").checked)
         self.key(app, pygame.K_RETURN)
         self.assertEqual((app.mode, game.cfg.enemy_ai.stat_mirror_ratio), ("playing", .6))
@@ -94,9 +94,9 @@ class DifficultyMenuTests(unittest.TestCase):
         self.click(app, "start")
         for mode in ("playing", "pause"):
             app.mode = mode
-            self.assertFalse(any(button.key.startswith("difficulty_") for button in app.buttons()))
+            self.assertFalse(any(button.key.startswith("difficulty_") for button in app.get_menu_buttons()))
             for key, _, _ in DIFFICULTY_OPTIONS:
-                app.activate(key)
+                app.activate_menu_action(key)
                 self.assertEqual((app.mode, app.difficulty_ratio,
                                   game.cfg.enemy_ai.stat_mirror_ratio), (mode, .4, .4))
         self.click(app, "restart")
@@ -109,7 +109,7 @@ class DifficultyMenuTests(unittest.TestCase):
         self.key(app, pygame.K_ESCAPE)
         self.click(app, "main")
         self.assertEqual(app.mode, "main")
-        self.assertEqual(app.buttons()[app.selected].key, "start")
+        self.assertEqual(app.get_menu_buttons()[app.selected_button_index].key, "start")
         self.assertEqual(app.difficulty_ratio, .4)
         self.click(app, "difficulty_hard")
         self.assertEqual(game.cfg.enemy_ai.stat_mirror_ratio, .4)
@@ -141,7 +141,7 @@ class DifficultyMenuTests(unittest.TestCase):
         for size in ((960, 640), (1280, 800), (1920, 1080)):
             with self.subTest(size=size):
                 app.renderer.size = size
-                buttons = app.buttons()
+                buttons = app.get_menu_buttons()
                 viewport = pygame.Rect((0, 0), size)
                 for i, button in enumerate(buttons):
                     self.assertTrue(viewport.contains(button.rect))
@@ -152,7 +152,7 @@ class DifficultyMenuTests(unittest.TestCase):
                 self.assertEqual(buttons[2].rect.right, buttons[3].rect.right)
                 self.assertLess(buttons[0].rect.bottom, buttons[3].rect.top)
         app.mode = "pause"
-        self.assertEqual([button.key for button in app.buttons()],
+        self.assertEqual([button.key for button in app.get_menu_buttons()],
                          ["fullscreen", "zoom", "controls", "debug", "auto_pause",
                           "resume", "restart", "main", "quit"])
 

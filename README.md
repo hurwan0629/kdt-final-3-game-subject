@@ -1,19 +1,19 @@
-# Space Skirmish
+# Space Z
 
 Python/Pygame 기반 탑뷰 우주선 슈팅 게임과 화면 없는 강화학습 환경입니다.
 
 ## 실행과 검증
 
 ```powershell
-pip install -r requirements.txt
-python main.py
-python main.py --seed 42 --map belt
-python main.py --random-map
-python main.py --stage2
-python main.py --no-terrain
-python main.py --limited-ammo   # 기본은 탄약 무제한, 이 플래그로 120발 제한 켜기
+python -m pip install -e .
+python -m space_z
+python -m space_z --seed 42 --map belt
+python -m space_z --random-map
+python -m space_z --stage2
+python -m space_z --no-terrain
+python -m space_z --limited-ammo   # 기본은 탄약 무제한, 이 플래그로 120발 제한 켜기
 python -m unittest discover -s tests -v
-python random_agent_test.py
+python scripts/random_agent_test.py
 ```
 
 ## 조작
@@ -42,8 +42,8 @@ Q·Space 액티브 스킬은 제거했습니다. 설정 메뉴의 Q 종료 단�
 | 1 | 체력 | 최대 체력 +25, 현재 체력 +25(최대치 제한) |
 | 2 | 공격력 | 주무기 피해 ×1.25 |
 | 3 | 사거리 및 탄속도 | 탄속 ×1.2, 탄환 수명 ×1.15 |
-| 4 | 발사속도 | 기본 발사 대기 ×0.85, 최소 4프레임 |
-| 5 | 이동속도 | 이동 가속도 ×1.15 |
+| 4 | 발사속도 | 기본 발사 대기 ×0.95 후 반올림, 최소 4프레임 |
+| 5 | 이동속도 | 이동 가속도 ×1.07 |
 
 점수만큼 경험치를 얻고 다음 레벨의 요구량은 `60 + (현재 레벨 - 1) × 40`입니다. 일반 레벨업마다 강화 포인트 1개를 주며, 쓰지 않은 포인트는 계속 누적하고 화면에 표시합니다. 10의 배수 레벨은 별도의 전직·숙련 보상을 줍니다. 전직을 미뤄도 순서대로 선택할 수 있고 일반 강화와 남은 포인트는 유지됩니다. 새 게임·맵 변경 시 초기화합니다.
 
@@ -69,11 +69,11 @@ Q·Space 액티브 스킬은 제거했습니다. 설정 메뉴의 Q 종료 단�
 
 트윈 계열은 교차 연사·순차 4/6연사 또는 3/5방향 동시 탄막, 스나이퍼 계열은 모두 한 번에 일반 저격탄 1발을 발사하며 단계별 피해·탄속·사거리로 차별화합니다. 헌터·프레데터도 단발입니다. 플랭크 계열은 전후방·사방·8방향 또는 전후 쌍포와 측면포를 사용합니다. 가디언 계열은 큰 선체·높은 체력·피해 감소와 약한 소형 견제포를 갖습니다. 최종 진화는 직전 기체의 직계 자식 하나로 연결되고, Lv40부터 매 10레벨은 현재 기체 숙련 보상입니다.
 
-`python main.py` 기본 실행은 탄약 무제한입니다(`--limited-ammo`로 켜거나, `GameConfig(limited_ammo=True)`로 직접 설정 가능). 켜면 탄환마다 탄약 1발을 쓰고, 순차 발사는 실제 탄환이 나오는 시점에 소모하며, 재장전·사망·전직 시 남은 연사 묶음은 취소됩니다. 탄환은 처음 맞은 대상에 피해를 주고 사라지며 벽에서 멈추는데, 스나이퍼 계열(스나이퍼/레일거너/헌터/하이퍼 레일건/프레데터)은 관통 1회가 있어 대상 하나를 더 맞힙니다.
+`python -m space_z` 기본 실행은 탄약 무제한입니다(`--limited-ammo`로 켜거나, `GameConfig(limited_ammo=True)`로 직접 설정 가능). 켜면 탄환마다 탄약 1발을 쓰고, 순차 발사는 실제 탄환이 나오는 시점에 소모하며, 재장전·사망·전직 시 남은 연사 묶음은 취소됩니다. 탄환은 처음 맞은 대상에 피해를 주고 사라지며 벽에서 멈추는데, 스나이퍼 계열(스나이퍼/레일거너/헌터/하이퍼 레일건/프레데터)은 관통 1회가 있어 대상 하나를 더 맞힙니다.
 
 ## 기체 크기와 전체 미니맵
 
-플레이어와 적 우주선은 이전보다 가로·세로가 각각 2배이고 실제 충돌 반경도 2배입니다. 기본 선체 반경은 44px, 가장 큰 시타델은 96px입니다. 탄환은 기체별 포신 입구에 맞춰 물리 크기와 화면에서 보이는 폭을 함께 조정합니다.
+플레이어와 적 우주선은 이전보다 가로·세로가 각각 2배이고 실제 충돌 반경도 2배입니다. 기본 선체 반경은 44px, 가장 큰 시타델은 96px입니다. 탄환 충돌 크기는 포신 입구를 기준으로 계산하고, 작은 탄환의 표시는 화면 기준 최소 4px로 보정합니다.
 
 오른쪽 아래에는 카메라·줌과 무관한 전체 미니맵이 표시됩니다. 밝은 회색 공간에 진한 회색 벽을 그리고 플레이어 위치와 방향만 표시합니다. 적 위치는 표시하지 않습니다.
 
@@ -93,27 +93,16 @@ Q·Space 액티브 스킬은 제거했습니다. 설정 메뉴의 Q 종료 단�
 
 ## 파일 구조
 
-| 파일 | 역할 |
-|---|---|
-| `main.py` | 입력·메뉴·실행 루프 |
-| `game_core.py` | 공통 월드·초기화·프레임 처리 순서 |
-| `gameplay/progression.py` | 점수·레벨·강화·진화 상태와 적용 |
-| `gameplay/combat.py` | 무장·탄환·피해·회복·충돌·전투 연출 |
-| `gameplay/enemies.py` | 적 재등장·성장·AI |
-| `gameplay/entities.py`, `gameplay/actions.py` | 개체 상태 정의·행동 변환 |
-| `progression.py` | 5개 스탯, 21종 기체·포신·진화 정의 |
-| `config.py` | 게임·지형·환경 설정 |
-| `terrain.py`, `maps/` | 맵·충돌·시야·선체 크기를 고려한 경로 탐색 |
-| `renderer.py`, `sprite_assets.py`, `assets/` | 화면과 PNG 리소스 |
-| `env.py` | Gymnasium 형태의 학습 환경 |
-| `tests/`, `random_agent_test.py` | 자동 검증 |
+실행 코드는 `src/space_z/`에 있습니다. `config/`는 설정·정의, `game/`은 공통 규칙, `rendering/`은 화면, `rl/`은 학습 환경입니다. `main.py`는 실행 준비, `app.py`는 입력·메뉴를 관리합니다.
+
+`assets/`, `maps/`, `tests/`, `docs/`는 프로젝트 루트에 유지합니다. 검증·문서 생성 도구는 `scripts/`에 있습니다. [폴더와 객체의 상세 지도](docs/development/project-structure.md)를 참고하세요.
 
 ## 강화학습
 
 기본 `TankEnv()`는 성장과 탄약 제한을 끄고, 이동 9방향 × 회전 3가지의 27개 행동으로 자동 발사합니다. 관찰은 기본 float32 길이 **241**(자기 8 + 적 24 + 천체 48 + 적 탄환 40 + 벽 121)입니다. 은신 채널이 사라져 기존 363차원 모델과 입력 크기가 다릅니다.
 
 ```python
-from env import TankEnv
+from space_z.rl.environment import TankEnv
 env = TankEnv()
 observation, info = env.reset(seed=42)
 observation, reward, terminated, truncated, info = env.step(0)
@@ -124,10 +113,10 @@ observation, reward, terminated, truncated, info = env.step(0)
 ## 실행 파일 만들기
 
 ```powershell
-pyinstaller --onefile --windowed --name SpaceSkirmish --add-data "maps;maps" --add-data "assets;assets" main.py
+pyinstaller --onefile --windowed --name SpaceZ --paths src --add-data "maps;maps" --add-data "assets;assets" src/space_z/__main__.py
 ```
 
-추가 설명은 [docs/README.md](docs/README.md)를 확인하세요.
+설치·게임 안내·클래스·동작 흐름은 [문서 목차](docs/README.md)에서 찾아볼 수 있습니다.
 
 ## 중앙 카메라와 확장 월드
 

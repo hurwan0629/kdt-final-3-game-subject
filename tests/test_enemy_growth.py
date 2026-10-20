@@ -10,11 +10,12 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig, ObsConfig, SHAPE_TYPES
-from game_core import GameCore
-from main import GameApplication
-from progression import SHIPS, SHIPS_BY_LEVEL, STAT_MAX_LEVEL, STAT_UPGRADES, stat_collapsed_rect
-from renderer import Renderer
+from space_z.config import GameConfig, ObsConfig, SHAPE_TYPES
+from space_z.game.game_core import GameCore
+from space_z.app import GameApplication
+from space_z.config.progression_definitions import SHIPS, SHIPS_BY_LEVEL, STAT_MAX_LEVEL, STAT_UPGRADES
+from space_z.rendering.progression_panel import get_collapsed_stat_panel_rect
+from space_z.rendering.renderer import Renderer
 
 
 def open_game(enemies=0, seed=7, mercy_seconds=None):
@@ -214,7 +215,7 @@ class ShapeSpawnAvoidsTightCornersTests(unittest.TestCase):
         (그런 구석에 천체가 생기면 적들이 거리 유지를 하려다 구석에 몰려 끼기 쉽다).
         방 대부분은 넓게 트여 있고 한쪽 구석만 ㄱ자 벽으로 좁게 막아 둔 뒤, 스폰 위치
         대부분이 '적이 돌 수 있는 자리(roomy)'를 만족하는지 확인한다."""
-        from terrain import TileMap, EMPTY, WALL
+        from space_z.game.terrain import TileMap, EMPTY, WALL
         cfg = GameConfig(num_enemies=0, num_shapes=0)
         cfg.terrain.enabled = False
         game = GameCore(cfg, seed=3)
@@ -243,7 +244,7 @@ class ShapeSpawnAvoidsTightCornersTests(unittest.TestCase):
 class SmarterEnemyAITests(unittest.TestCase):
     """플레이어가 대각선/벽 뒤에 있어도 적이 찾아오는지."""
     def make(self, enemies, wall_col=None):
-        from terrain import TileMap, EMPTY, WALL
+        from space_z.game.terrain import TileMap, EMPTY, WALL
         cfg = GameConfig(num_enemies=enemies, num_shapes=0)
         cfg.terrain.enabled = False
         game = GameCore(cfg, seed=1)
@@ -268,7 +269,7 @@ class SmarterEnemyAITests(unittest.TestCase):
         e, p = game.enemies[0], game.player
         self.place(e, 1000, 800)
         self.place(p, 1000 + 450, 800 + 450)   # 대각선 약 636px
-        from game_core import Shape
+        from space_z.game.game_core import Shape
         game.shapes = [Shape(game._new_id(), "square", 1060, 800, 0, 0, 10, 10, 26, 10)]
         self.run_frames(game, 25)
         self.assertEqual(e.ai_target[0], "player")
@@ -385,22 +386,22 @@ class StatPanelCollapseTests(unittest.TestCase):
         app.mode = "playing"
         keys, far = defaultdict(bool), (700, 200)
         app.update(0, keys, far, (False, False, False))
-        self.assertFalse(app.stats_collapsed)
+        self.assertFalse(app.stat_panel_collapsed)
         for _ in range(60):   # 한 번에 최대 5프레임씩 진행
             app.update(0.1, keys, far, (False, False, False))
-        self.assertTrue(app.stats_collapsed)
+        self.assertTrue(app.stat_panel_collapsed)
         app.draw(ObsConfig())
-        pill = pygame.Rect(stat_collapsed_rect(*self.renderer.size))
+        pill = pygame.Rect(get_collapsed_stat_panel_rect(*self.renderer.size))
         self.assertTrue(app.pointer_over_rewards(pill.center))
         app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pill.center))
-        self.assertFalse(app.stats_collapsed)
+        self.assertFalse(app.stat_panel_collapsed)
         # 새 스탯 포인트가 생겨도 다시 펼쳐진다.
         for _ in range(60):
             app.update(0.1, keys, far, (False, False, False))
-        self.assertTrue(app.stats_collapsed)
+        self.assertTrue(app.stat_panel_collapsed)
         game.progression._add_score(100)
         app.update(0, keys, far, (False, False, False))
-        self.assertFalse(app.stats_collapsed)
+        self.assertFalse(app.stat_panel_collapsed)
 
 
 if __name__ == "__main__":

@@ -11,10 +11,10 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig
-from game_core import GameCore
-from main import GameApplication
-from progression import REWARD_CARDS
+from space_z.config import GameConfig
+from space_z.game.game_core import GameCore
+from space_z.app import GameApplication
+from space_z.config.progression_definitions import REWARD_CARDS
 
 
 class MenusReloadTests(unittest.TestCase):
@@ -31,27 +31,27 @@ class MenusReloadTests(unittest.TestCase):
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
 
     def click(self, name):
-        button = next(b for b in self.app.buttons() if b.key == name)
+        button = next(b for b in self.app.get_menu_buttons() if b.key == name)
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=button.rect.center))
 
     def update(self, elapsed=1 / 60, fire=False):
         self.app.update(elapsed, defaultdict(bool), (480, 360), (fire, False, False))
 
     def test_main_menu_difficulty_choices_disabled_story_and_keyboard_navigation(self):
-        buttons = self.app.buttons()
+        buttons = self.app.get_menu_buttons()
         self.assertEqual([b.key for b in buttons],
                          ["difficulty_easy", "difficulty_normal", "difficulty_hard", "start", "story", "quit"])
         self.assertEqual(buttons[3].rect.top, 354)
         self.assertFalse(buttons[4].enabled)
-        self.assertEqual(self.app.selected, 3)
+        self.assertEqual(self.app.selected_button_index, 3)
         self.click("story")
         self.assertEqual(self.app.mode, "main")
         self.update(100)
         self.assertEqual(self.game.frame, 0)
         self.key(pygame.K_DOWN)
-        self.assertEqual(self.app.selected, 5)
+        self.assertEqual(self.app.selected_button_index, 5)
         self.key(pygame.K_UP)
-        self.assertEqual(self.app.selected, 3)
+        self.assertEqual(self.app.selected_button_index, 3)
         self.key(pygame.K_RETURN)
         self.assertEqual(self.app.mode, "playing")
 
@@ -94,7 +94,7 @@ class MenusReloadTests(unittest.TestCase):
         self.click("quit")
         self.assertFalse(self.app.running)
         self.app.running = True
-        self.app.activate("start")
+        self.app.activate_menu_action("start")
         self.game.progression._add_score(190)
         self.key(pygame.K_ESCAPE)
         self.click("restart")
@@ -156,13 +156,13 @@ class MenusReloadTests(unittest.TestCase):
         self.assertNotIn("ammo", {c.key for c in REWARD_CARDS})
 
     def test_real_main_loop_starts_on_main_menu_and_handles_exit(self):
-        import main
+        from space_z import main
         pygame.init()
         pygame.display.set_mode((960, 720))
         renderer = SimpleNamespace(clock=Mock(), draw_main_menu=Mock(), draw=Mock())
         renderer.clock.tick.return_value = 17
-        with patch("sys.argv", ["main.py"]), patch("main.GameCore", return_value=self.game), \
-                patch("renderer.Renderer", return_value=renderer), \
+        with patch("sys.argv", ["main.py"]), patch("space_z.main.GameCore", return_value=self.game), \
+                patch("space_z.rendering.renderer.Renderer", return_value=renderer), \
                 patch("pygame.event.get", side_effect=[[], [pygame.event.Event(pygame.QUIT)]]):
             main.main()
         renderer.draw_main_menu.assert_called_once()

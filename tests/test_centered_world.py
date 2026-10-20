@@ -6,10 +6,10 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 import numpy as np
 import pygame
-import terrain
-from config import GameConfig, TerrainConfig
-from game_core import GameCore
-from renderer import Renderer
+from space_z.game import terrain
+from space_z.config import GameConfig, TerrainConfig
+from space_z.game.game_core import GameCore
+from space_z.rendering.renderer import Renderer
 
 class ExpandedWorldTests(unittest.TestCase):
     def test_default_area_and_enemy_population(self):

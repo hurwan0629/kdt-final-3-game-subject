@@ -7,10 +7,11 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
-from config import GameConfig
-from game_core import Bullet, GameCore, Shape, Tank
-from progression import SHIPS, SKILLS, STAT_UPGRADES, stat_rows, stat_upgrades_visible
-from terrain import TileMap, EMPTY, WALL, BREAKABLE
+from space_z.config import GameConfig
+from space_z.game.game_core import Bullet, GameCore, Shape, Tank
+from space_z.config.progression_definitions import SHIPS, SKILLS, STAT_UPGRADES
+from space_z.rendering.progression_panel import build_stat_upgrade_rows, can_show_stat_upgrades
+from space_z.game.terrain import TileMap, EMPTY, WALL, BREAKABLE
 
 
 class WeaponsSkillsTests(unittest.TestCase):
@@ -101,7 +102,7 @@ class WeaponsSkillsTests(unittest.TestCase):
     def test_five_fixed_stats_show_at_zero_and_points_accumulate(self):
         game = self.game
         self.assertEqual([s.title for s in STAT_UPGRADES], ["체력", "공격력", "사거리 및 탄속도", "발사속도", "이동속도"])
-        self.assertTrue(stat_upgrades_visible(game))
+        self.assertTrue(can_show_stat_upgrades(game))
         self.assertEqual(game.progression.stat_choices, STAT_UPGRADES)
         self.assertTrue(all(not game.progression.can_upgrade_stat(s.key) for s in STAT_UPGRADES))
         game.progression._add_score(190)
@@ -114,7 +115,7 @@ class WeaponsSkillsTests(unittest.TestCase):
         self.assertTrue(game.progression.upgrade_stat("hull"))
         self.assertEqual(game.progression.upgrade_points, 7)
         self.assertEqual(game.progression.stat_choices, STAT_UPGRADES)
-        rows = [rect for _, rect in stat_rows(960, 720)]
+        rows = [rect for _, rect in build_stat_upgrade_rows(960, 720)]
         self.assertEqual(len(rows), 5)
         self.assertTrue(all(y >= 0 and y + h <= 720 for x, y, w, h in rows))
 

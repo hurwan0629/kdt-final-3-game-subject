@@ -10,11 +10,12 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 import pygame
 
-from config import GameConfig, ObsConfig
-from game_core import Bullet, GameCore
-from main import GameApplication
-from progression import FAMILIES, SHIPS, STAT_UPGRADES, stat_rows, special_cards
-from renderer import Renderer
+from space_z.config import GameConfig, ObsConfig
+from space_z.game.game_core import Bullet, GameCore
+from space_z.app import GameApplication
+from space_z.config.progression_definitions import FAMILIES, SHIPS, STAT_UPGRADES
+from space_z.rendering.progression_panel import build_stat_upgrade_rows, get_evolution_card_rects
+from space_z.rendering.renderer import Renderer
 
 
 class DisplayAssetsTests(unittest.TestCase):
@@ -50,7 +51,7 @@ class DisplayAssetsTests(unittest.TestCase):
                  self.game.player.ammo, self.game.combat.reload_frames_left, self.game.progression.reward_choices,
                  self.game.progression.stat_choices, id(self.game.terrain))
         for expected in (True, False):
-            button = next(b for b in self.app.buttons() if b.key == "fullscreen")
+            button = next(b for b in self.app.get_menu_buttons() if b.key == "fullscreen")
             self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=button.rect.center))
             self.assertEqual(self.renderer.fullscreen, expected)
             self.assertEqual(bool(self.renderer.screen.get_flags() & pygame.FULLSCREEN), expected)
@@ -59,7 +60,7 @@ class DisplayAssetsTests(unittest.TestCase):
             self.assertEqual((self.game.frame, self.game.progression.score, self.game.player.x, self.game.player.hp,
                               self.game.player.ammo, self.game.combat.reload_frames_left, self.game.progression.reward_choices,
                               self.game.progression.stat_choices, id(self.game.terrain)), state)
-            self.assertTrue(pygame.Rect((0, 0), self.renderer.size).contains(self.app.buttons()[-1].rect))
+            self.assertTrue(pygame.Rect((0, 0), self.renderer.size).contains(self.app.get_menu_buttons()[-1].rect))
         self.assertEqual(self.renderer.size, (1280, 800))
         self.assertEqual((self.cfg.width, self.cfg.height), (960, 720))
 
@@ -71,7 +72,7 @@ class DisplayAssetsTests(unittest.TestCase):
         for point in ((0, 0), (720, 450), (1440, 900)):
             self.assertEqual(self.renderer.world_to_screen(*self.renderer.screen_to_world(*point)), point)
         choice = self.game.progression.stat_choices[0].key
-        row = pygame.Rect(stat_rows(*self.renderer.size, self.game.progression.stat_choices)[0][1])
+        row = pygame.Rect(build_stat_upgrade_rows(*self.renderer.size, self.game.progression.stat_choices)[0][1])
         self.assertTrue(self.app.pointer_over_rewards(row.center))
         self.app.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=row.center))
         self.assertEqual(self.game.progression.stat_levels[choice], 1)
@@ -91,7 +92,7 @@ class DisplayAssetsTests(unittest.TestCase):
             self.app.draw(ObsConfig())
             paths = {call.args[0] for call in image.call_args_list}
             self.assertTrue({SHIPS["bastion"].asset, SHIPS["aegis"].asset}.issubset(paths))
-        for coords in special_cards(*self.renderer.size):
+        for coords in get_evolution_card_rects(*self.renderer.size):
             self.assertEqual(pygame.Rect(coords).size, (90, 90))
 
     def test_stats_always_show_five_fixed_choices_and_all_number_keys_work(self):
@@ -109,7 +110,7 @@ class DisplayAssetsTests(unittest.TestCase):
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
         self.app.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
         self.assertEqual(self.game.progression.stat_choices, choices)
-        for coords in (row[1] for row in stat_rows(960, 640)):
+        for coords in (row[1] for row in build_stat_upgrade_rows(960, 640)):
             self.assertTrue(pygame.Rect(0, 0, 960, 640).contains(pygame.Rect(coords)))
 
     def test_all_ship_sprites_render_and_transform_cache_reuses_images(self):
