@@ -49,6 +49,8 @@ COLORS = {
 SPAWN_FRAMES = 14   # 등장 애니메이션 길이
 SHAPE_FADE_FRAMES = 60  # 천체는 1초 동안 서서히 떠오른다
 SCORE_TEXT_FRAMES = 50  # "+점수" 글자가 떠오르는 시간
+SCORE_POPUP_FRAMES = 60  # 점수 팝업 기록을 유지하는 게임 프레임 수
+CONFIRMED_DIFFICULTY_ALPHA = 170  # 확정했지만 현재 가리키지 않는 난이도의 불투명도
 DEATH_FRAMES = 22   # 파괴/폭발 애니메이션 길이
 FLASH_FRAMES = 5    # 피격 깜빡임 길이
 MIN_BULLET_SCREEN_DIAMETER = 4  # 줌아웃해도 탄체 폭을 화면 기준 최소 4px로 표시
@@ -112,9 +114,7 @@ class Renderer:
         self._prev_shapes = {}  # id -> 이전 프레임 도형 (사라짐 감지)
         self._prev_alive = {}   # 적 id -> 이전 alive
         self._ghosts = []       # 파괴 애니메이션: dict(kind, x, y, r, angle, color, age)
-        self._sparks = []       # 점수 획득 불꽃: [x, y, vx, vy, age, life, color]
-        self._popups_seen = set()
-        self._xp_flash_frame = -999
+        self.reset_score_popups()
 
     # ------------------------------------------------------------------
     # 화면 출력의 진입점: 게임 화면과 메인 메뉴
@@ -332,6 +332,48 @@ class Renderer:
     # ------------------------------------------------------------------
     # 연출 기록 갱신
     # ------------------------------------------------------------------
+    def reset_score_popups(self):
+        """새 판을 시작할 때 점수 팝업과 관련 화면 연출을 초기화한다.
+
+        인자:
+            없음.
+
+        처리:
+            1) 팝업 목록과 고유 번호를 초기화한다.
+            2) 점수 불꽃·처리한 번호·경험치 반짝임 시각을 초기화한다.
+
+        반환:
+            None: 렌더러의 점수 연출 상태만 변경한다.
+        """
+        # 1) 팝업 목록과 고유 번호를 초기화한다.
+        self.score_popups = []  # 표시 중인 팝업 (번호, 발생 프레임, x, y, 점수, 종류)
+        self._popup_id = 0  # 화면 연출용 팝업 고유 번호
+        # 2) 점수 불꽃·처리한 번호·경험치 반짝임 시각을 초기화한다.
+        self._sparks = []  # 점수 획득 불꽃의 위치·속도·수명·색
+        self._popups_seen = set()  # 이미 불꽃 연출을 생성한 팝업 번호
+        self._xp_flash_frame = -999  # 최근 점수 획득의 게임 프레임
+
+    def add_score_popups(self, score_award_events):
+        """전달받은 점수 획득 이벤트를 렌더러의 팝업으로 변환한다.
+
+        인자:
+            score_award_events: (발생 프레임, 월드 x, 월드 y, 점수, 대상 종류) 목록.
+                앱이나 학습 환경이 코어에서 한 번 꺼낸 이벤트를 전달한다.
+
+        처리:
+            1) 각 이벤트에 화면 연출용 고유 번호를 발급한다.
+            2) 발생 프레임·위치·점수·종류를 팝업 목록에 추가한다.
+            발생 시각을 유지해 여러 게임 프레임 뒤에 그려도 표시 시간이 맞도록 한다.
+
+        반환:
+            None: 렌더러의 팝업 목록과 번호만 변경한다.
+        """
+        for frame, x, y, amount, kind in score_award_events:
+            # 1) 화면 연출용 고유 번호를 발급한다.
+            self._popup_id += 1
+            # 2) 원래 발생 시각을 유지한 팝업을 목록에 추가한다.
+            self.score_popups.append((self._popup_id, frame, x, y, amount, kind))
+
     def _track(self, game):
         f = game.frame
         if f < self._last_frame:  # 재시작
@@ -343,6 +385,7 @@ class Renderer:
         for g in self._ghosts:
             g["age"] += delta
         self._last_frame = f
+        self.score_popups = [popup for popup in self.score_popups if f - popup[1] <= SCORE_POPUP_FRAMES]
 
         cur = {s.id: s for s in game.shapes}
         for sid, s in self._prev_shapes.items():
@@ -382,7 +425,7 @@ class Renderer:
                 spark[3] *= 0.9
             spark[4] += delta
         self._sparks = [spark for spark in self._sparks if spark[4] < spark[5]]
-        for pid, frame, x, y, amount, kind in game.combat.score_popups:
+        for pid, frame, x, y, amount, kind in self.score_popups:
             if pid in self._popups_seen:
                 continue
             self._popups_seen.add(pid)
@@ -395,7 +438,7 @@ class Renderer:
                 self._sparks.append([x, y, math.cos(angle) * speed, math.sin(angle) * speed, 0,
                                      self._rand.randint(18, 32), _mix(color, (255, 255, 255), 0.35)])
         if len(self._popups_seen) > 500:
-            self._popups_seen = {pop[0] for pop in game.combat.score_popups}
+            self._popups_seen = {pop[0] for pop in self.score_popups}
         # 오래된 id 정리
         if len(self._first_seen) > 400:
             live = set(cur) | {e.id for e in game.enemies} | {p.id}
@@ -496,7 +539,7 @@ class Renderer:
 
     def _draw_score_text(self, game):
         """줌과 관계없이 읽히도록 "+점수"는 화면 좌표에 고정 크기로 그린다."""
-        for _, frame, x, y, amount, kind in game.combat.score_popups:
+        for _, frame, x, y, amount, kind in self.score_popups:
             age = game.frame - frame
             if age > SCORE_TEXT_FRAMES or not self._visible(x, y):
                 continue
@@ -543,22 +586,29 @@ class Renderer:
         text = self.font_body.render(sub, True, COLORS["text"])
         self.screen.blit(text, text.get_rect(center=(W // 2, H // 2 - (132 if main else 194))))
         mouse = pygame.mouse.get_pos()
+        hovered_button_index = next((i for i, button in enumerate(buttons)
+                                     if button.enabled and button.rect.collidepoint(mouse)), None)
+        focused_button_index = hovered_button_index if hovered_button_index is not None else selected_button_index
         for i, button in enumerate(buttons):
-            active = button.enabled and (i == selected_button_index or button.rect.collidepoint(mouse))
+            if main:
+                active = button.enabled and i == focused_button_index
+            else:
+                active = button.enabled and (i == selected_button_index or button.rect.collidepoint(mouse))
             difficulty_choice = main and button.key.startswith("difficulty_")
             highlighted = button.enabled and (active or (difficulty_choice and button.checked))
             path = "etc/home_selected" if highlighted else "etc/home_selected_normal"
-            image = self.assets.image(path, button.rect.size)
+            image = self.assets.image(path, button.rect.size).copy()
             if not button.enabled:
-                image = image.copy()
                 image.fill((100, 100, 100, 255), special_flags=pygame.BLEND_RGBA_MULT)
-            self.screen.blit(image, button.rect)
             text_color = (48, 30, 20) if highlighted else (12, 32, 42) if button.enabled else (145, 150, 160)
             font = self.font_hud if difficulty_choice else self.font_card if main else self.font_body
             if difficulty_choice and button.checked:
-                pygame.draw.circle(self.screen, text_color, (button.rect.left + 20, button.rect.centery), 3)
+                pygame.draw.circle(image, text_color, (20, button.rect.height // 2), 3)
             label = font.render(button.label, True, text_color)
-            self.screen.blit(label, label.get_rect(center=button.rect.center))
+            image.blit(label, label.get_rect(center=(button.rect.width // 2, button.rect.height // 2)))
+            if difficulty_choice and button.checked and not active:
+                image.set_alpha(CONFIRMED_DIFFICULTY_ALPHA)
+            self.screen.blit(image, button.rect)
         hint = "클릭 또는 ↑↓ / Enter로 선택" if main else "새 게임은 진행도를 초기화합니다 · 설정은 이번 실행 동안 유지됩니다"
         text = self.font_small.render(hint, True, COLORS["text"])
         self.screen.blit(text, text.get_rect(center=(W // 2, buttons[-1].rect.bottom + 30)))

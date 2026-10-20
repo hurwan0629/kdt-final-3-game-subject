@@ -14,9 +14,6 @@ if TYPE_CHECKING:
 SNIPER_LINE_JOBS = ("sniper", "railgunner", "hyper_railgun", "hunter", "predator")
 SNIPER_PIERCE = 1
 
-SCORE_POPUP_FRAMES = 60   # 점수 연출을 기억하는 시간 (1초)
-
-
 class Combat:
     """무장·탄환·피해·회복·충돌과 전투 연출 상태를 관리한다. 공통 월드는 game을 통해 조회한다."""
 
@@ -32,29 +29,22 @@ class Combat:
         self.dash_frames_left = 0  # 이전 돌진 동작의 남은 프레임 (현재 미사용)
         self.beams = []  # 수명이 남은 빔 연출 목록
         self.explosions = []  # 수명이 남은 폭발 연출 목록
-        # 화면 연출용 기록이며 게임 규칙에는 쓰지 않는다.
-        self.score_popups = []  # 획득 점수 연출 기록 (번호, 프레임, x, y, 점수, 종류)
-        self._popup_id = 0  # 점수 연출의 고유 번호 발급용 카운터
         self.player_shot_frame = -10**9  # 적의 청각 감지에 쓰는 마지막 플레이어 발사 프레임
         self.bullets = []  # 현재 비행 중인 탄환 목록
 
     def _finish_frame(self):
-        """프레임 증가 뒤 점수 연출과 재장전 완료를 처리한다.
+        """프레임 증가 뒤 재장전 타이머와 완료된 탄창을 갱신한다.
 
         인자:
             없음(self.game은 현재 월드를 참조한다).
 
         처리:
-            1) 표시 시간이 지난 점수 연출을 제거한다.
-            2) 재장전 타이머를 줄이고 완료 시 살아 있는 플레이어의 탄창을 채운다.
+            재장전 타이머를 줄이고 완료 시 살아 있는 플레이어의 탄창을 채운다.
 
         반환:
-            None: 연출 목록·재장전 타이머·플레이어 탄약을 갱신한다.
+            None: 재장전 타이머·플레이어 탄약을 갱신한다.
         """
-        # 1) 표시 시간이 지난 점수 연출을 제거한다.
-        if self.score_popups and self.game.frame - self.score_popups[0][1] > SCORE_POPUP_FRAMES:
-            self.score_popups = [pop for pop in self.score_popups if self.game.frame - pop[1] <= SCORE_POPUP_FRAMES]
-        # 2) 재장전 완료는 프레임 증가 뒤, 플레이어 사망 판정 전에 처리한다.
+        # 재장전 완료는 프레임 증가 뒤, 플레이어 사망 판정 전에 처리한다.
         if self.reload_frames_left:
             self.reload_frames_left -= 1
             if self.reload_frames_left == 0 and self.game.player.hp > 0:
@@ -443,29 +433,8 @@ class Combat:
                     p.hp = min(p.max_hp, p.hp + p.max_hp * ai.elite_heal_ratio)
                     self.game.progression._reward_notice("엘리트 처치 보상 (체력 회복)")
                 amount = round(self.game.cfg.enemy_kill_score * (ai.elite_score_scale if t.elite else 1))
-                self._score_popup(t.x, t.y, amount, "elite" if t.elite else "enemy")
+                self.game.record_score_award(t.x, t.y, amount, "elite" if t.elite else "enemy")
                 self.game.progression._add_score(amount)
-
-    def _score_popup(self, x, y, amount, kind):
-        """획득 점수를 표시할 화면 연출 기록을 추가한다.
-
-        인자:
-            x: 연출을 띄울 월드 가로 좌표(px).
-            y: 연출을 띄울 월드 세로 좌표(px).
-            amount: 표시할 획득 점수.
-            kind: 연출 종류(enemy, elite 또는 천체 종류 키).
-
-        처리:
-            1) 새 점수 연출 번호를 발급한다.
-            2) 현재 프레임·위치·점수·종류를 연출 목록에 기록한다.
-
-        반환:
-            None: score_popups에 기록을 추가한다. 실제 점수는 변경하지 않는다.
-        """
-        # 1) 새 점수 연출 번호를 발급한다.
-        self._popup_id += 1
-        # 2) 현재 프레임·위치·점수·종류를 연출 목록에 기록한다.
-        self.score_popups.append((self._popup_id, self.game.frame, x, y, amount, kind))
 
     def _damage_shape(self, s: Shape, dmg: float, by_player: bool):
         """천체 피해를 적용하고 플레이어 공격의 보상 이벤트를 기록한다.
@@ -477,7 +446,7 @@ class Combat:
 
         처리:
             1) 피해량을 남은 체력으로 제한하고 천체 체력을 줄인다.
-            2) 플레이어 공격이면 가중 피해를 기록하고 파괴 시 점수·파괴 수·점수 연출을 추가한다.
+            2) 플레이어 공격이면 가중 피해를 기록하고 파괴 시 점수·파괴 수·점수 획득 이벤트를 추가한다.
 
         반환:
             None: 천체 체력과 플레이어 이벤트·점수를 갱신한다. 천체 목록 제거는 호출 측에서 처리한다.
@@ -487,13 +456,13 @@ class Combat:
         if dealt <= 0:
             return
         s.hp -= dealt
-        # 2) 플레이어 공격이면 가중 피해를 기록하고 파괴 시 점수·파괴 수·점수 연출을 추가한다.
+        # 2) 플레이어 공격이면 가중 피해를 기록하고 파괴 시 점수·파괴 수·점수 획득 이벤트를 추가한다.
         if by_player:
             self.game.events["shape_damage_weighted"] += dealt * s.score / s.max_hp
             if s.hp <= 0:
                 self.game.events["shape_destroyed_score"] += s.score
                 self.game.events["shapes_destroyed"] += 1
-                self._score_popup(s.x, s.y, s.score, s.kind)
+                self.game.record_score_award(s.x, s.y, s.score, s.kind)
                 self.game.progression._add_score(s.score)
 
     def _collide_bodies(self):

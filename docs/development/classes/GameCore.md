@@ -17,6 +17,7 @@ tags: [space-z, class]
 - [[development/classes/GameCore#담당 객체와 설정|성장·전투·적 객체의 연결]]
 - [[development/classes/GameCore#월드와 개체 목록|플레이어·적·천체·지형]]
 - [[development/classes/GameCore#시간과 전투 이벤트|프레임·종료·이벤트]]
+- [[development/classes/GameCore#점수 획득 기록|위치가 포함된 점수 이벤트 전달]]
 - [[development/classes/GameCore#한 프레임의 순서|step의 실행 순서]]
 - [[development/classes/GameCore#새 판 초기화|reset의 생명 주기]]
 
@@ -69,12 +70,24 @@ tags: [space-z, class]
 3. 적 목록 순서대로 AI·이동·발사 또는 재등장 타이머 처리.
 4. 플레이어 발사 → 천체 이동 → 탄환 이동·명중 → 몸체 충돌 → 플레이어 회복.
 5. 부족한 천체 보충.
-6. `frame` 증가 → `Combat._finish_frame()`의 점수 연출 정리·재장전 완료.
+6. `frame` 증가 → `Combat._finish_frame()`의 재장전 완료.
 7. 플레이어 체력이 0 이하라면 체력·생존·예약 점사·게임오버·사망 이벤트 확정.
 
 적의 발사와 플레이어의 발사는 같은 위치의 한 묶음으로 처리되지 않습니다. 또한 적 사망은 피해 처리에서 확정하지만 플레이어 사망은 마지막 단계에서 확정합니다. 이 시점 차이는 [[development/flows/damage-and-kills|피해 흐름]]에서 설명합니다.
 
 사람 플레이는 앱이 실제 시간을 누적해 코어를 호출하며 화면 갱신 한 번에 최대 5프레임을 처리합니다. 학습의 `TankEnv.step()`은 기본 4개 게임 프레임을 처리합니다. 메뉴에서는 앱이 코어를 호출하지 않으므로 재장전·점사·회복·재등장도 멈춥니다.
+
+## 점수 획득 기록
+
+| 속성 | 의미 | 초기값 | 변경 함수 |
+|---|---|---|---|
+| `score_award_events` | 전달 대기 중인 `(발생 프레임, 월드 x, 월드 y, 획득 점수, 대상 종류)` 목록 | 빈 리스트 | `record_score_award()`, `pop_score_award_events()`, `reset()` |
+
+`Combat`이 처치·파괴 시 `record_score_award()`를 호출합니다. 이 메서드는 획득 사실만 기록하며 실제 점수나 화면 상태를 변경하지 않습니다. 실제 점수·경험치는 `PlayerProgression._add_score()`가 변경합니다.
+
+`GameApplication.update()`는 각 코어 프레임 직후 `pop_score_award_events()`로 기록을 꺼내 렌더러에 전달합니다. `TankEnv`는 화면을 그릴 때 모아서 전달하고, 화면 없는 학습에서는 매 코어 프레임 소비합니다. 꺼낸 목록은 코어에서 분리되므로 다음 호출에는 다시 나오지 않습니다.
+
+이 목록은 학습 보상용 `events`와 독립적입니다. 코어를 직접 사용하는 반복문도 각 프레임 뒤 기록을 꺼내 전달하거나 버려야 합니다. 팝업의 번호·표시 시간·그림은 [[development/classes/Renderer#점수 팝업|렌더러의 상태]]입니다.
 
 ## 새 판 초기화
 
@@ -89,6 +102,8 @@ tags: [space-z, class]
 | `reset(seed)` | 새 판 시작·재시작 | 모든 판 상태 초기화, 담당 객체 초기화, 맵·개체 생성 | `None` |
 | `step(action, ...)` | 진행할 행동·현재 월드 | 위 순서로 각 담당 객체 실행 | `None` |
 | `pop_events()` | 누적 이벤트 | 이벤트 버퍼 교체 | 기존 이벤트 `dict` |
+| `record_score_award(x, y, amount, kind)` | 전투에서 점수를 획득할 때 | 발생 프레임과 위치·점수·대상 종류 기록 | `None` |
+| `pop_score_award_events()` | 앱·환경이 기록을 전달하거나 버릴 때 | 점수 획득 목록을 새 빈 목록으로 교체 | 기존 기록 `list` |
 | `_make_terrain()` | 설정·난수 | 지형 생성·읽기 요청 | `TileMap` |
 | `_make_shape()` | 설정·난수·현재 월드 | 개체 번호 발급, 생성 위치 계산 | `Shape` |
 | `_new_id()` | 번호 카운터 | 카운터 증가 | `int` |

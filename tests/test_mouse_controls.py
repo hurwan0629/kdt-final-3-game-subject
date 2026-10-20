@@ -29,6 +29,7 @@ class MouseControlTests(unittest.TestCase):
         self.game = GameCore(cfg, seed=1)
         # 좌표 변환 검사는 실제 창/이미지 캐시 없이 실행한다.
         self.renderer = object.__new__(Renderer)
+        self.renderer.reset_score_popups()
         self.renderer.cfg = cfg
         self.renderer.screen = pygame.Surface((960, 720))
         self.renderer.view_width, self.renderer.view_height = 1600, 1200

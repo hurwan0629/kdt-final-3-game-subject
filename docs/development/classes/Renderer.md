@@ -17,6 +17,7 @@ tags: [space-z, class]
 - [[development/classes/Renderer#화면과 카메라|창 크기·전체화면·줌·좌표 변환]]
 - [[development/classes/Renderer#지형과 이미지|벽·미니맵 캐시]]
 - [[development/classes/Renderer#게임 상태와 화면 연출의 차이|체력과 피격 효과의 차이]]
+- [[development/classes/Renderer#점수 팝업|점수 이벤트를 화면 연출로 변환]]
 - [[development/classes/Renderer#관련 함수|그리기 시작점과 세부 함수]]
 
 ## 화면과 카메라
@@ -38,6 +39,8 @@ tags: [space-z, class]
 `_update_camera()`는 플레이어가 항상 화면 중앙에 오도록 카메라를 정합니다. 맵 가장자리에서도 이 규칙을 유지하므로 맵 밖 배경이 보일 수 있습니다. `screen_to_world()`는 마우스 조준을 위해 반대 방향으로 좌표를 변환합니다.
 
 `resize()`는 창 모드에서 최소 크기를 적용하고 화면·줌 영역을 다시 만듭니다. 전체화면 전환도 그리기 대상을 바꾸지만 게임 맵·진행도를 재생성하지 않습니다.
+
+`_draw_menu()`는 메인 메뉴에서 마우스가 버튼 위에 있으면 그 버튼을 우선 강조합니다. 확정했지만 현재 가리키지 않는 난이도 버튼은 `CONFIRMED_DIFFICULTY_ALPHA = 170`으로 이미지·글자·점 표시를 함께 흐리게 그립니다. 이미지 캐시의 원본을 복사해 사용하므로 다른 버튼이나 다음 프레임의 투명도에는 영향을 주지 않습니다.
 
 ## 지형과 이미지
 
@@ -63,6 +66,19 @@ tags: [space-z, class]
 >
 > 지형 캐시의 객체 번호 재사용에 따른 간헐 문제는 기존 검토 사항입니다. 이 문서는 현재 키를 설명하며 문제가 해결되었다고 전제하지 않습니다.
 
+## 점수 팝업
+
+| 속성 | 의미 | 초기값 | 변경 함수 |
+|---|---|---|---|
+| `score_popups` | `(번호, 발생 프레임, 월드 x, 월드 y, 점수, 종류)` 팝업 목록 | 빈 리스트 | `add_score_popups()`, `_track()`, `reset_score_popups()` |
+| `_popup_id` | 렌더러 내부의 팝업 고유 번호 | `0` | `add_score_popups()`, `reset_score_popups()` |
+
+앱이나 학습 환경이 [[development/classes/GameCore#점수 획득 기록|코어에서 꺼낸 점수 이벤트]]를 `add_score_popups()`에 전달합니다. 렌더러는 번호를 붙여 보관하고 `_track()`에서 불꽃·경험치 반짝임을 준비하며 `_draw_score_text()`에서 글자를 그립니다. 같은 프레임을 여러 번 그려도 불꽃은 한 번만 생성합니다.
+
+발생 프레임을 유지하므로 한 번 그리기 전에 여러 코어 프레임이 지나도 표시 시간이 맞습니다. 글자 표시 기준은 `SCORE_TEXT_FRAMES = 50`, 기록 유지 기준은 `SCORE_POPUP_FRAMES = 60` 게임 프레임입니다. 게임 프레임이 멈추면 이 시간도 멈춥니다.
+
+새 게임에서는 앱 또는 환경이 `reset_score_popups()`를 호출해 목록·번호·불꽃·처리한 번호·반짝임 시각을 비웁니다. 이전 판과 새 판의 프레임이 같아도 초기화합니다. 직접 코어와 렌더러를 연결하는 프로그램도 이벤트 전달과 새 판 초기화를 호출해야 합니다. `draw()`가 코어의 이벤트를 꺼내거나 비우지는 않습니다.
+
 ## 게임 상태와 화면 연출의 차이
 
 `Tank.hp`는 게임 규칙이 사용하는 실제 체력입니다. `_prev_hp`는 렌더러가 이전 체력과 비교해 피격 효과를 만들기 위한 기록입니다. 렌더러의 기록을 지워도 실제 체력이 회복되는 것은 아닙니다.
@@ -82,9 +98,9 @@ tags: [space-z, class]
 > | `_prev_shapes` | 직전 천체의 표시 정보 스냅샷 | 빈 사전 | `_track()` |
 > | `_prev_alive` | 선체 번호별 직전 생존 여부 | 빈 사전 | `_track()` |
 > | `_ghosts` | 사라지는 개체의 사망 연출 | 빈 리스트 | `_track()` |
-> | `_sparks` | 점수 획득 불꽃의 위치·속도·수명·색 | 빈 리스트 | `_track()` |
-> | `_popups_seen` | 이미 연출로 만든 점수 기록 번호 | 빈 집합 | `_track()` |
-> | `_xp_flash_frame` | 최근 점수 연출의 게임 프레임 | `-999` | `_track()` |
+> | `_sparks` | 점수 획득 불꽃의 위치·속도·수명·색 | 빈 리스트 | `_track()`, `reset_score_popups()` |
+> | `_popups_seen` | 이미 연출로 만든 점수 기록 번호 | 빈 집합 | `_track()`, `reset_score_popups()` |
+> | `_xp_flash_frame` | 최근 점수 연출의 게임 프레임 | `-999` | `_track()`, `reset_score_popups()` |
 > | `_flash_on` | 게임오버 전 피격 반짝임 허용 여부 | 첫 `draw()`에서 결정 | `draw()` |
 
 > [!info]- 글꼴 리소스
@@ -101,6 +117,8 @@ tags: [space-z, class]
 |---|---|---|---|
 | `draw(game, ...)` | 매 게임 화면 갱신; 월드·전투·성장·표시 옵션 | 카메라·추적·캐시·화면 갱신; 게임 규칙 상태는 변경하지 않음 | `None` |
 | `draw_main_menu(buttons, selected_button_index)` | 메인 메뉴 표시 | 메인 배경·메뉴 버튼을 화면에 그림 | `None` |
+| `add_score_popups(score_award_events)` | 앱·환경에서 꺼낸 점수 획득 기록 | 팝업 번호 발급·목록 추가 | `None` |
+| `reset_score_popups()` | 생성 또는 새 게임 시작 | 점수 팝업과 관련 화면 연출 초기화 | `None` |
 | `resize(size)`, `set_fullscreen(enabled)`, `set_zoom(zoom)` | 창 변경·옵션 선택 | 화면·줌 상태·월드 Surface 갱신; 줌은 공유 설정에도 반영 | `None` |
 | `_update_camera(player)` | 현재 플레이어 위치·월드 그리기 크기 | `camera_x`, `camera_y` 변경 | `None` |
 | `world_to_view(x, y)`, `world_to_screen(x, y)`, `screen_to_world(x, y)` | 카메라·배율 | 변경 없음 | 좌표 쌍 |

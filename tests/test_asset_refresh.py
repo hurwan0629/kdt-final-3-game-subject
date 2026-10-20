@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import os
+from collections import defaultdict
 from pathlib import Path
 import tempfile
 import unittest
@@ -16,8 +17,10 @@ import pygame
 
 from space_z.config import GameConfig
 from space_z.game.game_core import GameCore
+from space_z.app import GameApplication
+from space_z.rl.environment import TankEnv
 from space_z.rendering.menu_layout import build_menu_buttons
-from space_z.rendering.renderer import DEATH_FRAMES, Renderer
+from space_z.rendering.renderer import DEATH_FRAMES, SCORE_POPUP_FRAMES, Renderer
 from space_z.resource_paths import resource_path
 from space_z.game.terrain import BREAKABLE, EMPTY, MUD, WALL, TileMap
 
@@ -33,6 +36,10 @@ class AssetRefreshTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pygame.quit()
+
+    def setUp(self):
+        # 서로 다른 테스트의 TileMap 객체 번호가 재사용되어 캐시가 섞이지 않도록 격리한다.
+        self.renderer._terrain_key = None
 
     def test_resource_paths_work_outside_project_directory(self):
         project_root = Path(__file__).resolve().parents[1]
@@ -101,6 +108,42 @@ class AssetRefreshTests(unittest.TestCase):
                 paths = {call.args[0] for call in image.call_args_list}
                 self.assertTrue({"etc/home_selected", "etc/home_selected_normal"} <= paths)
                 self.assertEqual(pygame.image.tobytes(normal, "RGBA"), before)
+
+    def test_confirmed_difficulty_is_dimmed_without_dimming_focus_or_cached_images(self):
+        buttons = build_menu_buttons("main", self.cfg, size=self.renderer.size)
+        easy, normal = buttons[:2]
+        colors = {"etc/home_selected": (220, 160, 40), "etc/home_selected_normal": (40, 100, 140)}
+        cached_images = {}
+
+        def menu_image(path, size):
+            key = (path, size)
+            if key not in cached_images:
+                cached_images[key] = pygame.Surface(size, pygame.SRCALPHA)
+                cached_images[key].fill((*colors[path], 255))
+            return cached_images[key]
+
+        def sample(button):
+            return tuple(self.renderer.screen.get_at((button.rect.left + 8, button.rect.top + 8)))[:3]
+
+        for pointer, focus, easy_active in [(easy.rect.center, 1, True),
+                                           (normal.rect.center, 0, False),
+                                           ((-1, -1), 0, True), ((-1, -1), 1, False)]:
+            with self.subTest(pointer=pointer, focus=focus):
+                self.renderer.screen.fill((0, 0, 0))
+                with patch("pygame.mouse.get_pos", return_value=pointer), \
+                        patch.object(self.renderer.assets, "image", side_effect=menu_image):
+                    self.renderer._draw_menu(buttons, "TEST", focus, main=True)
+                if easy_active:
+                    self.assertEqual(sample(easy), colors["etc/home_selected"])
+                    self.assertLess(sample(normal)[0], sample(easy)[0])
+                    self.assertGreater(sample(normal)[0], colors["etc/home_selected_normal"][0])
+                else:
+                    self.assertEqual(sample(normal), colors["etc/home_selected"])
+                    self.assertEqual(sample(easy), colors["etc/home_selected_normal"])
+                self.assertEqual([button.key for button in buttons if button.checked], ["difficulty_normal"])
+        for (path, _), image in cached_images.items():
+            self.assertEqual(image.get_alpha(), 255)
+            self.assertEqual(tuple(image.get_at((8, 8)))[:3], colors[path])
 
     def test_only_fully_solid_8x8_regions_use_one_large_image(self):
         tiles = [[WALL] * 16 for _ in range(8)]
@@ -175,6 +218,96 @@ class AssetRefreshTests(unittest.TestCase):
         self.assertEqual((game.frame, game.rng.bit_generator.state, game.player, game.events), before)
         self.assertEqual(len(self.renderer._explosion_frames), 8)
         self.assertEqual(len({frame.get_size() for frame in self.renderer._explosion_frames}), 1)
+
+    def score_popup_game(self):
+        self.renderer.reset_score_popups()
+        self.renderer._last_frame = -1
+        game = GameCore(self.cfg, seed=17)
+        self.renderer._update_camera(game.player)
+        return game
+
+    def test_score_popups_do_not_mutate_core_or_repeat_sparks_and_expire_by_game_frame(self):
+        game = self.score_popup_game()
+        game.record_score_award(game.player.x, game.player.y, 10, "square")
+        self.renderer.add_score_popups(game.pop_score_award_events())
+        self.assertEqual(self.renderer.score_popups,
+                         [(1, 0, game.player.x, game.player.y, 10, "square")])
+        before = copy.deepcopy((game.frame, game.events, game.score_award_events,
+                                game.progression.score, game.rng.bit_generator.state))
+        for _ in range(2):
+            self.renderer._track(game)
+            self.renderer._draw_score_text(game)
+        self.assertEqual(len(self.renderer._sparks), 10)
+        self.assertEqual(self.renderer._popups_seen, {1})
+        self.assertEqual((game.frame, game.events, game.score_award_events,
+                          game.progression.score, game.rng.bit_generator.state), before)
+        game.frame = SCORE_POPUP_FRAMES
+        self.renderer._track(game)
+        self.assertEqual(len(self.renderer.score_popups), 1)
+        game.frame += 1
+        self.renderer._track(game)
+        self.assertEqual(self.renderer.score_popups, [])
+
+    def test_application_delivers_all_score_awards_before_drawing(self):
+        game = self.score_popup_game()
+        application = GameApplication(game, self.renderer, seed=17)
+        application.activate_menu_action("start")
+        original_step = game.step
+
+        def step_with_score_award(*args, **kwargs):
+            game.record_score_award(game.player.x, game.player.y, 10, "square")
+            original_step(*args, **kwargs)
+
+        with patch.object(game, "step", side_effect=step_with_score_award):
+            application.update(3.5 / game.cfg.fps, defaultdict(bool), (0, 0), (False, False, False))
+        self.assertEqual(game.frame, 3)
+        self.assertEqual([popup[1] for popup in self.renderer.score_popups], [0, 1, 2])
+        self.assertEqual(game.score_award_events, [])
+
+    def test_restart_clears_popups_and_effects_even_when_frame_is_unchanged(self):
+        game = self.score_popup_game()
+        application = GameApplication(game, self.renderer, seed=17)
+        application.activate_menu_action("start")
+        game.record_score_award(100, 200, 10, "square")
+        self.renderer.add_score_popups(game.pop_score_award_events())
+        self.renderer._track(game)
+        self.assertTrue(self.renderer._sparks)
+        game.record_score_award(300, 400, 20, "enemy")
+        application.activate_menu_action("restart")
+        self.assertEqual((game.frame, self.renderer._last_frame), (0, 0))
+        self.assertEqual(game.score_award_events, [])
+        self.assertEqual(self.renderer.score_popups, [])
+        self.assertEqual(self.renderer._popup_id, 0)
+        self.assertEqual(self.renderer._popups_seen, set())
+        self.assertEqual(self.renderer._sparks, [])
+        self.assertEqual(self.renderer._xp_flash_frame, -999)
+        game.record_score_award(100, 200, 10, "square")
+        self.renderer.add_score_popups(game.pop_score_award_events())
+        self.renderer._track(game)
+        self.assertEqual(len(self.renderer._sparks), 10)
+
+    def test_human_environment_delivers_frame_skip_awards_once_and_clears_on_reset(self):
+        self.score_popup_game()
+        environment = TankEnv(game_config=self.cfg, render_mode="human")
+        with patch("space_z.rendering.renderer.Renderer", return_value=self.renderer) as create_renderer:
+            environment.reset(seed=17)
+            original_step = environment.game.step
+
+            def step_with_score_award(action):
+                environment.game.record_score_award(100, 200, 10, "square")
+                original_step(action)
+
+            with patch.object(environment.game, "step", side_effect=step_with_score_award):
+                environment.step(0)
+            self.assertEqual([popup[1] for popup in self.renderer.score_popups],
+                             list(range(environment.env_cfg.frame_skip)))
+            self.assertEqual(environment.game.score_award_events, [])
+            environment.render()
+            self.assertEqual(len(self.renderer.score_popups), environment.env_cfg.frame_skip)
+            environment.reset(seed=17)
+            self.assertEqual(self.renderer.score_popups, [])
+            self.assertEqual(self.renderer._popups_seen, set())
+            create_renderer.assert_called_once_with(self.cfg)
 
 
 if __name__ == "__main__":

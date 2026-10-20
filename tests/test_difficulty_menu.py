@@ -24,6 +24,7 @@ class DifficultyMenuTests(unittest.TestCase):
         cfg.terrain.enabled = False
         game = GameCore(cfg, seed=22)
         renderer = SimpleNamespace(size=(1280, 800), _update_camera=lambda player: None,
+                                   add_score_popups=lambda events: None, reset_score_popups=lambda: None,
                                    screen_to_world=lambda x, y: (game.player.x + 500, game.player.y))
         return game, GameApplication(game, renderer, seed=22)
 

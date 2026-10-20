@@ -195,6 +195,8 @@ class TankEnv(_BaseEnv):
         if gym is not None:
             super().reset(seed=seed)
         self.game.reset(seed)
+        if self._renderer is not None:
+            self._renderer.reset_score_popups()
         self.steps = 0
         obs = self.obs_builder.build(self.game)
         if self.render_mode == "human":
@@ -206,6 +208,8 @@ class TankEnv(_BaseEnv):
         for _ in range(self.env_cfg.frame_skip):
             self.game.step(action)
             _merge_events(acc, self.game.pop_events())
+            if self.render_mode != "human":
+                self.game.pop_score_award_events()  # 화면 없는 학습에서는 전달 대기 기록을 남기지 않음
             if self.game.game_over:
                 break
         self.steps += 1
@@ -240,6 +244,7 @@ class TankEnv(_BaseEnv):
             pygame.init()
             self._renderer = Renderer(self.game_cfg)
         pygame.event.pump()
+        self._renderer.add_score_popups(self.game.pop_score_award_events())
         self._renderer.draw(self.game)
         pygame.display.flip()
         self._renderer.clock.tick(self.metadata["render_fps"])

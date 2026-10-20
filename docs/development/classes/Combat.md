@@ -12,6 +12,8 @@ tags: [space-z, class]
 
 탄환 목록은 이 객체에 있지만 **탄약·발사 대기·예약 점사는 각 `Tank`에** 있습니다. 플레이어와 적 모두 같은 발사 함수를 사용합니다. 적 처치·점수는 `PlayerProgression`에 전달합니다.
 
+점수를 획득한 위치와 시각은 `GameCore.record_score_award()`로 기록합니다. 팝업 목록·고유 번호·표시 시간은 [[development/classes/Renderer#점수 팝업|Renderer]]가 관리합니다.
+
 ## 찾아보기
 
 - [[development/classes/Combat#발사 상태|탄환·예약 점사·발사 수치]]
@@ -67,10 +69,8 @@ tags: [space-z, class]
 > | `game` | 현재 코어 참조 | 생성 인자 | `__init__()` |
 > | `beams` | `Beam` 연출 목록 | 빈 리스트 | `reset()`, `_tick_effects()`; 현재 일반 사격은 빔을 생성하지 않음 |
 > | `explosions` | `Explosion` 연출 목록 | 빈 리스트 | `reset()`, `_explode()`, `_tick_effects()` |
-> | `score_popups` | `(번호, 프레임, x, y, 점수, 종류)` 연출 기록 | 빈 리스트 | `_score_popup()`, `_finish_frame()`, `reset()` |
-> | `_popup_id` | 점수 연출 번호 | `0` | `_score_popup()`, `reset()` |
 >
-> `_tick_effects()`는 빔·폭발 수명을 줄여 만료 항목을 제거합니다. `_finish_frame()`은 `SCORE_POPUP_FRAMES`를 지난 점수 기록을 정리합니다. `Renderer`는 이 기록을 읽어 별도의 화면 연출을 만듭니다.
+> `_tick_effects()`는 빔·폭발 수명을 줄여 만료 항목을 제거합니다. `_finish_frame()`은 프레임 증가 뒤 재장전 타이머와 완료된 탄창을 갱신합니다.
 
 > [!note]- 현재 비활성인 상태
 > | 속성 | 의미 | 초기값 | 변경 함수 |
@@ -91,10 +91,11 @@ tags: [space-z, class]
 | `_emit_shot(tank, shot, damage, speed, life)` | 발사할 패턴과 기체 위치·각도 | 벽·즉시 명중 검사, 탄환 추가 또는 피해 적용 | `None` |
 | `_move_bullets()` | 탄환 목록·지형·개체 | 이동·수명 감소·첫 명중·벽 피해·소멸·천체 정리 | `None` |
 | `_bullet_hit(b)` | 이전·현재 탄환 위치와 대상 목록 | 가장 먼저 닿는 한 대상에 피해, 관통 상태 변경 | 탄환 소멸 여부 `bool` |
-| `_damage_tank(t, dmg, by_player)`, `_damage_shape(s, dmg, by_player)` | 대상 체력·피해·공격 주체 | 체력·이벤트 변경, 필요 시 성장·연출 요청 | `None` |
+| `_damage_tank(t, dmg, by_player)`, `_damage_shape(s, dmg, by_player)` | 대상 체력·피해·공격 주체 | 체력·전투 이벤트 변경, 코어에 점수 획득 기록, 성장에 실제 점수 전달 | `None` |
 | `_explode(x, y, damage, radius, team)` | 폭발 범위의 개체·벽 | 거리별 피해·벽 피해·폭발 연출 추가 | `None` |
 | `_collide_bodies()`, `_regen_player()` | 현재 개체·접촉·피격 시각 | 위치·체력 변경, 코어·지형 보정 요청 | `None` |
-| `_score_popup(x, y, amount, kind)`, `_tick_effects()`, `_finish_frame()` | 점수·연출 수명·현재 프레임·재장전 | 연출 기록·목록·타이머·완료 탄약 변경 | `None` |
+| `_tick_effects()` | 빔·폭발의 남은 수명 | 수명 감소와 만료 항목 제거 | `None` |
+| `_finish_frame()` | 현재 재장전 타이머·플레이어 체력 | 타이머·완료 탄약 변경 | `None` |
 | `request_reload()` | 생존·탄약 제한·잔탄·현재 타이머 | 가능한 경우 재장전 시작·점사 취소 | `bool` |
 | `reset()` | 새 판 시작 | 전투 상태 초기화; 전투 난수 소비 없음 | `None` |
 

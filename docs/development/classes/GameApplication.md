@@ -34,6 +34,8 @@ tags: [space-z, class]
 
 `selected_button_index`와 `difficulty_ratio`는 다릅니다. 난이도 버튼에 포커스를 옮긴 뒤 확정해야 선택이 바뀝니다. 메인 메뉴의 좌우는 난이도 행 안에서 순환하고, 상하는 난이도 행을 한 줄로 취급합니다. 새 게임 시작 시 확정한 비율을 공유 설정 `cfg.enemy_ai.stat_mirror_ratio`에 적용합니다.
 
+렌더러는 메인 메뉴에서 마우스로 가리키는 버튼을 먼저 강조하고, 버튼 위에 마우스가 없을 때 키보드 포커스를 표시합니다. 확정한 난이도가 현재 포커스와 다르면 점 표시를 유지한 채 버튼 전체를 반투명하게 그립니다. 이 표시가 앱의 포커스 인덱스나 확정 난이도를 변경하지는 않습니다.
+
 ## 시간과 발사 입력
 
 | 속성 | 의미와 단위 | 초기값 | 변경 함수 |
@@ -73,8 +75,8 @@ N 입력은 지형을 활성화하고 기존 8×8 랜덤 블록 생성 경로로
 | 함수 | 호출 조건과 읽는 상태 | 변경·요청 | 반환 |
 |---|---|---|---|
 | `handle_event(ev)` | 메인 루프의 각 Pygame 이벤트 | 메뉴·클릭 상태 변경; 강화·진화·재장전·창 크기 변경 요청 | `None` |
-| `activate_menu_action(key)` | 버튼 실행 또는 메뉴 전환 | 메뉴 상태 변경; 시작 시 코어 `reset()`, 표시 옵션은 렌더러에 요청 | `None` |
-| `update(elapsed, keys, mouse_pos, buttons)` | 이벤트 처리 후; 메뉴·시간·현재 입력 조회 | 스탯 창·입력 상태 갱신, 필요한 횟수만큼 코어 `step()`; 사람 플레이 이벤트 소비 | `None` |
+| `activate_menu_action(key)` | 버튼 실행 또는 메뉴 전환 | 메뉴 상태 변경; 시작·재시작 시 코어와 렌더러의 점수 팝업 초기화, 표시 옵션 변경 요청 | `None` |
+| `update(elapsed, keys, mouse_pos, buttons)` | 이벤트 처리 후; 메뉴·시간·현재 입력 조회 | 코어 `step()`마다 점수 획득 기록을 꺼내 `Renderer.add_score_popups()`에 전달; 학습 보상용 이벤트는 소비 | `None` |
 | `draw(obs_cfg)` | 업데이트 후; 메뉴·표시 옵션 조회 | `Renderer.draw_main_menu()` 또는 `draw()` 호출 | `None` |
 | `get_menu_buttons()` | 메뉴를 표시하거나 클릭·포커스를 판정할 때 | `menu_layout.build_menu_buttons()` 조회, 앱 상태 변경 없음 | 버튼 목록 |
 | `mark_stat_panel_used()` | 스탯 창 사용 시 | `stat_panel_last_used_frame` 갱신 | `None` |

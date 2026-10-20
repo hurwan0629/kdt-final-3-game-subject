@@ -31,4 +31,6 @@ obs, reward, terminated, truncated, info = env.step(0)
 
 `info`에는 점수·처치·맵·게임 프레임·환경 step·누적 이벤트와 성장·탄약·재장전 상태가 들어갑니다. 정확한 키는 코드의 `TankEnv._info()`를 확인합니다. `render_mode="human"`일 때만 렌더러를 생성하며 기본 실행은 화면을 만들지 않습니다.
 
+점수 팝업용 획득 기록은 학습 보상용 이벤트와 별도로 처리합니다. 화면 없는 `step()`은 매 코어 프레임 `pop_score_award_events()`를 호출해 기록을 버립니다. `render_mode="human"`은 여러 프레임의 기록을 `render()`에서 꺼내 렌더러에 한 번 전달하며, `reset()`은 기존 팝업도 초기화합니다. 이 기록은 관찰·보상·`info`에 추가하지 않습니다.
+
 구현: [environment.py](../../src/space_z/rl/environment.py) · 설정: [[development/configuration|관찰·보상·환경 설정]] · [[reinforcement-learning/README|강화학습 목차]] · [[README|문서 목차]]

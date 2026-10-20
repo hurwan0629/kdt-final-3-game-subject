@@ -90,6 +90,7 @@ class GameApplication:
             if key == "start":
                 self.cfg.enemy_ai.stat_mirror_ratio = self.difficulty_ratio
             self.game.reset(self.seed)
+            self.renderer.reset_score_popups()
             self.stat_panel_last_used_frame = self.previous_upgrade_points = 0
             self.mode, self.selected_button_index = "playing", 0
         elif key == "resume":
@@ -260,6 +261,7 @@ class GameApplication:
             self.action, target, want_fire = read_player_input(keys, self.renderer, mouse_pos, buttons)
             fire = (want_fire or self.click_requested) and not self.suppress_fire and not self.pointer_over_rewards(mouse_pos)
             self.game.step(self.action, want_fire=fire, aim_position=target)
+            self.renderer.add_score_popups(self.game.pop_score_award_events())
             self.click_requested = False
             self.game.pop_events()
             self.accumulated_time -= dt

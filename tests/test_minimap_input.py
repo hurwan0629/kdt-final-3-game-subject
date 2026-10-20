@@ -17,6 +17,7 @@ class MinimapInputTests(unittest.TestCase):
         cfg.terrain.enabled = False
         game = GameCore(cfg, seed=8)
         renderer = SimpleNamespace(size=(1280, 800),
+            add_score_popups=lambda events: None, reset_score_popups=lambda: None,
             minimap_rect=lambda: pygame.Rect(1070, 620, 196, 166),
             _update_camera=lambda player: None,
             screen_to_world=lambda x, y: (game.player.x+500, game.player.y))

@@ -9,7 +9,7 @@
 | 점수와 플레이어 성장 | [PlayerProgression](PlayerProgression.md) | 점수·레벨·강화·진화 |
 | 발사와 전투 결과 | [Combat](Combat.md) | 탄환·재장전·전투 연출 |
 | 적의 성장과 행동 | [EnemyController](EnemyController.md) | 공통 성장 단계; 적별 기억은 Tank |
-| 화면과 표현 | [Renderer](Renderer.md) | 카메라·줌·표시 캐시 |
+| 화면과 표현 | [Renderer](Renderer.md) | 카메라·줌·점수 팝업·표시 캐시 |
 | 플레이어·적 한 대 | [Tank](Tank.md) | 체력·이동·무장·AI |
 | 탄환 한 발 | [Bullet](Bullet.md) | 위치·수명·피해·관통 |
 | 파괴 가능한 천체 | [Shape](Shape.md) | 표류·체력·점수 |

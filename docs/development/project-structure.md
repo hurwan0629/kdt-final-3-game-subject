@@ -83,6 +83,8 @@ src/space_z/
 
 상속 계층이나 ECS·별도 이벤트 버스는 추가하지 않았습니다. 코어 이벤트는 `pop_events()`로 소비하며 학습 보상 계산은 환경에 있습니다. [[development/flows/README|동작 흐름]]은 객체 간 요청을 따라갑니다.
 
+위치가 포함된 점수 획득 사실은 코어의 `score_award_events`에 임시 보관합니다. 앱 또는 학습 환경이 이를 꺼내 렌더러에 전달하고, 실제 팝업 목록·표시 시간은 렌더러가 관리합니다. [[development/classes/GameCore#점수 획득 기록|기록과 전달]] → [[development/classes/Renderer#점수 팝업|팝업 관리]]로 이어집니다.
+
 ## 바꾸려는 기능으로 찾기
 
 | 바꾸려는 것 | 정의·설정 | 실제 처리 |

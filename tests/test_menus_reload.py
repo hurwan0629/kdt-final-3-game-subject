@@ -23,6 +23,7 @@ class MenusReloadTests(unittest.TestCase):
         cfg.terrain.enabled = False
         self.game = GameCore(cfg, seed=2)
         self.renderer = SimpleNamespace(
+            add_score_popups=Mock(), reset_score_popups=Mock(),
             _update_camera=Mock(), screen_to_world=lambda x, y: (2000, 1100),
             set_zoom=Mock(side_effect=lambda zoom: setattr(cfg, "camera_zoom", zoom)))
         self.app = GameApplication(self.game, self.renderer, seed=2)

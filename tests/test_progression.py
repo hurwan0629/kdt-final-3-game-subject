@@ -230,6 +230,58 @@ class OwnershipTests(unittest.TestCase):
         record.assert_called_once_with()
         self.assertEqual(game.progression.kills, 1)
         self.assertEqual(game.progression.score, cfg.enemy_kill_score)
+        self.assertEqual(game.score_award_events,
+                         [(0, enemy.x, enemy.y, cfg.enemy_kill_score, "enemy")])
+        self.assertFalse(hasattr(game.combat, "score_popups"))
+
+    def test_score_award_events_are_independent_consumed_once_and_reset(self):
+        game = empty_game()
+        random_state = game.rng.bit_generator.state
+        game.record_score_award(100, 200, 10, "square")
+        game.frame = 3
+        game.record_score_award(300, 400, 200, "enemy")
+        reward_events = game.pop_events()
+        self.assertNotIn("score_award_events", reward_events)
+        self.assertEqual(game.pop_score_award_events(),
+                         [(0, 100, 200, 10, "square"), (3, 300, 400, 200, "enemy")])
+        self.assertEqual(game.pop_score_award_events(), [])
+        self.assertEqual(game.progression.score, 0)
+        self.assertEqual(game.rng.bit_generator.state, random_state)
+        game.record_score_award(0, 0, 10, "triangle")
+        game.reset(7)
+        self.assertEqual(game.score_award_events, [])
+
+    def test_shape_destruction_records_its_position_and_score_once(self):
+        game = empty_game()
+        shape = game._make_shape()
+        game.combat._damage_shape(shape, shape.hp, True)
+        game.combat._damage_shape(shape, shape.max_hp, True)
+        self.assertEqual(game.pop_score_award_events(),
+                         [(0, shape.x, shape.y, shape.score, shape.kind)])
+        self.assertEqual(game.progression.score, shape.score)
+
+    def test_headless_environment_discards_score_awards_without_changing_results(self):
+        game_config = GameConfig(num_enemies=0, num_shapes=0)
+        game_config.terrain.enabled = False
+        environment = TankEnv(game_config=game_config)
+        reference = TankEnv(game_config=game_config)
+        environment.reset(seed=7)
+        reference.reset(seed=7)
+        original_step = environment.game.step
+
+        def step_with_score_award(action):
+            self.assertEqual(environment.game.score_award_events, [])
+            original_step(action)
+            environment.game.record_score_award(10, 20, 10, "square")
+
+        with patch.object(environment.game, "step", side_effect=step_with_score_award):
+            for action in (0, 1, 2):
+                actual = environment.step(action)
+                expected = reference.step(action)
+                np.testing.assert_array_equal(actual[0], expected[0])
+                self.assertEqual(actual[1:], expected[1:])
+                self.assertEqual(environment.game.score_award_events, [])
+        self.assertIsNone(environment._renderer)
 
     def test_reload_finishes_after_frame_increment_before_death_check(self):
         game = empty_game()

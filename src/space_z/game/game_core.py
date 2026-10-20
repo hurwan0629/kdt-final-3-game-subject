@@ -102,6 +102,7 @@ class GameCore:
         self.game_over = False  # 플레이어 사망으로 게임이 끝났는지 여부
         self._next_id = 0  # 선체·천체의 고유 번호 발급용 카운터
         self.events = empty_events()  # pop_events()로 꺼내기 전까지 누적하는 전투 이벤트
+        self.score_award_events = []  # 전달 대기 중인 점수 획득 사실 (프레임, x, y, 점수, 대상 종류)
         self.combat.reset()
         self.shapes = []  # 현재 월드에 남아 있는 천체 목록
         self.enemies = []  # 적 목록 (생성 위치 계산에 이전 판의 적이 섞이지 않도록 먼저 비움)
@@ -144,10 +145,11 @@ class GameCore:
             1) 게임 종료 상태면 중단하고, 아니면 행동 해석·연출 수명·적 성장을 갱신한다.
             2) 플레이어 이동·조준과 살아 있는 적의 AI 또는 죽은 적의 재등장을 처리한다.
             3) 발사·천체 이동·탄환 이동·몸체 충돌·체력 회복을 처리한다.
-            4) 천체 수를 보충하고 프레임·점수 연출·재장전 타이머·사망 상태를 갱신한다.
+            4) 천체 수를 보충하고 프레임·재장전 타이머·사망 상태를 갱신한다.
 
         반환:
-            None: 게임 상태와 전투 이벤트를 갱신한다. 이벤트는 pop_events()로 별도 조회한다.
+            None: 게임 상태와 이벤트를 갱신한다. 전투 결과는 pop_events(),
+                점수 획득 기록은 pop_score_award_events()로 각각 꺼낸다.
 
         예외:
             ValueError 또는 TypeError: 진행 중인 게임에서 행동의 정수 변환이나 범위 검사에 실패한 경우.
@@ -183,7 +185,7 @@ class GameCore:
         self.combat._regen_player()
 
         # 도형 개수 유지
-        # 4) 천체 수를 보충하고 프레임·점수 연출·재장전 타이머·사망 상태를 갱신한다.
+        # 4) 천체 수를 보충하고 프레임·재장전 타이머·사망 상태를 갱신한다.
         while len(self.shapes) < self.cfg.num_shapes:
             self.shapes.append(self._make_shape())
 
@@ -394,6 +396,43 @@ class GameCore:
                      hp=t["hp"], max_hp=t["hp"], radius=t["radius"], score=t["score"],
                      angle=float(self.rng.uniform(0, 2 * math.pi)),
                      spin=float(self.rng.uniform(-0.01, 0.01)))
+
+    def record_score_award(self, x, y, amount, kind):
+        """점수를 획득한 시점과 위치를 기록한다. 실제 점수나 화면 상태는 바꾸지 않는다.
+
+        인자:
+            x, y: 획득 위치의 월드 좌표(px).
+            amount: 획득한 점수.
+            kind: 점수 출처(enemy, elite 또는 천체 종류 키).
+
+        처리:
+            현재 게임 프레임과 인자를 전달 대기 목록에 추가한다.
+
+        반환:
+            None: score_award_events만 변경한다.
+        """
+        self.score_award_events.append((self.frame, x, y, amount, kind))
+
+    def pop_score_award_events(self) -> list:
+        """전달 대기 중인 점수 획득 이벤트를 꺼내고 코어의 목록을 비운다.
+
+        인자:
+            없음.
+
+        처리:
+            1) 현재 이벤트 목록을 보관한다.
+            2) 다음 기록을 받을 새 빈 목록으로 교체한다.
+
+        반환:
+            list: (게임 프레임, 월드 x, 월드 y, 획득 점수, 대상 종류) 목록.
+                호출자는 렌더러에 전달하거나 화면이 없으면 소비하고 버린다.
+                학습 보상용 pop_events()와는 별도로 소비한다.
+        """
+        # 1) 현재 이벤트 목록을 보관한다.
+        events = self.score_award_events
+        # 2) 다음 기록을 받을 새 빈 목록으로 교체한다.
+        self.score_award_events = []
+        return events
 
     def pop_events(self) -> dict:
         """누적된 전투 이벤트를 꺼내고 다음 누적용 저장소를 비운다.
