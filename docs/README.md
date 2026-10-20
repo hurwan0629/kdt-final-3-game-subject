@@ -5,6 +5,7 @@
 | 알고 싶은 것 | 시작할 문서 |
 |---|---|
 | 설치하고 게임 실행하기 | [처음 실행하기](getting-started.md) |
+| Python 설치 없이 실행할 파일 배포하기 | [Windows 배포](development/windows-release.md) |
 | 조작·전투·강화·맵 이해하기 | [게임 안내 목차](game/README.md) |
 | 폴더와 객체의 책임 이해하기 | [개발 안내 목차](development/README.md) |
 | 특정 클래스의 속성과 변경 함수 찾기 | [클래스·상태 목차](development/classes/README.md) |

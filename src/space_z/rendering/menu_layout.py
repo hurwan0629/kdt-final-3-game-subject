@@ -31,8 +31,7 @@ def build_menu_buttons(mode, cfg, show_debug=False, show_controls=True, auto_pau
                    for i, (key, label, ratio) in enumerate(DIFFICULTY_OPTIONS)]
         return choices + [
             MenuButton("start", "무한 스테이지", pygame.Rect(x, y, 380, 58)),
-            MenuButton("story", "스토리 모드 · 준비 중", pygame.Rect(x, y + 78, 380, 58), False),
-            MenuButton("quit", "게임 나가기", pygame.Rect(x, y + 156, 380, 58))]
+            MenuButton("quit", "게임 나가기", pygame.Rect(x, y + 78, 380, 58))]
     rows = [("fullscreen", f"화면 모드   {'전체화면' if fullscreen else '창 모드'}"),
             ("zoom", f"줌 배율   {cfg.camera_zoom:.0%}"),
             ("controls", f"조작 안내   {'켜짐' if show_controls else '꺼짐'}"),

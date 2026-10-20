@@ -1,6 +1,6 @@
 """점수·레벨·강화·진화 상태와 적용 규칙을 관리한다."""
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 

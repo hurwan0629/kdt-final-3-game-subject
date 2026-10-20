@@ -112,9 +112,14 @@ observation, reward, terminated, truncated, info = env.step(0)
 
 ## 실행 파일 만들기
 
+Windows x64의 Python 3.12 개발 환경에서 실행합니다.
+
 ```powershell
-pyinstaller --onefile --windowed --name SpaceZ --paths src --add-data "maps;maps" --add-data "assets;assets" src/space_z/__main__.py
+python -m pip install -e . pyinstaller
+python scripts/build_windows_release.py
 ```
+
+GitHub Release에 첨부할 파일은 `dist/SpaceZ-v0.1.0-windows-x64.zip`입니다. 받는 사람은 전체 압축을 풀고 `SpaceZ/SpaceZ.exe`를 실행하면 됩니다. Python·가상환경 설치가 필요하지 않습니다. [Windows 배포 안내](docs/development/windows-release.md)에 포함 파일과 재빌드 방법을 정리했습니다.
 
 설치·게임 안내·클래스·동작 흐름은 [문서 목차](docs/README.md)에서 찾아볼 수 있습니다.
 

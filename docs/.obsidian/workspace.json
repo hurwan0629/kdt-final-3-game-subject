@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "development/project-structure.md",
+                "file": "development/classes/EnemyController.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "project-structure"
+              "title": "EnemyController"
             }
           }
         ]
@@ -190,8 +190,9 @@
   },
   "active": "3c47a43530498af9",
   "lastOpenFiles": [
-    "development/README.md",
+    "development/windows-release.md",
     "development/project-structure.md",
+    "development/README.md",
     "README.md",
     "getting-started.md",
     "reinforcement-learning/README.md",
@@ -216,7 +217,6 @@
     "game/upgrades-and-evolution.md",
     "game/combat-and-reloading.md",
     "game/controls.md",
-    "reinforcement-learning/environment.md",
     "reinforcement-learning",
     "development/classes",
     "development",
