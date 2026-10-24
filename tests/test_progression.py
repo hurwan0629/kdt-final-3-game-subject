@@ -113,7 +113,7 @@ class ProgressionTests(unittest.TestCase):
             (20, 0, 17, [10, 20]),
         )
         first = game.progression.reward_choices
-        self.assertTrue(game.progression.upgrade_stat("hull"))
+        self.assertTrue(game.progression.upgrade_stat("health"))
         self.assertEqual(game.progression.reward_choices, first)
         self.assertTrue(game.progression.choose_reward(0))
         self.assertEqual(game.progression.special_reward_levels, [20])
@@ -122,7 +122,7 @@ class ProgressionTests(unittest.TestCase):
         self.assertTrue(game.progression.choose_reward(0))
         self.assertEqual(game.progression.special_reward_levels, [])
 
-    def test_regen_rate_scales_with_max_hp_from_hull_upgrades(self):
+    def test_regen_rate_scales_with_max_hp_from_health_upgrades(self):
         # 검사에 사용할 설정·개체·입력을 준비한다.
         game = empty_game()
         config, player = game.config, game.player
@@ -134,8 +134,8 @@ class ProgressionTests(unittest.TestCase):
 
         # 최대 체력 증가 비율에 맞춰 프레임당 회복량이 증가하는지 확인한다.
         self.assertAlmostEqual(base_regen, config.regen_rate)
-        self.assertTrue(game.progression.upgrade_stat("hull"))
-        self.assertTrue(game.progression.upgrade_stat("hull"))
+        self.assertTrue(game.progression.upgrade_stat("health"))
+        self.assertTrue(game.progression.upgrade_stat("health"))
         self.assertEqual(player.max_hp, config.player_hp + 50)
         player.hp = 1.0
         game.combat._regen_player()
@@ -168,7 +168,7 @@ class ProgressionTests(unittest.TestCase):
                 elif card.key == "speed":
                     game._apply_tank_control(player, 3, 0, player.accel_scale, 1)
                     self.assertAlmostEqual(player.velocity_x, game.config.accel * 1.07)
-                elif card.key == "hull":
+                elif card.key == "health":
                     self.assertEqual((player.max_hp, player.hp), (125, 45))
                 elif card.key == "range":
                     game.combat._fire(player, True)
@@ -201,7 +201,7 @@ class ProgressionTests(unittest.TestCase):
     def test_five_stats_and_unspent_points_survive_later_levels_and_evolution(self):
         # 검사에 사용할 설정·개체·입력을 준비한다.
         game = empty_game()
-        keys = ("hull", "damage", "range", "rapid", "speed")
+        keys = ("health", "damage", "range", "rapid", "speed")
 
         # 레벨업과 진화 뒤에도 스탯 단계와 미사용 포인트가 유지되는지 확인한다.
         self.assertEqual(
@@ -308,7 +308,7 @@ class OwnershipTests(unittest.TestCase):
         self.assertGreater(game.combat.bullets[0].x, game.player.x)
         self.assertEqual(game.combat.bullets[0].y, game.player.y)
         game.progression.upgrade_points = 1
-        self.assertTrue(game.progression.upgrade_stat("hull"))
+        self.assertTrue(game.progression.upgrade_stat("health"))
         self.assertEqual(game.player.max_hp, game.config.player_hp + 25)
         self.assertEqual(old_player.max_hp, game.config.player_hp)
 

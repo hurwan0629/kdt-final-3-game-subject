@@ -11,6 +11,16 @@ dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 rl = ["gymnasium>=0.29"]
+typing = ["mypy>=1.10", "typing_extensions>=4.7", "gymnasium>=0.29"]
+
+[tool.mypy]
+files = ["src"]
+python_version = "3.10"
+disallow_untyped_defs = true
+disallow_any_generics = true
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
 
 [project.scripts]
 space-z = "space_z.main:main"

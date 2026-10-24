@@ -16,10 +16,10 @@ ENEMY_SUFFIX = (
     "@enemy"  # "ships/Lv10_트윈@enemy" → 같은 그림의 청록 선체를 붉은색으로 바꿔 쓴다
 )
 ELITE_SUFFIX = "@elite"  # 엘리트 적은 금색 선체
-HULL_TINTS = {ENEMY_SUFFIX: (1.0, 0.32, 0.35), ELITE_SUFFIX: (1.0, 0.72, 0.18)}
+HEALTH_TINTS = {ENEMY_SUFFIX: (1.0, 0.32, 0.35), ELITE_SUFFIX: (1.0, 0.72, 0.18)}
 
 
-def _hull_mask(rgb_pixels: NDArray[np.int16], alpha: NDArray[np.uint8]) -> NDArray[np.bool_]:
+def _health_mask(rgb_pixels: NDArray[np.int16], alpha: NDArray[np.uint8]) -> NDArray[np.bool_]:
     """이미지에서 불투명한 청록색 선체에 해당하는 픽셀을 찾는다.
 
     인자:
@@ -40,12 +40,12 @@ def _hull_mask(rgb_pixels: NDArray[np.int16], alpha: NDArray[np.uint8]) -> NDArr
     )
 
 
-def _recolor_hull(image: pygame.Surface, tint: tuple[float, float, float]) -> pygame.Surface:
+def _recolor_health(image: pygame.Surface, tint: tuple[float, float, float]) -> pygame.Surface:
     """선체의 밝기와 투명도를 유지하며 진영별 색상으로 바꾼 복사본을 만든다.
 
     인자:
         image: 색상을 바꿀 pygame.Surface. 청록색 선체와 회색 포신이 있는 이미지이다.
-        tint: RGB 채널별 밝기 배율 세 개. HULL_TINTS의 0~1 범위 튜플을 사용한다.
+        tint: RGB 채널별 밝기 배율 세 개. HEALTH_TINTS의 0~1 범위 튜플을 사용한다.
 
     처리:
         1) 이미지를 복사하고 청록색 정도와 픽셀별 최대 채널 밝기를 구한다.
@@ -99,27 +99,27 @@ def _redraw_barrel(image: pygame.Surface, forward: float, inner: float) -> pygam
     # 선체 영역의 중심과 반지름을 측정한다.
     rgb_pixels = pygame.surfarray.array3d(image).astype(np.int16)
     alpha = pygame.surfarray.array_alpha(image)
-    hull_x_pixels, hull_y_pixels = np.where(_hull_mask(rgb_pixels, alpha))
+    health_x_pixels, health_y_pixels = np.where(_health_mask(rgb_pixels, alpha))
     center_x, center_y = (
-        (np.min(hull_x_pixels) + np.max(hull_x_pixels) + 1) / 2,
-        (np.min(hull_y_pixels) + np.max(hull_y_pixels) + 1) / 2,
+        (np.min(health_x_pixels) + np.max(health_x_pixels) + 1) / 2,
+        (np.min(health_y_pixels) + np.max(health_y_pixels) + 1) / 2,
     )
     radius = (
         max(
-            np.max(hull_x_pixels) - np.min(hull_x_pixels) + 1,
-            np.max(hull_y_pixels) - np.min(hull_y_pixels) + 1,
+            np.max(health_x_pixels) - np.min(health_x_pixels) + 1,
+            np.max(health_y_pixels) - np.min(health_y_pixels) + 1,
         )
         / 2
     )
 
     # 선체 이미지에서 기존 회색 포신을 지운다.
-    hull = image.copy()
+    health = image.copy()
     gray = (np.abs(rgb_pixels[:, :, 0] - rgb_pixels[:, :, 1]) < 25) & (
         np.abs(rgb_pixels[:, :, 1] - rgb_pixels[:, :, 2]) < 25
     )
-    hull_alpha = pygame.surfarray.pixels_alpha(hull)
-    hull_alpha[gray & (alpha > 0)] = 0
-    del hull_alpha
+    health_alpha = pygame.surfarray.pixels_alpha(health)
+    health_alpha[gray & (alpha > 0)] = 0
+    del health_alpha
 
     # 측정한 선체 크기에 맞춰 새 포신을 그리고 선체와 합성한다.
     surface = pygame.Surface(image.get_size(), pygame.SRCALPHA)
@@ -130,7 +130,7 @@ def _redraw_barrel(image: pygame.Surface, forward: float, inner: float) -> pygam
     outer.midleft = (round(center_x), round(center_y))
     pygame.draw.rect(surface, (85, 85, 85), outer, border_radius=edge)
     pygame.draw.rect(surface, (153, 153, 153), outer.inflate(-2 * edge, -2 * edge))
-    surface.blit(hull, (0, 0))
+    surface.blit(health, (0, 0))
     return surface
 
 
@@ -182,9 +182,9 @@ class SpriteAssets:
         반환:
             pygame.Surface: 전처리한 원본 이미지. 결과는 캐시되며 원본 파일은 변경하지 않는다.
         """
-        for suffix, tint in HULL_TINTS.items():
+        for suffix, tint in HEALTH_TINTS.items():
             if path.endswith(suffix):
-                return _recolor_hull(self._source(path[: -len(suffix)]), tint)
+                return _recolor_health(self._source(path[: -len(suffix)]), tint)
         image = pygame.image.load(resource_path(f"assets/{path}.png")).convert_alpha()
         if path.startswith(("etc/guard_", "etc/home_")):
             # 장애물·버튼은 큰 투명 여백을 제외한 실제 그림을 표시 영역에 맞춘다.
@@ -206,10 +206,10 @@ class SpriteAssets:
                경계의 중심과 긴 변의 길이(최소 1px)를 계산해 캐시한다.
 
         반환:
-            tuple: ((center_x, center_y), hull_diameter).
+            tuple: ((center_x, center_y), health_diameter).
             중심은 원본 이미지 안의 픽셀 좌표이며 지름은 선체 크기 변환에 사용할 픽셀 길이이다.
         """
-        for suffix in HULL_TINTS:  # 색을 바꾼 적 그림도 원본 선체 기준을 쓴다
+        for suffix in HEALTH_TINTS:  # 색을 바꾼 적 그림도 원본 선체 기준을 쓴다
             if path.endswith(suffix):
                 return self._ship_geometry(path[: -len(suffix)])
 
@@ -217,22 +217,22 @@ class SpriteAssets:
         source = self._source(path)
         rgb_pixels = pygame.surfarray.array3d(source).astype(np.int16)
         alpha = pygame.surfarray.array_alpha(source)
-        hull = (
+        health = (
             (alpha > 100)
             & (rgb_pixels[:, :, 1] > rgb_pixels[:, :, 0] + 30)
             & (rgb_pixels[:, :, 2] > rgb_pixels[:, :, 0] + 30)
         )
-        hull_x_pixels, hull_y_pixels = np.where(hull)
+        health_x_pixels, health_y_pixels = np.where(health)
 
         # 선체 영역의 중심과 충돌 지름에 대응할 크기를 구한다.
-        if not len(hull_x_pixels):
+        if not len(health_x_pixels):
             rect = source.get_bounding_rect()
         else:
             rect = pygame.Rect(
-                int(np.min(hull_x_pixels)),
-                int(np.min(hull_y_pixels)),
-                int(np.max(hull_x_pixels) - np.min(hull_x_pixels) + 1),
-                int(np.max(hull_y_pixels) - np.min(hull_y_pixels) + 1),
+                int(np.min(health_x_pixels)),
+                int(np.min(health_y_pixels)),
+                int(np.max(health_x_pixels) - np.min(health_x_pixels) + 1),
+                int(np.max(health_y_pixels) - np.min(health_y_pixels) + 1),
             )
         return (rect.x + rect.width / 2, rect.y + rect.height / 2), max(
             1, rect.width, rect.height
@@ -350,8 +350,8 @@ class SpriteAssets:
             pygame.Surface: 선체 지름을 요청값에 맞춘 우주선 이미지.
             포신·여백·회전 때문에 전체 표면 크기는 diameter보다 클 수 있다.
         """
-        _, hull_diameter = self._ship_geometry(path)
-        side = diameter * self._ship_base(path).get_width() / hull_diameter
+        _, health_diameter = self._ship_geometry(path)
+        side = diameter * self._ship_base(path).get_width() / health_diameter
         return self.image(path, side, angle)
 
     def _projectile_geometry(self, path: str) -> pygame.Rect:

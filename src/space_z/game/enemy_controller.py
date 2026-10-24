@@ -225,7 +225,7 @@ class EnemyController:
         if not enemy.stat_levels:
             self._roll_enemy_stats(enemy)
         levels = enemy.stat_levels
-        hull_level = levels.get("hull", 0)
+        health_level = levels.get("health", 0)
         damage_level = levels.get("damage", 0)
         rapid_level = levels.get("rapid", 0)
         speed_level = levels.get("speed", 0)
@@ -233,7 +233,7 @@ class EnemyController:
 
         # 3) 최대 체력·반지름·공격력·연사·이동·탄환 능력치를 갱신하되 현재 체력 비율은 유지한다.
         enemy.max_hp = (
-            (config.enemy_hp + ship_spec.hp_bonus * 0.5 + 25 * hull_level)
+            (config.enemy_hp + ship_spec.hp_bonus * 0.5 + 25 * health_level)
             * (1 + enemy_ai_config.hp_growth * tier)
             * elite_hp
             * hp_mercy

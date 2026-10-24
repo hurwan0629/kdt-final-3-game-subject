@@ -1267,7 +1267,7 @@ class Renderer:
                 (bar_x + 6, bar_y + 3, max(0, bar_width * ratio - 12), 3),
                 border_radius=2,
             )
-        health_text = f"HULL  {math.ceil(player.hp)} / {player.max_hp:.0f}"
+        health_text = f"HEALTH  {math.ceil(player.hp)} / {player.max_hp:.0f}"
         health_text_rect = self.font_label.render(health_text, True, COLORS["white"]).get_rect(
             center=(screen_width / 2, bar_y + bar_height / 2)
         )

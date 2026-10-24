@@ -212,7 +212,7 @@ class LargeWallLayoutTests(unittest.TestCase):
             ["wall", "mud", "breakable"],
         )
 
-    def test_astar_accounts_for_doubled_hull_and_five_tile_opening(self):
+    def test_astar_accounts_for_doubled_health_and_five_tile_opening(self):
         # 검사에 사용할 설정·개체·입력을 준비한다.
         for opening in ((5, 6, 7), (4, 5, 6, 7, 8)):
             grid = [[EMPTY] * 13 for _ in range(13)]
@@ -223,7 +223,7 @@ class LargeWallLayoutTests(unittest.TestCase):
                 bool(terrain.astar((6, 2), (6, 10), radius=96)), len(opening) == 5
             )
 
-    def test_clear_view_can_still_be_too_narrow_for_a_hull(self):
+    def test_clear_view_can_still_be_too_narrow_for_a_health(self):
         # 검사에 사용할 설정·개체·입력을 준비한다.
         grid = [[EMPTY] * 9 for _ in range(9)]
         grid[4][4] = WALL

@@ -235,7 +235,7 @@ class PlayerProgression:
         """지정한 스탯을 지금 강화할 수 있는지 확인한다.
 
         인자:
-            key: 강화할 스탯 키(damage, rapid, speed, hull, range).
+            key: 강화할 스탯 키(damage, rapid, speed, health, range).
 
         처리:
             키·포인트·게임 종료·생존·스탯 상한·최소 발사 간격 조건을 함께 검사한다.
@@ -256,7 +256,7 @@ class PlayerProgression:
         """강화 포인트 하나로 플레이어 스탯을 올리고 적의 대응 성장을 반영한다.
 
         인자:
-            key: 강화할 스탯 키(damage, rapid, speed, hull, range).
+            key: 강화할 스탯 키(damage, rapid, speed, health, range).
 
         처리:
             1) 강화 가능 여부를 확인하고 해당 플레이어 능력치를 올린다.
@@ -281,7 +281,7 @@ class PlayerProgression:
             )
         elif key == "speed":
             player.accel_scale *= 1.07
-        elif key == "hull":
+        elif key == "health":
             player.max_hp += 25
             player.hp = min(player.max_hp, player.hp + 25)
         elif key == "range":

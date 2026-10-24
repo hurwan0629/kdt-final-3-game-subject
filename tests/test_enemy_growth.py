@@ -98,7 +98,7 @@ class EnemyGrowthTests(unittest.TestCase):
         # 적별 강화 총량은 같고 스탯 배분은 서로 달라지는지 확인한다.
         for key, times in (
             ("damage", 3),
-            ("hull", 2),
+            ("health", 2),
             ("speed", 1),
             ("rapid", 1),
             ("range", 1),
@@ -280,7 +280,7 @@ class ShipTweakTests(unittest.TestCase):
         self.assertGreater(guardian.radius, rookie.radius)
         self.assertLess(guardian.damage, game.config.bullet_damage * 0.7)
 
-    def test_guardian_hull_is_smaller(self):
+    def test_guardian_health_is_smaller(self):
         # 검사에 사용할 설정·개체·입력을 준비한다.
         game = open_game()
         evolve(game, "guardian")

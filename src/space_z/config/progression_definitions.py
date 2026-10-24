@@ -19,7 +19,7 @@ class RewardCard:
 
 STAT_UPGRADES = (  # 스탯 강화 목록과 화면·숫자 단축키의 고정 순서
     RewardCard(
-        "hull", "체력", "능력치", ("최대 / 현재 체력 +25",)
+        "health", "체력", "능력치", ("최대 / 현재 체력 +25",)
     ),  # 최대·현재 체력 강화
     RewardCard("damage", "공격력", "능력치", ("공격 피해 +25%",)),  # 탄환 공격력 강화
     RewardCard(
@@ -205,7 +205,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         parent="sniper",
         level=20,
         asset="ships/Lv20_레일거너",
-        shots=(ShotSpec(forward=1.8842, caliber=caliber=15 / 167 * 0.9 * 2 * 1.5),),
+        shots=(ShotSpec(forward=1.8842, caliber=15 / 167 * 0.9 * 2 * 1.5),),
         damage=2.15,
         cooldown=1.8,
         speed=2.28,

@@ -194,7 +194,7 @@ class WeaponsSkillsTests(unittest.TestCase):
             (game.progression.upgrade_points, game.progression.special_reward_levels),
             (8, [10]),
         )
-        self.assertTrue(game.progression.upgrade_stat("hull"))
+        self.assertTrue(game.progression.upgrade_stat("health"))
         self.assertEqual(game.progression.upgrade_points, 7)
         self.assertEqual(game.progression.stat_choices, STAT_UPGRADES)
         rows = [rect for _, rect in build_stat_upgrade_rows(960, 720)]
@@ -597,11 +597,11 @@ class WeaponsSkillsTests(unittest.TestCase):
                     )
                 )
 
-    def test_guardian_growth_preserves_hull_upgrades_and_damage(self):
+    def test_guardian_growth_preserves_health_upgrades_and_damage(self):
         # 검사에 사용할 설정·개체·입력을 준비한다.
         game = self.game
         game.progression._add_score(190)
-        game.progression.upgrade_stat("hull")
+        game.progression.upgrade_stat("health")
         game.player.hp -= 30
         self.evolve("citadel")
 
@@ -739,7 +739,7 @@ class WeaponsSkillsTests(unittest.TestCase):
 
     def test_projectile_collision_width_matches_measured_gun_opening(self):
         # 원본 512px PNG 포신 안쪽의 밝은 회색 부분을 실측한 픽셀 폭이다.
-        for job, hull, opening in (
+        for job, health, opening in (
             ("rookie", 139, 26),
             ("twin", 136, 22),
             ("hunter", 174, 19),
@@ -750,7 +750,7 @@ class WeaponsSkillsTests(unittest.TestCase):
                 self.evolve(job)
                 self.game.combat._fire(self.game.player, True)
                 bullet = self.game.combat.bullets[0]
-                gun_width = 2 * self.game.player.radius * opening / hull
+                gun_width = 2 * self.game.player.radius * opening / health
                 self.assertAlmostEqual(2 * bullet.radius, gun_width * 0.9)
                 self.assertLess(2 * bullet.radius, gun_width)
 

@@ -283,7 +283,7 @@ class MenusReloadTests(unittest.TestCase):
             pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=position)
         )
         self.assertEqual(self.game.progression.upgrade_points, 0)
-        self.assertEqual(self.game.progression.stat_levels["hull"], 0)
+        self.assertEqual(self.game.progression.stat_levels["health"], 0)
         self.assertFalse(self.application.click_requested)
         self.assertTrue(self.application.suppress_fire)
 

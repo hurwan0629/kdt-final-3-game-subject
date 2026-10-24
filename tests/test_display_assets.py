@@ -274,26 +274,26 @@ class DisplayAssetsTests(unittest.TestCase):
                 image = self.renderer.assets.ship_image(spec.asset, 60)
                 rgb_pixels = pygame.surfarray.array3d(image).astype(np.int16)
                 alpha = pygame.surfarray.array_alpha(image)
-                hull_x_pixels, hull_y_pixels = np.where(
+                health_x_pixels, health_y_pixels = np.where(
                     (alpha > 100)
                     & (rgb_pixels[:, :, 1] > rgb_pixels[:, :, 0] + 30)
                     & (rgb_pixels[:, :, 2] > rgb_pixels[:, :, 0] + 30)
                 )
                 self.assertAlmostEqual(
                     max(
-                        hull_x_pixels.max() - hull_x_pixels.min() + 1,
-                        hull_y_pixels.max() - hull_y_pixels.min() + 1,
+                        health_x_pixels.max() - health_x_pixels.min() + 1,
+                        health_y_pixels.max() - health_y_pixels.min() + 1,
                     ),
                     60,
                     delta=3,
                 )
                 self.assertAlmostEqual(
-                    (hull_x_pixels.max() + hull_x_pixels.min()) / 2,
+                    (health_x_pixels.max() + health_x_pixels.min()) / 2,
                     image.get_width() / 2,
                     delta=2,
                 )
                 self.assertAlmostEqual(
-                    (hull_y_pixels.max() + hull_y_pixels.min()) / 2,
+                    (health_y_pixels.max() + health_y_pixels.min()) / 2,
                     image.get_height() / 2,
                     delta=2,
                 )
