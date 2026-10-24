@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+from space_z.game.types import AITarget, PendingShot, TilePosition, WorldPoint
+
 
 @dataclass
 class Tank:  # 플레이어·적 선체의 이동·전투·AI 상태
@@ -32,25 +34,25 @@ class Tank:  # 플레이어·적 선체의 이동·전투·AI 상태
     max_ammo: int = 0  # 플레이어 탄창 용량
     reload_scale: float = 1.0  # 플레이어 기본 재장전 시간에 곱할 배율
     # 예약 점사 (발사 프레임, 패턴, 피해, 탄속, 수명) 목록
-    pending_shots: list = field(default_factory=list)
+    pending_shots: list[PendingShot] = field(default_factory=list)
     elite: bool = False  # 엘리트 적 여부 (능력치·처치 점수 강화, 처치 시 플레이어 회복)
     # 적 개체에 무작위 배분한 스탯 키별 강화 단계
-    stat_levels: dict = field(default_factory=dict)
+    stat_levels: dict[str, int] = field(default_factory=dict)
     # 적 AI 상태
     ai_timer: int = 0  # 목표·조준 오차·옆돌기 방향을 다시 정하기까지 남은 프레임
     # 목표 ("player", id) / ("shape", id) / ("point", (x, y)) / None
-    ai_target: tuple = None
+    ai_target: AITarget | None = None
     ai_aim_offset: float = 0.0  # 목표 방향에 더할 조준 오차 (rad)
     ai_move: int = 0  # 목표가 없을 때 사용할 이동 번호 (0=정지, 1~8=8방향)
     # 이번 프레임에 시야 거리·시야선 조건으로 플레이어가 보이는지
     ai_can_see: bool = False
     # 감지하거나 동료에게 전달받은 마지막 플레이어 위치 (월드 x, y)
-    ai_last_seen: tuple = None
+    ai_last_seen: WorldPoint | None = None
     ai_last_seen_frame: int = -(10**9)  # 마지막 플레이어 위치를 확인·전달받은 프레임
     # A* 탐색 후 남은 이동 경로 (타일 열·행 좌표 목록)
-    ai_path: list = field(default_factory=list)
+    ai_path: list[TilePosition] = field(default_factory=list)
     ai_path_timer: int = 0  # A* 경로를 다시 계산하기까지 남은 프레임
-    ai_goal: tuple = None  # 현재 이동 목표의 월드 좌표 (디버그 표시용)
+    ai_goal: WorldPoint | None = None  # 현재 이동 목표의 월드 좌표 (디버그 표시용)
     ai_strafe: float = 1.0  # 목표 주위를 옆으로 도는 방향 (1 또는 -1)
 
 
@@ -83,14 +85,14 @@ class Bullet:  # 탄환의 이동·피해·충돌·관통 상태
     radius: float  # 탄환 충돌 반지름 (px)
     blast_radius: float = 0.0  # 명중 시 폭발 반지름 (px, 0이면 직접 피해)
     # 이동 구간 충돌 판정의 시작 가로 좌표 (None이면 현재 위치 사용)
-    prev_x: float = None
-    prev_y: float = None  # 이동 구간 충돌 판정의 시작 세로 좌표
+    prev_x: float | None = None
+    prev_y: float | None = None  # 이동 구간 충돌 판정의 시작 세로 좌표
     kind: str = "plasma"  # 표시할 탄환 종류 (plasma / shell / mine / missile)
     arming_frames: int = 0  # 이전 지뢰의 무장 대기 프레임 (현재 미사용)
     homing: bool = False  # 이전 유도탄의 추적 여부 (현재 미사용)
     pierce: int = 0  # 명중 후 탄환을 유지할 수 있는 남은 관통 횟수
     # 이미 맞힌 대상 번호 집합 (관통 중 중복 피해 방지)
-    hit_ids: set = field(default_factory=set)
+    hit_ids: set[int] = field(default_factory=set)
 
 
 @dataclass

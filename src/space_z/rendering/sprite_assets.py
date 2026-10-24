@@ -1,4 +1,7 @@
 """PNG 원본과 투명도를 보존하며 화면용 크기·회전을 캐시한다."""
+from __future__ import annotations
+from numpy.typing import NDArray
+from space_z.rendering.types import RGB
 
 import math
 from functools import lru_cache
@@ -16,7 +19,7 @@ ELITE_SUFFIX = "@elite"  # 엘리트 적은 금색 선체
 HULL_TINTS = {ENEMY_SUFFIX: (1.0, 0.32, 0.35), ELITE_SUFFIX: (1.0, 0.72, 0.18)}
 
 
-def _hull_mask(rgb_pixels, alpha):
+def _hull_mask(rgb_pixels: NDArray[np.int16], alpha: NDArray[np.uint8]) -> NDArray[np.bool_]:
     """이미지에서 불투명한 청록색 선체에 해당하는 픽셀을 찾는다.
 
     인자:
@@ -37,7 +40,7 @@ def _hull_mask(rgb_pixels, alpha):
     )
 
 
-def _recolor_hull(image, tint):
+def _recolor_hull(image: pygame.Surface, tint: tuple[float, float, float]) -> pygame.Surface:
     """선체의 밝기와 투명도를 유지하며 진영별 색상으로 바꾼 복사본을 만든다.
 
     인자:
@@ -76,7 +79,7 @@ def _recolor_hull(image, tint):
     return image
 
 
-def _redraw_barrel(image, forward, inner):
+def _redraw_barrel(image: pygame.Surface, forward: float, inner: float) -> pygame.Surface:
     """기존 회색 포신을 제거하고 지정한 크기의 포신을 선체 아래에 다시 그린다.
 
     인자:
@@ -98,13 +101,13 @@ def _redraw_barrel(image, forward, inner):
     alpha = pygame.surfarray.array_alpha(image)
     hull_x_pixels, hull_y_pixels = np.where(_hull_mask(rgb_pixels, alpha))
     center_x, center_y = (
-        (hull_x_pixels.min() + hull_x_pixels.max() + 1) / 2,
-        (hull_y_pixels.min() + hull_y_pixels.max() + 1) / 2,
+        (np.min(hull_x_pixels) + np.max(hull_x_pixels) + 1) / 2,
+        (np.min(hull_y_pixels) + np.max(hull_y_pixels) + 1) / 2,
     )
     radius = (
         max(
-            hull_x_pixels.max() - hull_x_pixels.min() + 1,
-            hull_y_pixels.max() - hull_y_pixels.min() + 1,
+            np.max(hull_x_pixels) - np.min(hull_x_pixels) + 1,
+            np.max(hull_y_pixels) - np.min(hull_y_pixels) + 1,
         )
         / 2
     )
@@ -138,7 +141,7 @@ class SpriteAssets:
     색상이나 투명도를 직접 바꿀 때는 반환값을 copy()한 뒤 사용한다.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """각 이미지 처리 메서드에 크기가 제한된 LRU 캐시를 연결한다.
 
         인자:
@@ -152,17 +155,18 @@ class SpriteAssets:
         반환:
             None: 현재 SpriteAssets 인스턴스의 메서드를 캐시를 사용하는 메서드로 교체한다.
         """
-        self._source = lru_cache(maxsize=96)(self._source)
-        self._ship_geometry = lru_cache(maxsize=32)(self._ship_geometry)
-        self._ship_base = lru_cache(maxsize=32)(self._ship_base)
-        self._scaled = lru_cache(maxsize=192)(self._scaled)
-        self._rotated = lru_cache(maxsize=512)(self._rotated)
-        self._projectile_geometry = lru_cache(maxsize=8)(self._projectile_geometry)
-        self._projectile_base = lru_cache(maxsize=8)(self._projectile_base)
-        self._projectile_scaled = lru_cache(maxsize=64)(self._projectile_scaled)
-        self._projectile_rotated = lru_cache(maxsize=256)(self._projectile_rotated)
+        # 인스턴스별 캐시와 cache_info()를 유지하는 바인딩이다. 메서드 재할당만 검사 예외로 둔다.
+        self._source = lru_cache(maxsize=96)(self._source)  # type: ignore[method-assign]
+        self._ship_geometry = lru_cache(maxsize=32)(self._ship_geometry)  # type: ignore[method-assign]
+        self._ship_base = lru_cache(maxsize=32)(self._ship_base)  # type: ignore[method-assign]
+        self._scaled = lru_cache(maxsize=192)(self._scaled)  # type: ignore[method-assign]
+        self._rotated = lru_cache(maxsize=512)(self._rotated)  # type: ignore[method-assign]
+        self._projectile_geometry = lru_cache(maxsize=8)(self._projectile_geometry)  # type: ignore[method-assign]
+        self._projectile_base = lru_cache(maxsize=8)(self._projectile_base)  # type: ignore[method-assign]
+        self._projectile_scaled = lru_cache(maxsize=64)(self._projectile_scaled)  # type: ignore[method-assign]
+        self._projectile_rotated = lru_cache(maxsize=256)(self._projectile_rotated)  # type: ignore[method-assign]
 
-    def _source(self, path):
+    def _source(self, path: str) -> pygame.Surface:
         """리소스 키에 해당하는 PNG를 읽고 종류별 전처리를 적용한다.
 
         인자:
@@ -189,7 +193,7 @@ class SpriteAssets:
             image = _redraw_barrel(image, *BARREL_OVERRIDES[path])
         return image
 
-    def _ship_geometry(self, path):
+    def _ship_geometry(self, path: str) -> tuple[tuple[float, float], int]:
         """우주선 이미지에서 포신을 제외한 선체의 중심과 지름 기준값을 구한다.
 
         인자:
@@ -225,16 +229,16 @@ class SpriteAssets:
             rect = source.get_bounding_rect()
         else:
             rect = pygame.Rect(
-                int(hull_x_pixels.min()),
-                int(hull_y_pixels.min()),
-                int(hull_x_pixels.max() - hull_x_pixels.min() + 1),
-                int(hull_y_pixels.max() - hull_y_pixels.min() + 1),
+                int(np.min(hull_x_pixels)),
+                int(np.min(hull_y_pixels)),
+                int(np.max(hull_x_pixels) - np.min(hull_x_pixels) + 1),
+                int(np.max(hull_y_pixels) - np.min(hull_y_pixels) + 1),
             )
         return (rect.x + rect.width / 2, rect.y + rect.height / 2), max(
             1, rect.width, rect.height
         )
 
-    def _ship_base(self, path):
+    def _ship_base(self, path: str) -> pygame.Surface:
         """포신까지 포함한 우주선 이미지를 선체 중심 기준의 정사각 캔버스에 배치한다.
 
         인자:
@@ -267,7 +271,7 @@ class SpriteAssets:
         image.blit(source, (round(side / 2 - center_x), round(side / 2 - center_y)))
         return image
 
-    def _scaled(self, path, width, height):
+    def _scaled(self, path: str, width: int, height: int) -> pygame.Surface:
         """종류에 맞는 기준 이미지를 지정한 가로·세로 크기로 변환한다.
 
         인자:
@@ -287,7 +291,7 @@ class SpriteAssets:
         )
         return pygame.transform.smoothscale(source, (width, height))
 
-    def _rotated(self, path, side, angle):
+    def _rotated(self, path: str, side: int, angle: float) -> pygame.Surface:
         """정사각형으로 크기를 맞춘 이미지를 지정한 각도로 회전한다.
 
         인자:
@@ -304,7 +308,7 @@ class SpriteAssets:
         """
         return pygame.transform.rotate(self._scaled(path, side, side), angle)
 
-    def image(self, path, size, angle=None):
+    def image(self, path: str, size: float | tuple[float, float], angle: float | None=None) -> pygame.Surface:
         """리소스 키와 표시 크기로 일반 이미지를 요청한다.
 
         인자:
@@ -330,7 +334,7 @@ class SpriteAssets:
             return self._scaled(path, side, side)
         return self._rotated(path, side, round(angle / 3) * 3 % 360)
 
-    def ship_image(self, path, diameter, angle=0):
+    def ship_image(self, path: str, diameter: float, angle: float=0) -> pygame.Surface:
         """투명 여백과 포신 길이에 영향받지 않도록 실제 선체 크기를 맞춘다.
 
         인자:
@@ -350,7 +354,7 @@ class SpriteAssets:
         side = diameter * self._ship_base(path).get_width() / hull_diameter
         return self.image(path, side, angle)
 
-    def _projectile_geometry(self, path):
+    def _projectile_geometry(self, path: str) -> pygame.Rect:
         """발광 여백을 제외한 탄환 몸체의 경계 사각형을 구한다.
 
         인자:
@@ -370,7 +374,7 @@ class SpriteAssets:
             core = source.get_bounding_rect()
         return core
 
-    def _projectile_base(self, path):
+    def _projectile_base(self, path: str) -> pygame.Surface:
         """탄체와 가까운 발광만 남기고 실제 탄체 중심을 기준 이미지 중앙에 맞춘다.
 
         인자:
@@ -413,7 +417,7 @@ class SpriteAssets:
         )
         return image
 
-    def _projectile_scaled(self, path, diameter):
+    def _projectile_scaled(self, path: str, diameter: int) -> pygame.Surface:
         """투명 여백 대신 실제 탄체 폭을 기준으로 탄환 크기를 변환한다.
 
         인자:
@@ -440,7 +444,7 @@ class SpriteAssets:
             ),
         )
 
-    def _projectile_rotated(self, path, diameter, angle):
+    def _projectile_rotated(self, path: str, diameter: int, angle: float) -> pygame.Surface:
         """탄체 폭을 맞춘 탄환 이미지를 지정한 각도로 회전한다.
 
         인자:
@@ -457,7 +461,7 @@ class SpriteAssets:
         """
         return pygame.transform.rotate(self._projectile_scaled(path, diameter), angle)
 
-    def projectile_image(self, path, diameter, angle=None):
+    def projectile_image(self, path: str, diameter: float, angle: float | None=None) -> pygame.Surface:
         """실제 탄체 폭과 회전각을 지정해 표시할 탄환 이미지를 요청한다.
 
         인자:

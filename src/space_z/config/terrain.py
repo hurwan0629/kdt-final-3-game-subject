@@ -9,7 +9,7 @@ class TerrainConfig:
     enabled: bool = True  # False면 벽 없는 빈 경기장
     tile_size: int = 48  # 지형 타일 한 변 길이 (px)
     map_name: str = "drift"  # maps/<map_name>.txt (drift / ring / belt)
-    map_pool: tuple = ()  # 비어있지 않으면 reset마다 seed로 이 중 하나 선택
+    map_pool: tuple[str, ...] = ()  # 비어있지 않으면 reset마다 seed로 이 중 하나 선택
     random_map: bool = True  # True면 reset마다 랜덤 블록 지형, False면 map_name 미로
     # 랜덤 지형 (diep.io 미로 모드 느낌): 큰 블록 격자 미로에서 벽 일부를 뚫는다
     block_tiles: int = 8  # 블록 한 변 (8칸 = 384px, 통로/벽 폭 — 더 개방감 있게)

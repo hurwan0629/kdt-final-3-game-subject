@@ -7,6 +7,19 @@
 gymnasium이 설치되어 있으면 gymnasium.Env를 상속하고 observation_space/action_space를
 gymnasium.spaces로 제공한다. 없으면 같은 인터페이스의 최소 대체 클래스를 쓴다.
 """
+from __future__ import annotations
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, TypeVar
+from numpy.typing import DTypeLike
+from space_z.game.entities import Tank, Shape, Bullet
+from space_z.game.terrain import TileMap
+from space_z.game.types import CombatEvents
+from space_z.rl.types import FloatArray, Observation, EnvironmentInfo
+
+if TYPE_CHECKING:
+    from space_z.rendering.renderer import Renderer
+
+EntityT = TypeVar("EntityT", Tank, Shape, Bullet)
 
 import math
 
@@ -23,35 +36,41 @@ from space_z.config import (
 from space_z.game.game_core import GameCore, N_ACTIONS, empty_events
 from space_z.game.terrain import grid_channels, WALL, MUD, BREAKABLE
 
-try:
+if TYPE_CHECKING:
     import gymnasium as gym
     from gymnasium import spaces
-
-    _BaseEnv = gym.Env
-except ImportError:  # gymnasium 없이도 동작
-    gym = None
-    spaces = None
-    _BaseEnv = object
+    # Gym의 공간 타입은 NumPy 정수 및 일반 dict를 사용한다. 공개 API는 아래에서 따로 구체화한다.
+    _BaseEnv = gym.Env[Any, Any]
+else:
+    # 실행 시에는 Gymnasium 설치 여부에 따라 기존 기반 클래스를 선택한다.
+    try:
+        import gymnasium as gym
+        from gymnasium import spaces
+        _BaseEnv = gym.Env
+    except ImportError:
+        gym = None
+        spaces = None
+        _BaseEnv = object
 
 
 class _Discrete:
-    def __init__(self, n):
+    def __init__(self, n: int) -> None:
         self.n = n
 
-    def sample(self, rng=None):
+    def sample(self, rng: np.random.Generator | None=None) -> int:
         rng = rng or np.random.default_rng()
         return int(rng.integers(self.n))
 
 
 class _Box:
-    def __init__(self, low, high, shape, dtype):
+    def __init__(self, low: float, high: float, shape: tuple[int, ...], dtype: DTypeLike) -> None:
         self.low, self.high, self.shape, self.dtype = low, high, shape, dtype
 
 
 # --------------------------------------------------------------------------
 # 관찰
 # --------------------------------------------------------------------------
-def build_vector(game: GameCore, observation_config: ObsConfig) -> np.ndarray:
+def build_vector(game: GameCore, observation_config: ObsConfig) -> FloatArray:
     """지형 격자를 제외한 벡터 관찰 (내 탱크, 적, 도형, 적 탄환, 레이)."""
 
     # 월드 크기와 속도 정규화 기준을 읽고 관측 벡터를 준비한다.
@@ -75,7 +94,7 @@ def build_vector(game: GameCore, observation_config: ObsConfig) -> np.ndarray:
     )
     observation_offset = observation_config.SELF_DIM
 
-    def nearest(entities, limit):
+    def nearest(entities: Sequence[EntityT], limit: int) -> list[EntityT]:
         return sorted(
             entities,
             key=lambda entity: (entity.x - player.x) ** 2 + (entity.y - player.y) ** 2,
@@ -154,17 +173,17 @@ class ObservationBuilder:
     """벡터 + 내 주변 타일 격자(지형 종류별 채널) 관찰을 만든다.
     격자는 맵 바깥을 벽으로 채운 배열을 캐시해 두고 잘라서 쓴다 (지형이 바뀔 때만 다시 만듦)."""
 
-    def __init__(self, game_config: GameConfig, observation_config: ObsConfig):
+    def __init__(self, game_config: GameConfig, observation_config: ObsConfig) -> None:
         if observation_config.grid_size % 2 != 1:
             raise ValueError("grid_size는 홀수여야 합니다.")
         self.observation_config = observation_config
         self.channels = grid_channels(game_config.terrain)
         self.grid_shape = observation_config.grid_shape(len(self.channels))
         self.flat_size = observation_config.flat_size(len(self.channels))
-        self._key = None
-        self._padded = None
+        self._key: tuple[int, int] | None = None
+        self._padded: FloatArray | None = None
 
-    def _padded_grid(self, terrain):
+    def _padded_grid(self, terrain: TileMap) -> FloatArray:
         # 맵이나 지형 버전이 바뀐 경우에만 관측용 격자 캐시를 다시 만든다.
         key = (id(terrain), terrain.version)
         if key != self._key:
@@ -191,9 +210,10 @@ class ObservationBuilder:
                     padding : padding + terrain.cols,
                 ] = tile_array == codes[name]
             self._padded, self._key = padded_grid, key
+        assert self._padded is not None  # 첫 조회에서 격자와 키를 함께 만든다.
         return self._padded
 
-    def grid(self, game: GameCore) -> np.ndarray:
+    def grid(self, game: GameCore) -> FloatArray:
         # 플레이어의 타일 좌표와 주변 격자 캐시를 가져온다.
         terrain = game.terrain
         padded_grid = self._padded_grid(terrain)
@@ -205,7 +225,7 @@ class ObservationBuilder:
         grid_size = self.observation_config.grid_size
         return padded_grid[:, row : row + grid_size, col : col + grid_size].copy()
 
-    def build(self, game: GameCore):
+    def build(self, game: GameCore) -> Observation:
         # 플레이어 주변의 벡터 관측과 타일 격자 관측을 만든다.
         vector = build_vector(game, self.observation_config)
         grid = self.grid(game)
@@ -216,7 +236,7 @@ class ObservationBuilder:
         return np.concatenate([vector, grid.ravel()])
 
 
-def compute_reward(events: dict, reward_config: RewardConfig) -> float:
+def compute_reward(events: CombatEvents, reward_config: RewardConfig) -> float:
     # 이번 행동 동안 누적된 피해·처치·사망 이벤트를 학습 보상으로 합산한다.
     return (
         reward_config.shape_damage * events["shape_damage_weighted"]
@@ -229,14 +249,15 @@ def compute_reward(events: dict, reward_config: RewardConfig) -> float:
     )
 
 
-def _merge_events(accumulated_events: dict, events: dict):
+def _merge_events(accumulated_events: CombatEvents, events: CombatEvents) -> None:
     # 피해량과 횟수는 합산하고 사망 여부 같은 불리언 이벤트는 누적한다.
-    for event_name, event_value in events.items():
-        accumulated_events[event_name] = (
-            (accumulated_events[event_name] or event_value)
-            if isinstance(event_value, bool)
-            else accumulated_events[event_name] + event_value
-        )
+    accumulated_events["shape_damage_weighted"] += events["shape_damage_weighted"]
+    accumulated_events["shape_destroyed_score"] += events["shape_destroyed_score"]
+    accumulated_events["shapes_destroyed"] += events["shapes_destroyed"]
+    accumulated_events["enemy_damage"] += events["enemy_damage"]
+    accumulated_events["enemies_killed"] += events["enemies_killed"]
+    accumulated_events["damage_taken"] += events["damage_taken"]
+    accumulated_events["died"] = accumulated_events["died"] or events["died"]
 
 
 # --------------------------------------------------------------------------
@@ -247,12 +268,12 @@ class TankEnv(_BaseEnv):
 
     def __init__(
         self,
-        game_config: GameConfig = None,
-        obs_config: ObsConfig = None,
-        reward_config: RewardConfig = None,
-        env_config: EnvConfig = None,
-        render_mode: str = None,
-    ):
+        game_config: GameConfig | None = None,
+        obs_config: ObsConfig | None = None,
+        reward_config: RewardConfig | None = None,
+        env_config: EnvConfig | None = None,
+        render_mode: str | None = None,
+    ) -> None:
         # 27개 이동/회전 행동으로 학습할 때는 카드 선택을 요구하지 않는다.
         self.game_config = game_config or GameConfig(
             progression_enabled=False, limited_ammo=False
@@ -310,9 +331,10 @@ class TankEnv(_BaseEnv):
         # 환경이 진행할 게임과 에피소드 카운터를 초기화한다.
         self.game = GameCore(self.game_config, seed=None)
         self.steps = 0
-        self._renderer = None
+        self._renderer: Renderer | None = None
 
-    def reset(self, seed: int = None, options: dict = None):
+    # Gym의 dict[str, Any]보다 구체적인 TypedDict 반환 계약을 제공한다.
+    def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[Observation, EnvironmentInfo]:  # type: ignore[override]
         # 환경과 게임을 같은 시드로 초기화하고 이전 판의 화면 연출을 비운다.
         if gym is not None:
             super().reset(seed=seed)
@@ -327,7 +349,7 @@ class TankEnv(_BaseEnv):
             self.render()
         return observation, self._info(None)
 
-    def step(self, action):
+    def step(self, action: int) -> tuple[Observation, float, bool, bool, EnvironmentInfo]:  # type: ignore[override]
         # 하나의 행동을 여러 게임 프레임에 적용하면서 발생한 이벤트를 모은다.
         accumulated_events = empty_events()
         for _ in range(self.environment_config.frame_skip):
@@ -354,7 +376,7 @@ class TankEnv(_BaseEnv):
             self._info(accumulated_events),
         )
 
-    def _info(self, events):
+    def _info(self, events: CombatEvents | None) -> EnvironmentInfo:
         # 점수·성장·무장·맵 상태를 학습 결과의 부가 정보로 정리한다.
         return {
             "score": self.game.progression.score,
@@ -378,7 +400,7 @@ class TankEnv(_BaseEnv):
             "special_levels": dict(self.game.progression.special_levels),
         }
 
-    def render(self):
+    def render(self) -> None:
         # 화면 출력이 요청된 경우 렌더러를 준비한다.
         if self.render_mode != "human":
             return
@@ -396,7 +418,7 @@ class TankEnv(_BaseEnv):
         pygame.display.flip()
         self._renderer.clock.tick(self.metadata["render_fps"])
 
-    def close(self):
+    def close(self) -> None:
         if self._renderer is not None:
             import pygame
 

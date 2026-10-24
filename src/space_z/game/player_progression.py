@@ -1,4 +1,6 @@
 """점수·레벨·강화·진화 상태와 적용 규칙을 관리한다."""
+from __future__ import annotations
+from space_z.config.progression_definitions import RewardCard
 
 import math
 from typing import TYPE_CHECKING, Literal
@@ -20,11 +22,11 @@ if TYPE_CHECKING:
 class PlayerProgression:
     """점수·레벨·강화·진화 상태와 적용 규칙을 관리한다. 공통 월드는 game을 통해 조회한다."""
 
-    def __init__(self, game: "GameCore"):
+    def __init__(self, game: "GameCore") -> None:
         """코어 참조를 보관한다. 이번 판의 상태는 reset()에서 초기화한다."""
         self.game = game  # 현재 월드·설정·프레임과 다른 담당 객체에 접근하는 코어
 
-    def reset(self, seed=None):
+    def reset(self, seed: int | None=None) -> None:
         """새 판의 담당 상태를 초기화한다. 전투 난수는 소비하지 않는다."""
         # 카드 선택이 맵 생성과 전투 난수열을 바꾸지 않도록 분리한다.
         self.reward_rng = np.random.default_rng(
@@ -35,22 +37,22 @@ class PlayerProgression:
         self.level = 1  # 플레이어의 현재 레벨
         self.xp = 0  # 다음 레벨업을 위해 쌓인 경험치
         self.upgrade_points = 0  # 아직 사용하지 않은 일반 스탯 강화 포인트
-        self.special_reward_levels = []  # 진화·숙련 보상을 아직 선택하지 않은 레벨 목록
+        self.special_reward_levels: list[int] = []  # 진화·숙련 보상을 아직 선택하지 않은 레벨 목록
         self.stat_levels = {
             card.key: 0 for card in STAT_UPGRADES
         }  # 스탯 키별 플레이어 강화 단계
-        self.stat_choices = STAT_UPGRADES  # 화면에 표시할 스탯 강화 선택지
+        self.stat_choices: tuple[RewardCard, ...] = STAT_UPGRADES  # 화면에 표시할 스탯 강화 선택지
         self.special_levels = {
             key: 0 for key in SHIPS
         }  # 우주선 키별 보상 선택 횟수 (숙련 배율 계산용)
         self.family = ""  # 10레벨에 선택한 첫 진화 계열 키
-        self.reward_portrait = None  # 마지막으로 선택한 진화·숙련 보상의 우주선 키
-        self.reward_choices = ()  # 현재 선택을 기다리는 진화·숙련 보상 목록
+        self.reward_portrait: str | None = None  # 마지막으로 선택한 진화·숙련 보상의 우주선 키
+        self.reward_choices: tuple[ShipClass, ...] = ()  # 현재 선택을 기다리는 진화·숙련 보상 목록
         self.last_reward = ""  # 마지막으로 적용한 보상의 알림 문구
         self.reward_message_until = 0  # 보상 알림 표시를 끝낼 게임 프레임
 
     @property
-    def xp_to_next_level(self):
+    def xp_to_next_level(self) -> int:
         """현재 레벨에서 다음 레벨로 오르는 데 필요한 경험치를 계산한다.
 
         인자:
@@ -68,7 +70,7 @@ class PlayerProgression:
         )
 
     @property
-    def pending_rewards(self):
+    def pending_rewards(self) -> int:
         """아직 사용하지 않은 강화·진화 보상의 총수를 계산한다.
 
         인자:
@@ -82,11 +84,11 @@ class PlayerProgression:
         """
         return self.upgrade_points + len(self.special_reward_levels)
 
-    def record_kill(self):
+    def record_kill(self) -> None:
         """플레이어의 적 처치 수를 1 늘린다. 반환값은 없다."""
         self.kills += 1
 
-    def _add_score(self, amount):
+    def _add_score(self, amount: int) -> None:
         """점수를 누적하고 성장 설정에 따라 경험치·레벨·보상을 갱신한다.
 
         인자:
@@ -120,7 +122,7 @@ class PlayerProgression:
         self.open_rewards()
         self.open_stat_upgrades()
 
-    def open_rewards(self):
+    def open_rewards(self) -> tuple[ShipClass, ...]:
         """가장 먼저 대기 중인 진화 보상의 선택지를 준비한다.
 
         인자:
@@ -158,7 +160,7 @@ class PlayerProgression:
             self.reward_choices = (SHIPS[self.game.player.job],)
         return self.reward_choices
 
-    def choose_reward(self, index):
+    def choose_reward(self, index: int) -> bool:
         """선택한 진화·숙련 보상을 적용하고 다음 보상을 준비한다.
 
         인자:
@@ -213,7 +215,7 @@ class PlayerProgression:
         self.open_rewards()
         return True
 
-    def open_stat_upgrades(self):
+    def open_stat_upgrades(self) -> tuple[RewardCard, ...]:
         # 숫자 1~5와 각 능력치 위치는 포인트 유무나 강화 한도와 관계없이 고정한다.
         """고정 순서의 스탯 강화 목록을 표시용으로 준비한다.
 
@@ -229,7 +231,7 @@ class PlayerProgression:
         self.stat_choices = STAT_UPGRADES
         return self.stat_choices
 
-    def can_upgrade_stat(self, key):
+    def can_upgrade_stat(self, key: str) -> bool:
         """지정한 스탯을 지금 강화할 수 있는지 확인한다.
 
         인자:
@@ -250,7 +252,7 @@ class PlayerProgression:
             and not (key == "rapid" and self.game.player.fire_cooldown_max <= 4)
         )
 
-    def upgrade_stat(self, key):
+    def upgrade_stat(self, key: str) -> bool:
         """강화 포인트 하나로 플레이어 스탯을 올리고 적의 대응 성장을 반영한다.
 
         인자:
@@ -299,7 +301,7 @@ class PlayerProgression:
         self.open_stat_upgrades()
         return True
 
-    def _reward_notice(self, title):
+    def _reward_notice(self, title: str) -> None:
         """보상 알림 내용과 표시 종료 프레임을 설정한다.
 
         인자:

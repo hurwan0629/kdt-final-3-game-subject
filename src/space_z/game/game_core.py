@@ -5,6 +5,9 @@
 - 보상은 여기서 계산하지 않고, 플레이어 관점의 이벤트만 self.events에 누적한다
   (rl/environment.py가 pop_events()로 꺼내서 보상으로 변환).
 """
+from __future__ import annotations
+from collections.abc import Sequence
+from space_z.game.types import CombatEvents, ScoreAward, TilePosition, WorldPoint
 
 import math
 
@@ -29,7 +32,7 @@ from space_z.game.combat import Combat
 from space_z.game.enemy_controller import EnemyController
 
 
-def empty_events():
+def empty_events() -> CombatEvents:
     """플레이어 관점의 전투 이벤트 누적용 딕셔너리를 새로 만든다.
 
     인자:
@@ -56,7 +59,7 @@ class GameCore:
     """공통 월드와 게임 한 프레임의 실행 순서를 관리한다."""
 
     # 읽는 순서: __init__() → reset() → step() → 각 담당 객체의 세부 규칙.
-    def __init__(self, config: GameConfig = None, seed: int = None):
+    def __init__(self, config: GameConfig | None = None, seed: int | None = None) -> None:
         """게임 설정을 검증하고 첫 게임 상태를 생성한다.
 
         인자:
@@ -103,7 +106,7 @@ class GameCore:
         self.reset(seed)
 
     # ---------------- 새 판의 상태 초기화 ----------------
-    def reset(self, seed: int = None):
+    def reset(self, seed: int | None = None) -> None:
         """새 판을 시작할 수 있도록 게임 상태를 모두 초기화한다.
 
         인자:
@@ -129,10 +132,10 @@ class GameCore:
         self.events = (
             empty_events()
         )  # pop_events()로 꺼내기 전까지 누적하는 전투 이벤트
-        self.score_award_events = []  # 전달 대기 중인 점수 획득 사실 (프레임, x, y, 점수, 대상 종류)
+        self.score_award_events: list[ScoreAward] = []  # 전달 대기 중인 점수 획득 사실 (프레임, x, y, 점수, 대상 종류)
         self.combat.reset()
-        self.shapes = []  # 현재 월드에 남아 있는 천체 목록
-        self.enemies = []  # 적 목록 (생성 위치 계산에 이전 판의 적이 섞이지 않도록 먼저 비움)
+        self.shapes: list[Shape] = []  # 현재 월드에 남아 있는 천체 목록
+        self.enemies: list[Tank] = []  # 적 목록 (생성 위치 계산에 이전 판의 적이 섞이지 않도록 먼저 비움)
         self.enemy_controller.reset()
 
         # 2) 지형을 만들고 시작 위치에 플레이어를 생성한다.
@@ -176,10 +179,10 @@ class GameCore:
         action: int,
         *,
         want_fire: bool = True,
-        aim_position=None,
+        aim_position: WorldPoint | None=None,
         want_skill: bool = False,
         want_dash: bool = False,
-    ):
+    ) -> None:
         """행동과 선택 입력을 적용해 게임을 정확히 한 프레임 진행한다.
 
         인자:
@@ -297,7 +300,7 @@ class GameCore:
             ]
         return load_map(name, terrain_config, config.world_cols, config.world_rows)
 
-    def _random_free_pos(self, radius: float, min_dist: float, tiles=None):
+    def _random_free_pos(self, radius: float, min_dist: float, tiles: Sequence[TilePosition] | None=None) -> WorldPoint:
         """원형 개체가 벽과 겹치지 않으면서 선체와 떨어진 생성 위치를 고른다.
 
         인자:
@@ -360,9 +363,10 @@ class GameCore:
                 return x, y
 
         # 3) 조건을 만족하면 즉시 선택하고, 없으면 선체와의 여유가 가장 큰 후보를 선택한다.
+        assert best is not None  # 후보가 있으면 위의 80회 시도 중 적어도 한 번 저장한다.
         return best[1], best[2]
 
-    def _fit_player_after_evolution(self):
+    def _fit_player_after_evolution(self) -> None:
         """진화 후 커진 플레이어 선체가 지형 안에 들어가도록 위치를 보정한다.
 
         인자:
@@ -376,7 +380,7 @@ class GameCore:
         """
         self._fit_tank(self.player)
 
-    def _fit_tank(self, entity):
+    def _fit_tank(self, entity: Tank | Shape) -> None:
         """원형 개체가 벽과 겹치면 가장 가까운 이동 가능 타일로 옮긴다.
 
         인자:
@@ -412,7 +416,7 @@ class GameCore:
         entity.x, entity.y = terrain.center(col, row)
         entity.velocity_x = entity.velocity_y = 0.0
 
-    def _shape_spawn_pos(self, radius):
+    def _shape_spawn_pos(self, radius: float) -> WorldPoint:
         """여러 생성 후보를 비교해 천체가 덜 뭉치는 위치를 고른다.
 
         인자:
@@ -468,6 +472,7 @@ class GameCore:
                 break
 
         # 3) 충분한 유효 후보를 모으거나 시도 횟수를 소진하면 가장 높은 평가의 위치를 선택한다.
+        assert best is not None
         return best[1], best[2]
 
     def _make_shape(self) -> Shape:
@@ -519,7 +524,7 @@ class GameCore:
             spin=float(self.rng.uniform(-0.01, 0.01)),
         )
 
-    def record_score_award(self, x, y, amount, kind):
+    def record_score_award(self, x: float, y: float, amount: int, kind: str) -> None:
         """점수를 획득한 시점과 위치를 기록한다. 실제 점수나 화면 상태는 바꾸지 않는다.
 
         인자:
@@ -535,7 +540,7 @@ class GameCore:
         """
         self.score_award_events.append((self.frame, x, y, amount, kind))
 
-    def pop_score_award_events(self) -> list:
+    def pop_score_award_events(self) -> list[ScoreAward]:
         """전달 대기 중인 점수 획득 이벤트를 꺼내고 코어의 목록을 비운다.
 
         인자:
@@ -558,7 +563,7 @@ class GameCore:
         self.score_award_events = []
         return events
 
-    def pop_events(self) -> dict:
+    def pop_events(self) -> CombatEvents:
         """누적된 전투 이벤트를 꺼내고 다음 누적용 저장소를 비운다.
 
         인자:
@@ -586,7 +591,7 @@ class GameCore:
         rotation: int,
         accel_scale: float,
         turn_scale: float,
-    ):
+    ) -> None:
         """선체의 이동·벽 충돌·포신 회전을 한 프레임 처리한다.
 
         인자:
@@ -635,7 +640,7 @@ class GameCore:
             tank.angle + ROT_DIR[rotation] * config.turn_speed * turn_scale
         )
 
-    def _clamp_to_arena(self, entity):
+    def _clamp_to_arena(self, entity: Tank | Shape) -> None:
         """원형 개체가 월드 경계를 벗어나지 않도록 위치와 속도를 보정한다.
 
         인자:
@@ -669,7 +674,7 @@ class GameCore:
                 min(0.0, entity.velocity_y),
             )
 
-    def _move_shapes(self):
+    def _move_shapes(self) -> None:
         """모든 천체의 표류·회전·벽 반사·속도 감쇠를 처리한다.
 
         인자:

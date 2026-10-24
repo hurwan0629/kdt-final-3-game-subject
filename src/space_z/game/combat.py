@@ -1,11 +1,14 @@
 """무장·탄환·피해·회복·충돌과 전투 연출 상태를 관리한다."""
+from __future__ import annotations
+from collections.abc import Sequence
+from space_z.game.types import WorldPoint
 
 import math
 from typing import TYPE_CHECKING
-from space_z.config.progression_definitions import ShotSpec
+from space_z.config.progression_definitions import ShotSpec, ShipClass
 from space_z.config.progression_definitions import SHIPS
 from space_z.game.terrain import BREAKABLE
-from space_z.game.entities import Tank, Shape, Bullet, Explosion
+from space_z.game.entities import Tank, Shape, Bullet, Beam, Explosion
 
 if TYPE_CHECKING:
     from space_z.game.game_core import GameCore
@@ -19,24 +22,24 @@ SNIPER_PIERCE = 1
 class Combat:
     """무장·탄환·피해·회복·충돌과 전투 연출 상태를 관리한다. 공통 월드는 game을 통해 조회한다."""
 
-    def __init__(self, game: "GameCore"):
+    def __init__(self, game: "GameCore") -> None:
         """코어 참조를 보관한다. 이번 판의 상태는 reset()에서 초기화한다."""
         self.game = game  # 현재 월드·설정·프레임과 다른 담당 객체에 접근하는 코어
 
-    def reset(self):
+    def reset(self) -> None:
         """새 판의 담당 상태를 초기화한다. 전투 난수는 소비하지 않는다."""
         self.active_skill = None  # 이전 액티브 스킬 상태 (현재 미사용)
         self.skill_cooldown = 0  # 이전 액티브 스킬의 남은 대기 프레임 (현재 미사용)
         self.reload_frames_left = 0  # 플레이어 재장전 완료까지 남은 프레임
         self.dash_frames_left = 0  # 이전 돌진 동작의 남은 프레임 (현재 미사용)
-        self.beams = []  # 수명이 남은 빔 연출 목록
-        self.explosions = []  # 수명이 남은 폭발 연출 목록
+        self.beams: list[Beam] = []  # 수명이 남은 빔 연출 목록
+        self.explosions: list[Explosion] = []  # 수명이 남은 폭발 연출 목록
         self.player_shot_frame = -(
             10**9
         )  # 적의 청각 감지에 쓰는 마지막 플레이어 발사 프레임
-        self.bullets = []  # 현재 비행 중인 탄환 목록
+        self.bullets: list[Bullet] = []  # 현재 비행 중인 탄환 목록
 
-    def _finish_frame(self):
+    def _finish_frame(self) -> None:
         """프레임 증가 뒤 재장전 타이머와 완료된 탄창을 갱신한다.
 
         인자:
@@ -55,7 +58,7 @@ class Combat:
                 self.game.player.ammo = self.game.player.max_ammo
 
     @property
-    def reload_frames_total(self):
+    def reload_frames_total(self) -> int:
         """플레이어의 재장전 시간을 프레임 수로 계산한다.
 
         인자:
@@ -72,7 +75,7 @@ class Combat:
             * self.game.config.fps
         )
 
-    def request_reload(self):
+    def request_reload(self) -> bool:
         """가능한 상태라면 플레이어 재장전을 시작한다.
 
         인자:
@@ -101,7 +104,7 @@ class Combat:
         self.game.player.pending_shots.clear()
         return True
 
-    def request_skill(self, move=0, aim_position=None):
+    def request_skill(self, move: int=0, aim_position: WorldPoint | None=None) -> bool:
         """제거된 액티브 스킬 호출을 받아 주는 호환용 API다.
 
         인자:
@@ -116,7 +119,7 @@ class Combat:
         """
         return False
 
-    def _shot_delays(self, tank, ship_spec):
+    def _shot_delays(self, tank: Tank, ship_spec: ShipClass) -> dict[int, int]:
         # 발사속도 강화는 연사 묶음 사이 대기뿐 아니라 묶음 안의 점사도 빠르게 한다.
         """우주선 점사 패턴의 지연을 실제 발사 간격에 맞게 환산한다.
 
@@ -146,7 +149,7 @@ class Combat:
             delays[delay] = previous
         return delays
 
-    def weapon_values(self, tank: Tank):
+    def weapon_values(self, tank: Tank) -> tuple[ShipClass, float, int, float, int]:
         """선체 종류와 강화·숙련을 반영한 발사 능력치를 계산한다.
 
         인자:
@@ -246,7 +249,7 @@ class Combat:
             bullet.prev_x = bullet.prev_y = None
             self.bullets.append(bullet)
 
-    def _tick_effects(self):
+    def _tick_effects(self) -> None:
         """빔과 폭발 연출의 남은 시간을 한 프레임 갱신한다.
 
         인자:
@@ -259,15 +262,17 @@ class Combat:
         반환:
             None: beams와 explosions 목록을 제자리에서 갱신한다.
         """
-        for effects in (self.beams, self.explosions):
-            # 1) 각 연출의 수명을 1 줄인다.
-            for effect in effects:
-                effect.life -= 1
+        # 1) 빔의 수명을 줄이고 끝난 항목을 기존 목록에서 제거한다.
+        for beam in self.beams:
+            beam.life -= 1
+        self.beams[:] = [beam for beam in self.beams if beam.life > 0]
 
-            # 2) 수명이 끝난 연출을 해당 목록에서 제거한다.
-            effects[:] = [effect for effect in effects if effect.life > 0]
+        # 2) 폭발도 같은 순서로 갱신한다. 각 목록의 개체 타입을 유지한다.
+        for explosion in self.explosions:
+            explosion.life -= 1
+        self.explosions[:] = [explosion for explosion in self.explosions if explosion.life > 0]
 
-    def _explode(self, x, y, damage, radius, team):
+    def _explode(self, x: float, y: float, damage: float, radius: float, team: str) -> None:
         """폭발 연출을 추가하고 주변 개체와 파괴 가능한 벽에 피해를 준다.
 
         인자:
@@ -315,7 +320,7 @@ class Combat:
             if math.hypot(center_x - x, center_y - y) <= radius:
                 self.game.terrain.damage_tile(col, row, damage)
 
-    def _fire(self, tank: Tank, want_fire: bool):
+    def _fire(self, tank: Tank, want_fire: bool) -> None:
         """예약 점사와 새 발사를 처리하고 탄약·발사 대기를 갱신한다.
 
         인자:
@@ -382,7 +387,7 @@ class Combat:
             self.player_shot_frame = self.game.frame
         tank.cooldown = cooldown
 
-    def _move_bullets(self):
+    def _move_bullets(self) -> None:
         """탄환의 한 프레임 이동과 충돌·수명 만료를 처리한다.
 
         인자:
@@ -461,6 +466,7 @@ class Combat:
             if bullet.prev_x is not None
             else (bullet.x, bullet.y)
         )
+        assert start_y is not None  # 이전 좌표는 x·y를 함께 설정하고 함께 비운다.
         for target in list(targets) + self.game.shapes:
             if (
                 target.hp <= 0
@@ -504,7 +510,7 @@ class Combat:
             return False
         return True
 
-    def _damage_tank(self, tank: Tank, damage: float, by_player: bool):
+    def _damage_tank(self, tank: Tank, damage: float, by_player: bool) -> None:
         """선체 피해를 적용하고 피격·처치·엘리트 보상을 처리한다.
 
         인자:
@@ -559,7 +565,7 @@ class Combat:
                 )
                 self.game.progression._add_score(amount)
 
-    def _damage_shape(self, shape: Shape, damage: float, by_player: bool):
+    def _damage_shape(self, shape: Shape, damage: float, by_player: bool) -> None:
         """천체 피해를 적용하고 플레이어 공격의 보상 이벤트를 기록한다.
 
         인자:
@@ -592,7 +598,7 @@ class Combat:
                 self.game.record_score_award(shape.x, shape.y, shape.score, shape.kind)
                 self.game.progression._add_score(shape.score)
 
-    def _collide_bodies(self):
+    def _collide_bodies(self) -> None:
         """선체와 천체의 몸체 충돌을 해결하고 접촉 피해를 적용한다.
 
         인자:
@@ -649,7 +655,7 @@ class Combat:
             self.game._clamp_to_arena(entity)
             self.game._fit_tank(entity)
 
-    def _regen_player(self):
+    def _regen_player(self) -> None:
         """피격 후 대기 시간이 지난 플레이어의 체력을 회복한다.
 
         인자:
@@ -670,14 +676,14 @@ class Combat:
             player.hp > 0
             and self.game.frame - player.last_hit_frame >= config.regen_delay
         ):
-            # 체력(hull 스탯·전직 보너스 등)이 늘어난 만큼 회복량도 비례해서 커진다
+            # 체력(health 스탯·전직 보너스 등)이 늘어난 만큼 회복량도 비례해서 커진다
             # (기준 체력 대비 같은 비율로 회복 → 최대 체력의 일정 %/초를 유지).
             # 2) 최대 체력에 비례한 기본 회복량과 추가 회복량을 더하되 최대 체력을 넘지 않게 한다.
             rate = config.regen_rate * (player.max_hp / config.player_hp)
             player.hp = min(player.max_hp, player.hp + rate + player.regen_bonus)
 
 
-def _segment_circle_hit(start_x, start_y, end_x, end_y, center_x, center_y, radius):
+def _segment_circle_hit(start_x: float, start_y: float, end_x: float, end_y: float, center_x: float, center_y: float, radius: float) -> float | None:
     """선분이 원에 처음 닿는 위치를 선분 내 비율로 계산한다.
 
     인자:
@@ -725,7 +731,7 @@ def _segment_circle_hit(start_x, start_y, end_x, end_y, center_x, center_y, radi
     return fraction if 0 <= fraction <= 1 else None
 
 
-def _overlap(first_entity, second_entity) -> bool:
+def _overlap(first_entity: Tank | Shape, second_entity: Tank | Shape) -> bool:
     """두 원형 개체가 서로 겹치는지 검사한다.
 
     인자:
@@ -746,7 +752,7 @@ def _overlap(first_entity, second_entity) -> bool:
     return delta_x * delta_x + delta_y * delta_y < combined_radius * combined_radius
 
 
-def _push_apart(first_entity, second_entity, first_share: float):
+def _push_apart(first_entity: Tank | Shape, second_entity: Tank | Shape, first_share: float) -> None:
     """겹친 두 원형 개체를 비율에 따라 밀어내고 약한 반동을 준다.
 
     인자:

@@ -2,6 +2,7 @@
 
 import math
 from dataclasses import dataclass, field
+from typing import TypedDict
 
 from .enemy_ai import EnemyAIConfig
 from .terrain import TerrainConfig
@@ -11,7 +12,17 @@ from .terrain import TerrainConfig
 # --------------------------------------------------------------------------
 SCORE_TIMES = 300
 
-SHAPE_TYPES = {
+class ShapeStats(TypedDict):
+    """천체 종류별 기본 능력치와 생성 가중치."""
+
+    sides: int
+    hp: float
+    score: int
+    radius: float
+    weight: float
+
+
+SHAPE_TYPES: dict[str, ShapeStats] = {
     "square": {  # 사각형 천체
         "sides": 4,  # 꼭짓점 수
         "hp": 10.0,  # 최대 체력

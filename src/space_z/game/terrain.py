@@ -3,6 +3,11 @@
 - 맵 텍스트 파싱/검증, 랜덤 맵 생성 (+BFS 연결성 검증)
 - 원 ↔ 벽 충돌 (벽을 따라 미끄러짐), 시야선/레이캐스트 (격자 DDA), A* 경로 탐색
 """
+from __future__ import annotations
+from collections.abc import Sequence
+from numpy.typing import NDArray
+from space_z.game.entities import Tank, Shape
+from space_z.game.types import TilePosition, WorldPoint
 
 import heapq
 import math
@@ -35,7 +40,7 @@ class MapError(ValueError):
     pass
 
 
-def grid_channels(terrain_config: TerrainConfig):
+def grid_channels(terrain_config: TerrainConfig) -> list[str]:
     """관찰 격자에 들어가는 지형 채널 이름 (설정에 따라 고정)."""
 
     # 활성화된 지형 기능에 맞춰 관측 채널 목록을 구성한다.
@@ -47,7 +52,7 @@ def grid_channels(terrain_config: TerrainConfig):
     return channels
 
 
-def list_maps():
+def list_maps() -> list[str]:
     # 리소스 폴더에서 사용할 수 있는 맵 파일 이름을 찾는다.
     maps_directory = resource_path("maps")
     if not os.path.isdir(maps_directory):
@@ -62,13 +67,13 @@ def list_maps():
 class TileMap:
     def __init__(
         self,
-        tiles,
-        tile_size,
-        player_start,
-        enemy_starts,
-        name,
+        tiles: Sequence[Sequence[int]],
+        tile_size: int,
+        player_start: TilePosition,
+        enemy_starts: Sequence[TilePosition],
+        name: str,
         terrain_config: TerrainConfig,
-    ):
+    ) -> None:
         self.rows = len(tiles)
         self.cols = len(tiles[0])
         self.tile = tile_size
@@ -94,10 +99,12 @@ class TileMap:
         self.version = 0  # 지형이 바뀔 때마다 증가 (렌더러/관찰 캐시 무효화용)
         self._refresh()
 
-    def _refresh(self):
+    def _refresh(self) -> None:
         # 지형 변경으로 유효하지 않게 된 경로·이동 구간 캐시를 비운다.
-        self._navigation_cache = {}
-        self._segment_cache = {}
+        self._navigation_cache: dict[
+            float, tuple[tuple[TilePosition, ...], frozenset[TilePosition]]
+        ] = {}
+        self._segment_cache: dict[tuple[float, TilePosition, TilePosition], bool] = {}
 
         # 벽 타일과 벽 주변 타일을 다시 표시한다.
         self.solid = [
@@ -137,7 +144,7 @@ class TileMap:
         self.version += 1
 
     # ---------------- 조회 ----------------
-    def is_solid_tile(self, col, row):
+    def is_solid_tile(self, col: int, row: int) -> bool:
         return (
             col < 0
             or row < 0
@@ -146,26 +153,26 @@ class TileMap:
             or self.solid[row][col]
         )
 
-    def tile_of(self, x, y):
+    def tile_of(self, x: float, y: float) -> TilePosition:
         return int(x // self.tile), int(y // self.tile)
 
-    def tile_at(self, x, y):
+    def tile_at(self, x: float, y: float) -> int:
         col, row = int(x // self.tile), int(y // self.tile)
         if col < 0 or row < 0 or col >= self.cols or row >= self.rows:
             return WALL
         return self.tiles[row][col]
 
-    def is_solid_at(self, x, y):
+    def is_solid_at(self, x: float, y: float) -> bool:
         return self.is_solid_tile(int(x // self.tile), int(y // self.tile))
 
-    def center(self, col, row):
+    def center(self, col: int, row: int) -> WorldPoint:
         return (col + 0.5) * self.tile, (row + 0.5) * self.tile
 
-    def as_array(self):
+    def as_array(self) -> NDArray[np.int8]:
         return np.array(self.tiles, dtype=np.int8)
 
     # ---------------- 선체 여유 ----------------
-    def circle_fits(self, x, y, radius):
+    def circle_fits(self, x: float, y: float, radius: float) -> bool:
         """경계/벽과 겹치지 않는 원인지 검사한다. 정확히 닿는 것은 허용한다."""
 
         # 반지름과 월드 경계를 검사해 배치할 수 없는 원을 걸러낸다.
@@ -218,7 +225,7 @@ class TileMap:
                     return False
         return True
 
-    def segment_fits(self, start_x, start_y, end_x, end_y, radius):
+    def segment_fits(self, start_x: float, start_y: float, end_x: float, end_y: float, radius: float) -> bool:
         """원형 선체가 선분 전체를 이동할 수 있는지 검사한다. 시야선보다 넓은 여유를 쓴다."""
 
         # 이동의 시작점과 끝점에 선체가 들어갈 수 있는지 확인한다.
@@ -306,7 +313,7 @@ class TileMap:
                     return False
         return True
 
-    def sweep_circle(self, x, y, delta_x, delta_y, max_distance, radius):
+    def sweep_circle(self, x: float, y: float, delta_x: float, delta_y: float, max_distance: float, radius: float) -> tuple[float, TilePosition | None]:
         """단위 방향으로 움직이는 원의 첫 벽 접촉 (거리, 타일). 없으면 (거리한도, None).
 
         벽 사각형에 반지름을 더한 둥근 사각형과 ray를 정확히 교차시킨다.
@@ -331,7 +338,7 @@ class TileMap:
         width, height, tile = self.cols * self.tile, self.rows * self.tile, self.tile
         tolerance = 1e-9
 
-        def consider(distance, cell):
+        def consider(distance: float, cell: TilePosition) -> None:
             nonlocal best, hit_tile
             if -tolerance <= distance <= best + tolerance:
                 distance = max(0.0, min(float(max_distance), distance))
@@ -364,7 +371,7 @@ class TileMap:
         if not self.has_solid:
             return best, hit_tile
 
-        def ray_box(left, top, right, bottom):
+        def ray_box(left: float, top: float, right: float, bottom: float) -> float | None:
             # 광선이 사각형 내부에 머무는 진입·이탈 거리 범위를 구한다.
             enter, leave = 0.0, best
             for origin, direction, low, high in (
@@ -387,7 +394,7 @@ class TileMap:
                         return None
             return max(0.0, enter)
 
-        def ray_circle(center_x, center_y):
+        def ray_circle(center_x: float, center_y: float) -> float | None:
             # 광선 시작점과 벽 모서리 원의 상대 위치를 구한다.
             offset_x, offset_y = x - center_x, y - center_y
             constant = offset_x * offset_x + offset_y * offset_y - radius * radius
@@ -437,12 +444,12 @@ class TileMap:
                             (right, bottom),
                         )
                     )
-                for distance in candidates:
-                    if distance is not None:
-                        consider(distance, (col, row))
+                for candidate_distance in candidates:
+                    if candidate_distance is not None:
+                        consider(candidate_distance, (col, row))
         return best, hit_tile
 
-    def navigation_tiles(self, radius=0.0):
+    def navigation_tiles(self, radius: float=0.0) -> tuple[TilePosition, ...]:
         """지정 반지름의 선체가 중심에 놓일 수 있는 타일 목록(파괴 시 캐시 갱신)."""
 
         # 선체 반지름별로 들어갈 수 있는 타일 목록을 계산해 캐시에 보관한다.
@@ -460,11 +467,11 @@ class TileMap:
             self._navigation_cache[radius] = (tiles, frozenset(tiles))
         return self._navigation_cache[radius][0]
 
-    def _navigation_set(self, radius):
+    def _navigation_set(self, radius: float) -> frozenset[TilePosition]:
         self.navigation_tiles(radius)
         return self._navigation_cache[float(radius)][1]
 
-    def _navigation_edge(self, start, end, radius):
+    def _navigation_edge(self, start: TilePosition, end: TilePosition, radius: float) -> bool:
         # 인접 타일 중심 및 대각선 양옆의 통행 가능 여부는 호출자가 확인한다.
         # 반 타일보다 작은 원은 이 타일들 밖의 벽과 만날 수 없다.
         if radius <= self.tile / 2:
@@ -479,7 +486,7 @@ class TileMap:
         return self._segment_cache[key]
 
     # ---------------- 부서지는 벽 ----------------
-    def damage_tile(self, col, row, damage) -> bool:
+    def damage_tile(self, col: int, row: int, damage: float) -> bool:
         """부서지는 벽에 데미지. 파괴되면 True."""
 
         # 피해를 받을 파괴 가능 벽과 남은 체력을 확인한다.
@@ -498,7 +505,7 @@ class TileMap:
         return False
 
     # ---------------- 충돌 ----------------
-    def resolve_circle(self, entity, bounce=False) -> bool:
+    def resolve_circle(self, entity: Tank | Shape, bounce: bool=False) -> bool:
         """원(entity.x, entity.y, entity.radius)을 벽 밖으로 밀어낸다.
         벽을 향하는 속도 성분만 제거(bounce면 반사)하므로 벽을 따라 미끄러진다."""
 
@@ -567,7 +574,7 @@ class TileMap:
         return hit
 
     # ---------------- 시야 ----------------
-    def raycast(self, start_x, start_y, delta_x, delta_y, max_distance) -> float:
+    def raycast(self, start_x: float, start_y: float, delta_x: float, delta_y: float, max_distance: float) -> float:
         """(start_x,start_y)에서 단위벡터 (delta_x,delta_y) 방향으로 첫 벽까지 거리 (없으면 max_dist). 격자 DDA."""
         tile_size = self.tile
         col, row = int(start_x // tile_size), int(start_y // tile_size)
@@ -610,7 +617,7 @@ class TileMap:
             if self.is_solid_tile(col, row):
                 return distance
 
-    def line_of_sight(self, start_x, start_y, end_x, end_y) -> bool:
+    def line_of_sight(self, start_x: float, start_y: float, end_x: float, end_y: float) -> bool:
         if not self.has_solid:
             return True
 
@@ -629,7 +636,7 @@ class TileMap:
         )
 
     # ---------------- 경로 ----------------
-    def astar(self, start, goal, max_nodes=None, *, radius=0.0):
+    def astar(self, start: TilePosition, goal: TilePosition, max_nodes: int | None=None, *, radius: float=0.0) -> list[TilePosition]:
         """선체 반지름을 고려한 8방향 A*. start 제외 타일 목록, 실패 시 []."""
 
         # 선체 크기로 통과 가능한 타일과 출발·도착 조건을 확인한다.
@@ -638,7 +645,7 @@ class TileMap:
             return []
         goal_col, goal_row = goal
 
-        def heuristic(col, row):
+        def heuristic(col: int, row: int) -> float:
             candidate_col, candidate_row = abs(col - goal_col), abs(row - goal_row)
             return max(candidate_col, candidate_row) + (math.sqrt(2) - 1) * min(
                 candidate_col, candidate_row
@@ -646,7 +653,8 @@ class TileMap:
 
         # 탐색 후보와 타일별 최저 이동 비용을 준비한다.
         open_heap = [(heuristic(*start), 0, 0.0, start)]
-        came, costs = {start: None}, {start: 0.0}
+        came: dict[TilePosition, TilePosition] = {}
+        costs = {start: 0.0}
         serial, expanded = 0, 0
         limit = len(walkable) if max_nodes is None else max_nodes
         closed = set()
@@ -690,7 +698,7 @@ class TileMap:
                     )
         return []
 
-    def reachable_from(self, start, *, radius=0.0):
+    def reachable_from(self, start: TilePosition, *, radius: float=0.0) -> set[TilePosition]:
         """4방향 BFS. radius를 지정하면 선체가 통과할 수 있는 중심만 탐색한다."""
 
         # 선체가 통과할 수 있는 타일과 탐색 시작점을 확인한다.
@@ -713,13 +721,13 @@ class TileMap:
                     queue.append(next_tile)
         return seen
 
-    def is_connected(self, radius=0.0):
+    def is_connected(self, radius: float=0.0) -> bool:
         tiles = self.navigation_tiles(radius)
         return bool(tiles) and len(
             self.reachable_from(self.player_start, radius=radius)
         ) == len(tiles)
 
-    def validate_navigation(self, radius):
+    def validate_navigation(self, radius: float) -> None:
         """최대 선체의 시작 위치/통로 연결성을 확인한다."""
         if not self.circle_fits(*self.center(*self.player_start), radius):
             raise MapError(
@@ -739,7 +747,7 @@ class TileMap:
 # --------------------------------------------------------------------------
 # 맵 로드 / 생성
 # --------------------------------------------------------------------------
-def parse_map(text, name, terrain_config: TerrainConfig, cols, rows) -> TileMap:
+def parse_map(text: str, name: str, terrain_config: TerrainConfig, cols: int, rows: int) -> TileMap:
     # 주석과 빈 줄을 제외한 맵 텍스트의 크기를 확인한다.
     lines = [line.rstrip() for line in text.splitlines()]
     lines = [
@@ -787,12 +795,12 @@ def parse_map(text, name, terrain_config: TerrainConfig, cols, rows) -> TileMap:
     return terrain
 
 
-_MAP_TEXT_CACHE = {}
+_MAP_TEXT_CACHE: dict[str, str] = {}
 # 같은 이름을 작은 사용자 지정 월드에서도 일관된 미로 형태로 사용할 고정 시드.
 BUILTIN_MAP_SEEDS = {"drift": 1109, "ring": 2027, "belt": 3037, "hello-world": 4051}
 
 
-def load_map(name, terrain_config: TerrainConfig, cols, rows) -> TileMap:
+def load_map(name: str, terrain_config: TerrainConfig, cols: int, rows: int) -> TileMap:
     # 맵 파일을 처음 읽을 때 내용을 캐시에 보관한다.
     if name not in _MAP_TEXT_CACHE:
         path = resource_path(os.path.join("maps", f"{name}.txt"))
@@ -826,7 +834,7 @@ def load_map(name, terrain_config: TerrainConfig, cols, rows) -> TileMap:
     return parse_map(text, name, terrain_config, cols, rows)
 
 
-def empty_map(terrain_config: TerrainConfig, cols, rows) -> TileMap:
+def empty_map(terrain_config: TerrainConfig, cols: int, rows: int) -> TileMap:
     tiles = [[EMPTY] * cols for _ in range(rows)]
     return TileMap(
         tiles,
@@ -872,7 +880,7 @@ def expand_map(terrain: TileMap, scale: int, terrain_config: TerrainConfig) -> T
     return expanded
 
 
-def _clear_outer_wall_band(tiles, *, left, right, top, bottom):
+def _clear_outer_wall_band(tiles: list[list[int]], *, left: int, right: int, top: int, bottom: int) -> None:
     """생성기의 외곽 벽띠만 비우며 내부 장애물은 유지한다."""
     rows, cols = len(tiles), len(tiles[0])
     for row_index, row in enumerate(tiles):
@@ -888,7 +896,7 @@ def _clear_outer_wall_band(tiles, *, left, right, top, bottom):
 
 
 def _generate_maze(
-    random_generator, terrain_config: TerrainConfig, cols, rows, name="random"
+    random_generator: np.random.Generator, terrain_config: TerrainConfig, cols: int, rows: int, name: str="random"
 ) -> TileMap:
     """넓은 방을 굵은 벽으로 나누고 DFS 통로로 잇는 하나의 전체 월드 미로.
 
@@ -913,7 +921,7 @@ def _generate_maze(
     room_col_count = max(1, (inner_cols + thickness) // (passage + thickness))
     room_row_count = max(1, (inner_rows + thickness) // (passage + thickness))
 
-    def spans(total, count):
+    def spans(total: int, count: int) -> list[tuple[int, int]]:
         available = total - thickness * (count - 1)
         base, extra = divmod(available, count)
         positions, start = [], border
@@ -930,7 +938,7 @@ def _generate_maze(
     )
     tiles = [[WALL] * cols for _ in range(rows)]
 
-    def carve(first_col, first_row, width, height, kind=EMPTY):
+    def carve(first_col: int, first_row: int, width: int, height: int, kind: int=EMPTY) -> None:
         for row in range(first_row, first_row + height):
             for col in range(first_col, first_col + width):
                 tiles[row][col] = kind
@@ -1054,7 +1062,7 @@ def _generate_maze(
 
 
 def generate_random_map(
-    random_generator, terrain_config: TerrainConfig, cols, rows, max_attempts=50
+    random_generator: np.random.Generator, terrain_config: TerrainConfig, cols: int, rows: int, max_attempts: int=50
 ) -> TileMap:
     """diep.io 미로 모드 같은 블록 지형.
 
@@ -1109,7 +1117,7 @@ def generate_random_map(
             seen.add((next_x, next_y))
             stack.append((next_x, next_y))
 
-        def touches_floor(x, y):
+        def touches_floor(x: int, y: int) -> bool:
             return any(
                 0 <= x + delta_x < block_cols
                 and 0 <= y + delta_y < block_rows
@@ -1141,7 +1149,7 @@ def generate_random_map(
 
         # 5) 벽 덩어리: 벽 옆 바닥 블록 일부를 메워 크기가 제각각인 큰 벽을 만든다.
         #    전체 바닥이 여전히 이어질 때만 메운다.
-        def floor_connected():
+        def floor_connected() -> bool:
             floor = {
                 (x, y)
                 for y in range(block_rows)
@@ -1199,7 +1207,7 @@ def generate_random_map(
                             tiles[row][col] = EMPTY
         # 블록 격자에 들어가지 않는 가장자리 자투리는 바깥 벽과 이어 둔다
 
-        def block_center(x, y):
+        def block_center(x: int, y: int) -> TilePosition:
             return (
                 col_offset + x * block + block // 2,
                 row_offset + y * block + block // 2,

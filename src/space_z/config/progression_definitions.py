@@ -1,4 +1,9 @@
 """성장 능력치, 21종 우주선 진화와 포신별 사격 명세."""
+from __future__ import annotations
+from typing import TYPE_CHECKING, TypedDict
+
+if TYPE_CHECKING:
+    from typing_extensions import Unpack
 
 import math
 from dataclasses import dataclass
@@ -56,15 +61,25 @@ class ShipClass(RewardCard):
     damage_taken: float = 1.0  # 받는 피해 배율 (0.8이면 피해 20% 감소)
 
     @property
-    def angles(self):  # 발사 패턴 순서대로 포신 상대 각도 목록 반환
+    def angles(self) -> tuple[float, ...]:  # 발사 패턴 순서대로 포신 상대 각도 목록 반환
         return tuple(shot.angle for shot in self.shots)
 
     @property
-    def muzzles(self):  # 발사 패턴 순서대로 포구 측면 위치 목록 반환
+    def muzzles(self) -> tuple[float, ...]:  # 발사 패턴 순서대로 포구 측면 위치 목록 반환
         return tuple(shot.lateral for shot in self.shots)
 
 
-def _muzzle(angle, x, y, **kwargs):
+class ShotOverrides(TypedDict, total=False):
+    """포구 좌표 외에 _muzzle()에 전달할 수 있는 개별 탄환 배율."""
+
+    delay: int
+    damage: float
+    caliber: float
+    speed: float
+    life: float
+
+
+def _muzzle(angle: float, x: float, y: float, **kwargs: Unpack[ShotOverrides]) -> ShotSpec:
     """선체 중심 기준 포구(x,y)를 포신 방향의 전방/측면 좌표로 바꾼다."""
     return ShotSpec(
         angle=angle,
@@ -116,7 +131,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         ("장거리 고속 단발 저격",),
         level=10,
         asset="ships/Lv10_스나이퍼",
-        shots=(ShotSpec(forward=1.8144, caliber=22 / 167 * 0.9 * 2 * 1.5),),
+        shots=(ShotSpec(forward=1.8144, caliber=15 / 167 * 0.9 * 2 * 1.5),),
         damage=1.9,
         cooldown=1.7,
         speed=1.71,
@@ -190,7 +205,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         parent="sniper",
         level=20,
         asset="ships/Lv20_레일거너",
-        shots=(ShotSpec(forward=1.8842, caliber=16 / 190 * 0.9 * 1.5),),
+        shots=(ShotSpec(forward=1.8842, caliber=caliber=15 / 167 * 0.9 * 2 * 1.5),),
         damage=2.15,
         cooldown=1.8,
         speed=2.28,
@@ -454,15 +469,23 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         parent="aegis",
         level=30,
         asset="ships/Lv30_시타델",
-        shots=tuple(
+        shots=tuple([
             # 선체 크기를 보정해 Lv.10 가디언보다 실제 탄환 지름을 20% 키운다.
-            ShotSpec(
-                angle=i * math.pi / 2,
-                forward=1.2828,
-                caliber=GUARDIAN_BARREL[1] * 0.9 * (26 / 48) * 1.2,
-            )
-            for i in range(4)
-        ),  # 90도 간격 사방 소형포 동시 발사
+            ShotSpec(angle=0 * math.pi / 2,forward=1.2828,caliber=GUARDIAN_BARREL[1] * 0.9 * (26 / 48) * 1.2,),
+            _muzzle(
+                -math.radians(64),
+                0.4678,
+                -1.0101,
+                caliber=GUARDIAN_BARREL[1] * 0.9 * (26 / 40) * 1.1,
+            ),
+            _muzzle(
+                math.radians(64),
+                0.4690,
+                1.0016,
+                caliber=GUARDIAN_BARREL[1] * 0.9 * (26 / 40) * 1.1,
+            ),
+            ShotSpec(angle=2 * math.pi / 2,forward=1.2828,caliber=GUARDIAN_BARREL[1] * 0.9 * (26 / 48) * 1.2,),
+        ]),  # 90도 간격 사방 소형포 동시 발사
         damage=0.5,
         hp_bonus=440,
         radius_scale=48 / 22,
@@ -486,4 +509,4 @@ FAMILIES = tuple(
     ship for ship in SHIP_CLASSES if ship.level == 10
 )  # 10레벨에 고르는 첫 진화 계열
 # 이전 호출자가 이 이름을 가져와도 동작하지만 Q/Space 액티브는 없다.
-SKILLS = {}  # 제거된 액티브 스킬의 이전 import를 유지하는 빈 사전
+SKILLS: dict[str, RewardCard] = {}  # 제거된 액티브 스킬의 이전 import를 유지하는 빈 사전

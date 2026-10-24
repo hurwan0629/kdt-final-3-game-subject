@@ -1,4 +1,5 @@
 """강화학습의 관찰·보상·환경 설정."""
+from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -29,7 +30,7 @@ class ObsConfig:
             + self.n_rays
         )
 
-    def grid_shape(self, n_channels: int):  # 지형 격자 배열 크기 (채널, 세로, 가로)
+    def grid_shape(self, n_channels: int) -> tuple[int, int, int]:  # 지형 격자 배열 크기 (채널, 세로, 가로)
         return (n_channels, self.grid_size, self.grid_size)
 
     def flat_size(

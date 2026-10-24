@@ -1,4 +1,6 @@
 """메뉴의 표시와 클릭 판정에서 공유하는 버튼 배치."""
+from __future__ import annotations
+from space_z.config import GameConfig
 
 from dataclasses import dataclass
 
@@ -22,15 +24,15 @@ class MenuButton:
 
 
 def build_menu_buttons(
-    mode,
-    config,
-    show_debug=False,
-    show_controls=True,
-    auto_pause=True,
-    fullscreen=False,
-    size=None,
-    difficulty_ratio=0.5,
-):
+    mode: str,
+    config: GameConfig,
+    show_debug: bool=False,
+    show_controls: bool=True,
+    auto_pause: bool=True,
+    fullscreen: bool=False,
+    size: tuple[int, int] | None=None,
+    difficulty_ratio: float=0.5,
+) -> list[MenuButton]:
     # 현재 창 크기를 기준으로 메뉴 버튼의 가로 위치를 정한다.
     width, height = size or (config.width, config.height)
     x = width // 2 - 190

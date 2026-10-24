@@ -1,4 +1,6 @@
 """적의 재등장·능력치·성장·감지·추적·조준을 관리한다."""
+from __future__ import annotations
+from space_z.game.types import AITarget, WorldPoint
 
 import math
 from typing import TYPE_CHECKING
@@ -14,15 +16,15 @@ if TYPE_CHECKING:
 class EnemyController:
     """적의 재등장·능력치·성장·감지·추적·조준을 관리한다. 공통 월드는 game을 통해 조회한다."""
 
-    def __init__(self, game: "GameCore"):
+    def __init__(self, game: "GameCore") -> None:
         """코어 참조를 보관한다. 이번 판의 상태는 reset()에서 초기화한다."""
         self.game = game  # 현재 월드·설정·프레임과 다른 담당 객체에 접근하는 코어
 
-    def reset(self):
+    def reset(self) -> None:
         """새 판의 담당 상태를 초기화한다. 전투 난수는 소비하지 않는다."""
         self.enemy_scale_tier = 0  # 경과 시간에 따른 적 성장 단계
 
-    def _respawn_enemy(self, enemy: Tank):
+    def _respawn_enemy(self, enemy: Tank) -> None:
         """적의 종류·능력치를 다시 정하고 재등장 상태로 초기화한다.
 
         인자:
@@ -90,7 +92,7 @@ class EnemyController:
         enemy.ai_path_timer = 0
         enemy.ai_goal = None
 
-    def _random_enemy_job(self):
+    def _random_enemy_job(self) -> str:
         """플레이어와 같은 진화 단계의 적 우주선 종류를 추첨한다.
 
         인자:
@@ -110,7 +112,7 @@ class EnemyController:
         # 2) 후보 중 하나를 균등 확률로 추첨한다.
         return jobs[int(self.game.rng.integers(len(jobs)))]
 
-    def _mercy_factor(self):
+    def _mercy_factor(self) -> float:
         """초반 적 약화가 정상 난이도로 돌아오는 진행도를 계산한다.
 
         인자:
@@ -130,7 +132,7 @@ class EnemyController:
             self.game.frame / (enemy_ai_config.mercy_seconds * self.game.config.fps),
         )
 
-    def _enemy_stat_budget(self):
+    def _enemy_stat_budget(self) -> int:
         """플레이어 스탯 투자량을 기준으로 적의 강화 포인트 총량을 계산한다.
 
         인자:
@@ -148,7 +150,7 @@ class EnemyController:
             for card in STAT_UPGRADES
         )
 
-    def _roll_enemy_stats(self, enemy: Tank):
+    def _roll_enemy_stats(self, enemy: Tank) -> None:
         """적 강화 포인트를 스탯 항목에 무작위로 배분한다.
 
         인자:
@@ -175,7 +177,7 @@ class EnemyController:
             key: int(level_count) for key, level_count in zip(keys, counts)
         }
 
-    def _apply_enemy_strength(self, enemy: Tank):
+    def _apply_enemy_strength(self, enemy: Tank) -> None:
         """성장 단계·초반 약화·엘리트·우주선·스탯을 합쳐 적 능력치를 갱신한다.
 
         인자:
@@ -217,7 +219,7 @@ class EnemyController:
             if enemy.elite
             else (1.0, 1.0)
         )
-        # 플레이어의 upgrade_stat()과 같은 배율을 적용한다(hull은 +25, 나머지는 레벨당 배율).
+        # 플레이어의 upgrade_stat()과 같은 배율을 적용한다(health은 +25, 나머지는 레벨당 배율).
         # 어느 항목에 얼마나 찍혔는지는 개체마다 무작위로 다르다(_roll_enemy_stats).
         # 2) 스탯 배분이 없으면 추첨하고 항목별 레벨을 읽는다.
         if not enemy.stat_levels:
@@ -260,7 +262,7 @@ class EnemyController:
         enemy.bullet_life_scale = 1.15**range_level
         enemy.projectiles = len(ship_spec.shots)
 
-    def _refresh_stats(self):
+    def _refresh_stats(self) -> None:
         """플레이어 강화에 맞춰 적 스탯을 재배분하고 능력치를 갱신한다.
 
         인자:
@@ -281,7 +283,7 @@ class EnemyController:
             # 2) 새 발사 대기에 맞춰 남은 대기를 보정한다.
             enemy.cooldown = min(enemy.cooldown, enemy.fire_cooldown_max)
 
-    def _update_enemy_scaling(self):
+    def _update_enemy_scaling(self) -> None:
         """경과 시간에 맞춰 적 성장 단계와 능력치를 갱신한다.
 
         인자:
@@ -316,7 +318,7 @@ class EnemyController:
             for enemy in self.game.enemies:
                 self._apply_enemy_strength(enemy)
 
-    def _promote_enemies(self):
+    def _promote_enemies(self) -> None:
         """플레이어 진화에 맞춰 모든 적을 같은 단계의 우주선으로 진화시킨다.
 
         인자:
@@ -340,7 +342,7 @@ class EnemyController:
             if enemy.alive:
                 self.game._fit_tank(enemy)
 
-    def _enemy_ai(self, enemy: Tank):
+    def _enemy_ai(self, enemy: Tank) -> None:
         """적 하나의 감지·목표 선택·추적 이동·조준·발사를 처리한다.
 
         인자:
@@ -420,6 +422,7 @@ class EnemyController:
         enemy.ai_timer -= 1
         if enemy.ai_timer <= 0:
             enemy.ai_timer = enemy_ai_config.reaction_frames
+            target: AITarget | None
             if enemy.ai_can_see:
                 target = ("player", player.id)
             elif enemy.ai_last_seen is not None:
@@ -460,6 +463,7 @@ class EnemyController:
         move = enemy.ai_move if enemy.ai_target is None else 0
         enemy.ai_goal = target_position
         if target_position is not None:
+            assert enemy.ai_target is not None  # _target_pos()의 유효한 반환 조건
             target_x, target_y = target_position
             kind = enemy.ai_target[0]
             can_move_directly = kind != "point" and terrain.segment_fits(
@@ -543,6 +547,7 @@ class EnemyController:
         rotation = 0
         aligned = False
         if target_position is not None:
+            assert enemy.ai_target is not None
             aim_x, aim_y = target_position
             if (
                 enemy.ai_target[0] == "player"
@@ -578,9 +583,9 @@ class EnemyController:
             aligned = abs(angle_difference) <= math.radians(
                 enemy_ai_config.fire_angle_tol_deg
             )
-        kind = enemy.ai_target[0] if enemy.ai_target else None
-        can_fire = (kind == "player" and enemy.ai_can_see) or (
-            kind == "shape" and can_move_directly
+        fire_target_kind = enemy.ai_target[0] if enemy.ai_target else None
+        can_fire = (fire_target_kind == "player" and enemy.ai_can_see) or (
+            fire_target_kind == "shape" and can_move_directly
         )
 
         self.game._apply_tank_control(
@@ -592,7 +597,7 @@ class EnemyController:
         )
         self.game.combat._fire(enemy, aligned and can_fire)
 
-    def _target_pos(self, enemy: Tank):
+    def _target_pos(self, enemy: Tank) -> WorldPoint | None:
         """적 AI가 현재 추적해야 할 목표 좌표를 조회한다.
 
         인자:
@@ -621,8 +626,8 @@ class EnemyController:
                 if enemy.ai_can_see
                 else enemy.ai_last_seen
             )
-        if kind == "point":
-            return enemy.ai_last_seen or target_value
+        if target[0] == "point":
+            return enemy.ai_last_seen or target[1]
         for shape in self.game.shapes:
             if shape.id == target_value:
                 return (shape.x, shape.y)

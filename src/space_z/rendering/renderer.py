@@ -7,6 +7,17 @@
 연출(별 반짝임, 등장/폭발 애니메이션 등)은 렌더러 내부 기록과 렌더러 전용 random만 쓴다
 → 게임 결과/재현성에 영향 없음.
 """
+from __future__ import annotations
+from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING, cast
+from space_z.game.entities import Tank, Shape, Bullet
+from space_z.game.terrain import TileMap
+from space_z.game.types import ScoreAward, TilePosition, WorldPoint
+from space_z.rendering.menu_layout import MenuButton
+from space_z.rendering.types import RGB, Ghost, Palette, ScorePopup
+
+if TYPE_CHECKING:
+    from space_z.game.game_core import GameCore
 
 import math
 import random
@@ -25,7 +36,7 @@ from space_z.rendering.progression_panel import (
 )
 from space_z.rendering.sprite_assets import SpriteAssets, ENEMY_SUFFIX, ELITE_SUFFIX
 
-COLORS = {
+COLORS: Palette = {
     "space_top": (6, 8, 22),
     "space_bottom": (16, 10, 34),
     "player": (70, 200, 255),
@@ -64,14 +75,15 @@ MIN_BULLET_SCREEN_DIAMETER = 4  # 줌아웃해도 탄체 폭을 화면 기준 �
 MINIMAP_ALPHA = 165  # 우하단 미니맵 반투명도 (0=완전 투명, 255=불투명)
 
 
-def _mix(start_color, end_color, blend_ratio):
-    return tuple(
+def _mix(start_color: RGB, end_color: RGB, blend_ratio: float) -> RGB:
+    # zip 결과는 입력과 같은 RGB 3채널이다.
+    return cast(RGB, tuple(
         int(start_channel + (end_channel - start_channel) * blend_ratio)
         for start_channel, end_channel in zip(start_color, end_color)
-    )
+    ))
 
 
-def _hp_color(ratio):
+def _hp_color(ratio: float) -> RGB:
     if ratio > 0.5:
         return _mix((250, 210, 80), (90, 230, 170), (ratio - 0.5) * 2)
     return _mix((245, 80, 100), (250, 210, 80), ratio * 2)
@@ -79,7 +91,7 @@ def _hp_color(ratio):
 
 class Renderer:
     # 읽는 순서: __init__() → draw() / draw_main_menu() → 필요한 세부 그리기 함수.
-    def __init__(self, config: GameConfig, caption: str = "Space Z - RL Demo"):
+    def __init__(self, config: GameConfig, caption: str = "Space Z - RL Demo") -> None:
         # 화면 설정을 검증하고 창·이미지·프레임 제어 객체를 준비한다.
         self.config = config
         if not 0 < config.camera_zoom <= 1:
@@ -110,9 +122,10 @@ class Renderer:
 
         # 게임 난수와 분리된 배경·연출용 난수와 캐시를 초기화한다.
         self._rand = random.Random(2024)  # 렌더러 전용 (배경 별 배치 등)
-        self._glow_cache = {}
+        self._glow_cache: dict[tuple[int, RGB, float], pygame.Surface] = {}
         self._bg = self._make_background()
-        self.camera_x = self.camera_y = 0
+        self.camera_x: float = 0
+        self.camera_y: float = 0
         self._twinkles = [
             (
                 self._rand.uniform(0, config.world_width),
@@ -126,20 +139,20 @@ class Renderer:
             shape_kind: self._make_shape_sprite(shape_kind)
             for shape_kind in ("square", "triangle", "pentagon")
         }
-        self._terrain_key = None
-        self._floor = None  # 배경 + 성운/중력장/소행성 캐시
-        self._minimap_key = None
-        self._minimap_floor = None
+        self._terrain_key: tuple[int, int] | None = None
+        self._floor: pygame.Surface | None = None  # 배경 + 성운/중력장/소행성 캐시
+        self._minimap_key: tuple[TileMap, int, tuple[int, int]] | None = None
+        self._minimap_floor: pygame.Surface | None = None
         self._tick = 0
 
         # 연출용 기록 (게임 상태와 무관)
         self._last_frame = -1
-        self._first_seen = {}  # id -> 처음 본 frame (등장 애니메이션)
-        self._prev_hp = {}  # 도형 id -> 이전 hp (피격 깜빡임)
-        self._hit_frame = {}  # 도형 id -> 마지막 피격 frame
-        self._prev_shapes = {}  # id -> 이전 프레임 도형 (사라짐 감지)
-        self._prev_alive = {}  # 적 id -> 이전 alive
-        self._ghosts = []  # 파괴 애니메이션: dict(kind, x, y, r, angle, color, age)
+        self._first_seen: dict[int, int] = {}  # id -> 처음 본 frame (등장 애니메이션)
+        self._prev_hp: dict[int, float] = {}  # 도형 id -> 이전 hp (피격 깜빡임)
+        self._hit_frame: dict[int, int] = {}  # 도형 id -> 마지막 피격 frame
+        self._prev_shapes: dict[int, _ShapeSnap] = {}  # id -> 이전 프레임 도형 (사라짐 감지)
+        self._prev_alive: dict[int, bool] = {}  # 적 id -> 이전 alive
+        self._ghosts: list[Ghost] = []  # 파괴 애니메이션: dict(kind, x, y, r, angle, color, age)
         self.reset_score_popups()
 
     # ------------------------------------------------------------------
@@ -147,16 +160,16 @@ class Renderer:
     # ------------------------------------------------------------------
     def draw(
         self,
-        game,
-        debug_lines=None,
-        paused=False,
-        show_ai=False,
-        show_controls=True,
-        menu=None,
-        selected_button_index=-1,
-        show_stats=False,
-        stat_panel_collapsed=False,
-    ):
+        game: GameCore,
+        debug_lines: Sequence[str] | None=None,
+        paused: bool=False,
+        show_ai: bool=False,
+        show_controls: bool=True,
+        menu: Sequence[MenuButton] | None=None,
+        selected_button_index: int=-1,
+        show_stats: bool=False,
+        stat_panel_collapsed: bool=False,
+    ) -> None:
         self._tick += 1
         self._update_camera(game.player)
 
@@ -176,6 +189,7 @@ class Renderer:
         for y in range(start_y, self.view_height, bg_height):
             for x in range(start_x, self.view_width, bg_width):
                 display_surface.blit(self._bg, (x, y))
+        assert self._floor is not None  # _ensure_terrain()이 캐시 표면을 준비한다.
         display_surface.blit(self._floor, (offset_x, offset_y))
         self._draw_twinkles()
         frame = game.frame
@@ -249,14 +263,14 @@ class Renderer:
         elif paused:
             self._draw_card(["일시정지"], ["P / ESC: 계속"])
 
-    def draw_main_menu(self, buttons, selected_button_index=0):
+    def draw_main_menu(self, buttons: Sequence[MenuButton], selected_button_index: int=0) -> None:
         self.screen.blit(self.assets.image("backgrounds/main", self.size), (0, 0))
         self._draw_menu(buttons, "SPACE Z", selected_button_index, main=True)
 
     # ------------------------------------------------------------------
     # 폭발 프레임: 서로 다른 원본 크기를 공통 캔버스에 정렬
     # ------------------------------------------------------------------
-    def _make_explosion_frames(self):
+    def _make_explosion_frames(self) -> tuple[pygame.Surface, ...]:
         """폭발 원본 8장의 비율을 유지하며 같은 크기·중심의 표면으로 정렬한다."""
 
         # 폭발 단계별 원본 이미지를 가져와 공통 캔버스 크기를 정한다.
@@ -274,7 +288,7 @@ class Renderer:
             frames.append(frame)
         return tuple(frames)
 
-    def _draw_explosion(self, x, y, diameter, progress):
+    def _draw_explosion(self, x: float, y: float, diameter: float, progress: float) -> None:
         """월드 좌표의 폭발을 진행도(0~1)에 해당하는 이미지로 그린다."""
 
         # 폭발 진행도에 해당하는 프레임과 표시 크기를 선택한다.
@@ -296,7 +310,7 @@ class Renderer:
     # ------------------------------------------------------------------
     # 빛 번짐 스프라이트 (BLEND_ADD로 더해서 발광 효과)
     # ------------------------------------------------------------------
-    def _glow(self, radius, color, intensity=1.0):
+    def _glow(self, radius: float, color: RGB, intensity: float=1.0) -> pygame.Surface:
         # 빛 번짐의 크기·색·강도를 캐시 키로 묶는다.
         radius = max(2, int(radius))
         key = (radius, color, round(intensity, 2))
@@ -319,7 +333,7 @@ class Renderer:
             self._glow_cache[key] = surface
         return surface
 
-    def _blit_glow(self, target, x, y, radius, color, intensity=1.0):
+    def _blit_glow(self, target: pygame.Surface, x: float, y: float, radius: float, color: RGB, intensity: float=1.0) -> None:
         glow_surface = self._glow(radius, color, intensity)
         target.blit(
             glow_surface,
@@ -333,7 +347,7 @@ class Renderer:
     # ------------------------------------------------------------------
     # 배경: 그라데이션 우주 + 희미한 성운 + 별
     # ------------------------------------------------------------------
-    def _make_background(self):
+    def _make_background(self) -> pygame.Surface:
         # 월드 크기에 맞춘 우주 배경에 성운과 색조를 합성한다.
         size = (self.config.world_width, self.config.world_height)
         surface = self.assets.image("backgrounds/deep_space", size).copy()
@@ -343,7 +357,7 @@ class Renderer:
         surface.fill((205, 215, 230), special_flags=pygame.BLEND_RGB_MULT)
         return surface
 
-    def _draw_twinkles(self):
+    def _draw_twinkles(self) -> None:
         # 배경 별의 밝기를 갱신하고 카메라 영역 안의 별만 그린다.
         for x, y, phase, speed in self._twinkles:
             brightness_ratio = 0.5 + 0.5 * math.sin(self._tick * speed + phase)
@@ -363,13 +377,13 @@ class Renderer:
     # ------------------------------------------------------------------
     # 지형 (지형이 바뀔 때만 다시 그림)
     # ------------------------------------------------------------------
-    def _draw_full_wall_blocks(self, floor, terrain):
+    def _draw_full_wall_blocks(self, floor: pygame.Surface, terrain: TileMap) -> set[TilePosition]:
         """빈칸이 없는 8×8 벽 영역을 큰 이미지로 그리고 처리한 타일 좌표를 반환한다."""
         block = max(
             self.config.terrain.block_tiles,
             2 * math.ceil(self.config.terrain.navigation_radius / terrain.tile) + 1,
         )
-        covered = set()
+        covered: set[TilePosition] = set()
         if block != 8:
             return covered  # 다른 크기의 생성 블록은 기존 타일별 렌더링을 사용한다.
         # 랜덤 생성기의 가운데 정렬을 따르고, 파일 맵은 첫 타일부터 검사한다.
@@ -419,7 +433,7 @@ class Renderer:
                 covered.update(cells)
         return covered
 
-    def _ensure_terrain(self, terrain):
+    def _ensure_terrain(self, terrain: TileMap) -> None:
         # 맵과 지형 버전이 같으면 이전 지형 이미지를 재사용한다.
         key = (id(terrain), terrain.version)
         if key == self._terrain_key:
@@ -468,7 +482,7 @@ class Renderer:
     # ------------------------------------------------------------------
     # 도형 → 천체 스프라이트 (한 번 만들어두고 회전/확대해서 씀)
     # ------------------------------------------------------------------
-    def _make_shape_sprite(self, kind):
+    def _make_shape_sprite(self, kind: str) -> tuple[pygame.Surface, pygame.Surface]:
         from space_z.config import SHAPE_TYPES
 
         path = {
@@ -484,7 +498,7 @@ class Renderer:
     # ------------------------------------------------------------------
     # 연출 기록 갱신
     # ------------------------------------------------------------------
-    def reset_score_popups(self):
+    def reset_score_popups(self) -> None:
         """새 판을 시작할 때 점수 팝업과 관련 화면 연출을 초기화한다.
 
         인자:
@@ -499,15 +513,15 @@ class Renderer:
         """
 
         # 1) 팝업 목록과 고유 번호를 초기화한다.
-        self.score_popups = []  # 표시 중인 팝업 (번호, 발생 프레임, x, y, 점수, 종류)
+        self.score_popups: list[ScorePopup] = []  # 표시 중인 팝업 (번호, 발생 프레임, x, y, 점수, 종류)
         self._popup_id = 0  # 화면 연출용 팝업 고유 번호
 
         # 2) 점수 불꽃·처리한 번호·경험치 반짝임 시각을 초기화한다.
-        self._sparks = []  # 점수 획득 불꽃의 위치·속도·수명·색
-        self._popups_seen = set()  # 이미 불꽃 연출을 생성한 팝업 번호
+        self._sparks: list[list[float | RGB]] = []  # 앞 6개는 위치·속도·수명, 마지막은 색
+        self._popups_seen: set[int] = set()  # 이미 불꽃 연출을 생성한 팝업 번호
         self._xp_flash_frame = -999  # 최근 점수 획득의 게임 프레임
 
-    def add_score_popups(self, score_award_events):
+    def add_score_popups(self, score_award_events: Iterable[ScoreAward]) -> None:
         """전달받은 점수 획득 이벤트를 렌더러의 팝업으로 변환한다.
 
         인자:
@@ -529,7 +543,7 @@ class Renderer:
             # 2) 원래 발생 시각을 유지한 팝업을 목록에 추가한다.
             self.score_popups.append((self._popup_id, frame, x, y, amount, kind))
 
-    def _track(self, game):
+    def _track(self, game: GameCore) -> None:
         # 새 판인지 확인하고 이전 판의 등장·피격·파괴 기록을 비운다.
         current_frame = game.frame
         if current_frame < self._last_frame:  # 재시작
@@ -558,16 +572,16 @@ class Renderer:
 
         # 사라진 천체를 파괴 연출로 옮기고 남은 천체의 피격 시점을 기록한다.
         current_shapes = {shape.id: shape for shape in game.shapes}
-        for shape_id, shape in self._prev_shapes.items():
+        for shape_id, previous_shape in self._prev_shapes.items():
             if shape_id not in current_shapes:
                 self._ghosts.append(
                     dict(
-                        kind=shape.kind,
-                        x=shape.x,
-                        y=shape.y,
-                        r=shape.radius,
-                        angle=shape.angle,
-                        color=COLORS[shape.kind],
+                        kind=previous_shape.kind,
+                        x=previous_shape.x,
+                        y=previous_shape.y,
+                        r=previous_shape.radius,
+                        angle=previous_shape.angle,
+                        color=cast(RGB, COLORS.get(previous_shape.kind)),
                         age=0,
                     )
                 )
@@ -620,19 +634,21 @@ class Renderer:
         self._ghosts = [ghost for ghost in self._ghosts if ghost["age"] < DEATH_FRAMES]
         # 점수를 얻은 자리에서 불꽃이 튀고 EXP 바가 반짝인다.
         for spark in self._sparks:
+            # 기존 가변 list를 유지한다. 앞 6칸만 숫자로 접근하고 7번째 RGB는 건드리지 않는다.
+            motion = cast("list[float]", spark)
             for _ in range(delta):
-                spark[0] += spark[2]
-                spark[1] += spark[3]
-                spark[2] *= 0.9
-                spark[3] *= 0.9
-            spark[4] += delta
-        self._sparks = [spark for spark in self._sparks if spark[4] < spark[5]]
+                motion[0] += motion[2]
+                motion[1] += motion[3]
+                motion[2] *= 0.9
+                motion[3] *= 0.9
+            motion[4] += delta
+        self._sparks = [spark for spark in self._sparks if cast(float, spark[4]) < cast(float, spark[5])]
         for popup_id, frame, x, y, amount, kind in self.score_popups:
             if popup_id in self._popups_seen:
                 continue
             self._popups_seen.add(popup_id)
             self._xp_flash_frame = frame
-            color = COLORS.get(kind, COLORS["elite"])
+            color = cast(RGB, COLORS.get(kind, COLORS["elite"]))
             count = 10 if amount < 50 else 18 if amount < 200 else 26
             for _ in range(count):
                 angle = self._rand.uniform(0, math.tau)
@@ -671,7 +687,7 @@ class Renderer:
                 if entity_id in live
             }
 
-    def _spawn_scale(self, entity_id, frame):
+    def _spawn_scale(self, entity_id: int, frame: int) -> float:
         # 등장 후 경과한 시간으로 우주선의 표시 크기를 계산한다.
         spawn_progress = (frame - self._first_seen.get(entity_id, -999)) / SPAWN_FRAMES
         if spawn_progress >= 1:
@@ -683,10 +699,10 @@ class Renderer:
     # 그리기
     # ------------------------------------------------------------------
     @property
-    def size(self):
+    def size(self) -> tuple[int, int]:
         return self.screen.get_size()
 
-    def resize(self, size):
+    def resize(self, size: tuple[int, int]) -> None:
         # 창 모드에서 최소 화면 크기를 보장하고 카메라 표시 영역을 다시 만든다.
         if self.fullscreen:
             return
@@ -694,7 +710,7 @@ class Renderer:
         self.screen = pygame.display.set_mode(self.windowed_size, pygame.RESIZABLE)
         self.set_zoom(self.config.camera_zoom)
 
-    def set_fullscreen(self, enabled):
+    def set_fullscreen(self, enabled: bool) -> None:
         # 전체화면 전환이 필요한지 확인하고 이전 창 크기를 보관하거나 복원한다.
         if enabled == self.fullscreen:
             return
@@ -714,7 +730,7 @@ class Renderer:
         self.fullscreen = enabled
         self.set_zoom(self.config.camera_zoom)
 
-    def set_zoom(self, zoom):
+    def set_zoom(self, zoom: float) -> None:
         if not 0 < zoom <= 1:
             raise ValueError("camera_zoom은 0보다 크고 1 이하여야 합니다.")
         self.config.camera_zoom = zoom
@@ -724,33 +740,33 @@ class Renderer:
         self.view_height = max(2, 2 * round(self.size[1] / (2 * zoom)))
         self._view = pygame.Surface((self.view_width, self.view_height)).convert()
 
-    def world_to_view(self, x, y):
+    def world_to_view(self, x: float, y: float) -> WorldPoint:
         return x - self.camera_x, y - self.camera_y
 
-    def world_to_screen(self, x, y):
+    def world_to_screen(self, x: float, y: float) -> WorldPoint:
         view_x, view_y = self.world_to_view(x, y)
         return view_x * self.size[0] / self.view_width, view_y * self.size[
             1
         ] / self.view_height
 
-    def screen_to_world(self, x, y):
+    def screen_to_world(self, x: float, y: float) -> WorldPoint:
         return (
             x * self.view_width / self.size[0] + self.camera_x,
             y * self.view_height / self.size[1] + self.camera_y,
         )
 
-    def _update_camera(self, player):
+    def _update_camera(self, player: Tank) -> None:
         self.camera_x = player.x - self.view_width / 2
         self.camera_y = player.y - self.view_height / 2
 
-    def _visible(self, x, y, margin=100):
+    def _visible(self, x: float, y: float, margin: float=100) -> bool:
         view_x, view_y = self.world_to_view(x, y)
         return (
             -margin <= view_x <= self.view_width + margin
             and -margin <= view_y <= self.view_height + margin
         )
 
-    def _draw_world_boundary(self):
+    def _draw_world_boundary(self) -> None:
         """0.5px 외곽선을 화면 1px의 절반 농도로 표현한다."""
 
         # 월드 경계를 화면 좌표로 옮기고 경계선이 화면에 보이는지 확인한다.
@@ -779,9 +795,13 @@ class Renderer:
         pygame.draw.lines(layer, (255, 0, 0, 128), True, points, 1)
         self.screen.blit(layer, (0, 0))
 
-    def _draw_score_effects(self, game):
+    def _draw_score_effects(self, game: GameCore) -> None:
         # 점수 획득 불꽃의 남은 수명에 맞춰 밝기와 크기를 줄여 그린다.
         for x, y, _, _, age, life, color in self._sparks:
+            # 숫자 6개와 RGB를 담은 기존 list의 필드별 타입을 좁힌다.
+            x, y = cast(float, x), cast(float, y)
+            age, life = cast(float, age), cast(float, life)
+            color = cast(RGB, color)
             if not self._visible(x, y):
                 continue
             remaining_ratio = 1 - age / life
@@ -801,7 +821,7 @@ class Renderer:
                 max(1, round(4.5 * remaining_ratio)),
             )
 
-    def _draw_score_text(self, game):
+    def _draw_score_text(self, game: GameCore) -> None:
         """줌과 관계없이 읽히도록 "+점수"는 화면 좌표에 고정 크기로 그린다."""
         for _, frame, x, y, amount, kind in self.score_popups:
             age = game.frame - frame
@@ -838,7 +858,7 @@ class Renderer:
                 text, text.get_rect(center=(round(screen_x), round(screen_y)))
             )
 
-    def _draw_combat_effects(self, game):
+    def _draw_combat_effects(self, game: GameCore) -> None:
         for beam in game.combat.beams:
             start = self.world_to_view(beam.x, beam.y)
             end = self.world_to_view(beam.end_x, beam.end_y)
@@ -850,7 +870,7 @@ class Renderer:
                 explosion.x, explosion.y, explosion.radius * 2, 1 - explosion.life / 18
             )
 
-    def _draw_menu(self, buttons, title, selected_button_index, main=False):
+    def _draw_menu(self, buttons: Sequence[MenuButton], title: str, selected_button_index: int, main: bool=False) -> None:
         # 메뉴 배경과 제목·설명 문구를 배치한다.
         screen_width, screen_height = self.size
         shade = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
@@ -965,7 +985,7 @@ class Renderer:
             text.get_rect(center=(screen_width // 2, buttons[-1].rect.bottom + 30)),
         )
 
-    def _draw_shape(self, shape, frame):
+    def _draw_shape(self, shape: Shape, frame: int) -> None:
         # 천체 종류와 최근 피격 여부에 맞는 이미지를 고른다.
         sprite, flash = self._shape_sprites[shape.kind]
         image = (
@@ -994,7 +1014,7 @@ class Renderer:
         x, y = self.world_to_view(shape.x, shape.y)
         self.screen.blit(image, image.get_rect(center=(int(x), int(y))))
 
-    def _draw_bullet(self, bullet):
+    def _draw_bullet(self, bullet: Bullet) -> None:
         # 탄환 종류와 이동 방향으로 사용할 이미지와 회전각을 정한다.
         path = (
             "cannon_shell"
@@ -1023,7 +1043,7 @@ class Renderer:
             self._blit_glow(self.screen, x, y, diameter * 1.1, glow, 0.9)
         self.screen.blit(image, image.get_rect(center=(round(x), round(y))))
 
-    def _draw_ship(self, tank, frame, is_player=False):
+    def _draw_ship(self, tank: Tank, frame: int, is_player: bool=False) -> None:
         # 카메라 좌표와 등장 진행도에 맞춰 선체 표시 크기를 정한다.
         x, y = self.world_to_view(tank.x, tank.y)
         scale = self._spawn_scale(tank.id, frame)
@@ -1054,13 +1074,13 @@ class Renderer:
             label = self.font_label.render(text, True, color)
             self.screen.blit(label, label.get_rect(center=(x, y - tank.radius - 20)))
 
-    def _draw_ghost(self, ghost):
+    def _draw_ghost(self, ghost: Ghost) -> None:
         """우주선·천체 파괴 시 공통 폭발 8단계를 순서대로 재생한다."""
         self._draw_explosion(
             ghost["x"], ghost["y"], ghost["r"] * 3, ghost["age"] / DEATH_FRAMES
         )
 
-    def _hp_bar(self, center_x, y, width, ratio, height=6):
+    def _hp_bar(self, center_x: float, y: float, width: float, ratio: float, height: int=6) -> None:
         # 개체 체력바의 화면 위치와 표시 크기를 구한다.
         if not self._visible(center_x, y):
             return
@@ -1083,7 +1103,7 @@ class Renderer:
             border_radius=height // 2,
         )
 
-    def _draw_ai_debug(self, game):
+    def _draw_ai_debug(self, game: GameCore) -> None:
         # 적의 경로·플레이어 감지·이동 목표를 표시할 좌표를 준비한다.
         terrain = game.terrain
         player = game.player
@@ -1115,7 +1135,7 @@ class Renderer:
     # ------------------------------------------------------------------
     # HUD
     # ------------------------------------------------------------------
-    def _panel(self, rect, alpha=170, radius=10):
+    def _panel(self, rect: pygame.Rect, alpha: int=170, radius: int=10) -> None:
         # 요청한 크기의 반투명 패널과 테두리를 만들어 화면에 합성한다.
         surface = pygame.Surface(rect.size, pygame.SRCALPHA)
         pygame.draw.rect(
@@ -1132,12 +1152,12 @@ class Renderer:
 
     def _draw_hud(
         self,
-        game,
-        paused,
-        show_notice=True,
-        show_controls=True,
-        stat_panel_collapsed=False,
-    ):
+        game: GameCore,
+        paused: bool,
+        show_notice: bool=True,
+        show_controls: bool=True,
+        stat_panel_collapsed: bool=False,
+    ) -> None:
         # 플레이어 상태와 화면 크기·경과 시간을 읽는다.
         player = game.player
         screen_width, screen_height = self.size
@@ -1247,15 +1267,15 @@ class Renderer:
                 (bar_x + 6, bar_y + 3, max(0, bar_width * ratio - 12), 3),
                 border_radius=2,
             )
-        text = f"HULL  {math.ceil(player.hp)} / {player.max_hp:.0f}"
-        health_text_rect = self.font_label.render(text, True, COLORS["white"]).get_rect(
+        health_text = f"HULL  {math.ceil(player.hp)} / {player.max_hp:.0f}"
+        health_text_rect = self.font_label.render(health_text, True, COLORS["white"]).get_rect(
             center=(screen_width / 2, bar_y + bar_height / 2)
         )
         self.screen.blit(
-            self.font_label.render(text, True, (0, 0, 0)), health_text_rect.move(1, 1)
+            self.font_label.render(health_text, True, (0, 0, 0)), health_text_rect.move(1, 1)
         )
         self.screen.blit(
-            self.font_label.render(text, True, COLORS["white"]), health_text_rect
+            self.font_label.render(health_text, True, COLORS["white"]), health_text_rect
         )
 
         # 메뉴의 조작 안내 설정을 즉시 반영한다.
@@ -1274,7 +1294,7 @@ class Renderer:
                 )
         self._draw_minimap(game)
 
-    def minimap_rect(self):
+    def minimap_rect(self) -> pygame.Rect:
         """현재 창의 우하단에 표시할 전체 지도 영역."""
 
         # 창 크기와 월드 비율을 반영해 미니맵의 최대 표시 크기를 정한다.
@@ -1296,7 +1316,7 @@ class Renderer:
             map_height + 12,
         )
 
-    def _ensure_minimap(self, terrain, size):
+    def _ensure_minimap(self, terrain: TileMap, size: tuple[int, int]) -> None:
         # 맵 객체를 키에 보관해 새 판의 id 재사용도 이전 지도로 오인하지 않는다.
         key = (terrain, terrain.version, size)
         if self._minimap_key == key:
@@ -1321,7 +1341,7 @@ class Renderer:
                 )
         self._minimap_key, self._minimap_floor = key, surface
 
-    def _minimap_marker(self, game, area):
+    def _minimap_marker(self, game: GameCore, area: pygame.Rect) -> list[WorldPoint]:
         # 플레이어의 월드 위치를 미니맵 위치로 변환한다.
         terrain, player = game.terrain, game.player
         x = area.left + player.x / (terrain.cols * terrain.tile) * area.width
@@ -1338,7 +1358,7 @@ class Renderer:
             for local_x, local_y in ((6.0, 0.0), (-4.0, -3.5), (-2.0, 0.0), (-4.0, 3.5))
         ]
 
-    def _draw_minimap(self, game):
+    def _draw_minimap(self, game: GameCore) -> None:
         # 화면의 미니맵 영역을 구하고 정적 지형 이미지를 준비한다.
         rect = self.minimap_rect()
         area = rect.inflate(-12, -12)
@@ -1351,6 +1371,7 @@ class Renderer:
         pygame.draw.rect(
             layer, COLORS["minimap_border"], layer.get_rect(), border_radius=3
         )
+        assert self._minimap_floor is not None  # _ensure_minimap()이 준비한 표면
         layer.blit(self._minimap_floor, local_area.topleft)
         layer.set_clip(local_area)
         marker = self._minimap_marker(game, local_area)
@@ -1359,7 +1380,7 @@ class Renderer:
         layer.set_alpha(MINIMAP_ALPHA)
         self.screen.blit(layer, rect.topleft)
 
-    def _draw_progression(self, game, show_notice, stat_panel_collapsed=False):
+    def _draw_progression(self, game: GameCore, show_notice: bool, stat_panel_collapsed: bool=False) -> None:
         # 현재 레벨과 우주선 이름을 성장 패널에 배치한다.
         player = game.player
         screen_width, screen_height = self.size
@@ -1413,7 +1434,7 @@ class Renderer:
                 text, text.get_rect(midtop=(screen_width / 2, screen_height - 126))
             )
 
-    def _draw_stats_panel(self, game):
+    def _draw_stats_panel(self, game: GameCore) -> None:
         # 화면 중앙에 능력치 패널과 현재 우주선·레벨을 표시한다.
         rect = pygame.Rect(self.size[0] // 2 - 230, self.size[1] // 2 - 220, 460, 440)
         self._panel(rect, 175, 16)
@@ -1438,12 +1459,12 @@ class Renderer:
             self.font_small.render(hint, True, COLORS["label"]),
             (rect.x + 24, rect.bottom - 55),
         )
-        hint = self.font_small.render(
+        hint_surface = self.font_small.render(
             "Tab을 놓으면 닫힘 · 전투는 계속됩니다", True, COLORS["player"]
         )
-        self.screen.blit(hint, (rect.x + 24, rect.bottom - 31))
+        self.screen.blit(hint_surface, (rect.x + 24, rect.bottom - 31))
 
-    def _draw_stat_upgrades(self, game):
+    def _draw_stat_upgrades(self, game: GameCore) -> None:
         rows = build_stat_upgrade_rows(*self.size, game.progression.stat_choices)
 
         # 표시할 스탯 행이 있는지 확인하고 패널 영역을 정한다.
@@ -1508,7 +1529,7 @@ class Renderer:
             if rect.collidepoint(pygame.mouse.get_pos()):
                 self._tooltip(card.description, (14, top - 42), 300)
 
-    def _draw_stat_collapsed(self, game):
+    def _draw_stat_collapsed(self, game: GameCore) -> None:
         # 접힌 스탯 패널의 위치와 남은 강화 포인트 문구를 준비한다.
         rect = pygame.Rect(get_collapsed_stat_panel_rect(*self.size))
         hover = rect.collidepoint(pygame.mouse.get_pos())
@@ -1524,7 +1545,7 @@ class Renderer:
         )
         self.screen.blit(text, text.get_rect(midleft=(badge.right + 9, rect.centery)))
 
-    def _tooltip(self, lines, position, width):
+    def _tooltip(self, lines: Sequence[str], position: tuple[int, int], width: int) -> None:
         wrapped = [
             line for text in lines for line in self._wrapped_text(text, width - 20)
         ]
@@ -1536,7 +1557,7 @@ class Renderer:
                 (rect.x + 10, rect.y + 7 + line_index * 18),
             )
 
-    def _wrapped_text(self, text, width):
+    def _wrapped_text(self, text: str, width: int) -> list[str]:
         lines, line = [], ""
         for char in text:
             if line and self.font_small.size(line + char)[0] > width:
@@ -1545,7 +1566,7 @@ class Renderer:
             line += char
         return lines + ([line] if line else [])
 
-    def _draw_rewards(self, game):
+    def _draw_rewards(self, game: GameCore) -> None:
         pending = game.progression.special_reward_levels
         level = pending[0] if pending else (game.progression.level // 10 + 1) * 10
 
@@ -1589,7 +1610,7 @@ class Renderer:
                 )
                 self._tooltip(description, (14, rect.bottom + 8), 330)
 
-    def _draw_debug(self, lines):
+    def _draw_debug(self, lines: Sequence[str]) -> None:
         # 디버그 문장 길이에 맞춰 패널 크기를 정한다.
         line_height = 16
         width = max(self.font_mono.size(line)[0] for line in lines) + 24
@@ -1606,7 +1627,7 @@ class Renderer:
                 (rect.x + 12, rect.y + 8 + line_height * line_index),
             )
 
-    def _draw_card(self, titles, subs, stats=None):
+    def _draw_card(self, titles: Sequence[str], subs: Sequence[str], stats: Sequence[tuple[str, str]] | None=None) -> None:
         # 화면 중앙의 안내 카드와 배경을 준비한다.
         screen_width, screen_height = self.size
         shade = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
@@ -1614,7 +1635,8 @@ class Renderer:
         self.screen.blit(shade, (0, 0))
         card_height = 140 + (70 if stats else 0)
         card = pygame.Rect(0, 0, 420, card_height)
-        card.center = (screen_width / 2, screen_height / 2)
+        # pygame은 float 좌표를 내부에서 정수로 변환하지만 setter 주석은 int만 허용한다.
+        card.center = (screen_width / 2, screen_height / 2)  # type: ignore[assignment]
         self._panel(card, 225, 18)
         y = card.y + 22
 
@@ -1653,7 +1675,7 @@ class Renderer:
             )
             y += 22
 
-    def _draw_game_over(self, game):
+    def _draw_game_over(self, game: GameCore) -> None:
         # 종료 시점의 점수·처치 수·경과 시간을 안내 카드에 표시한다.
         elapsed_seconds = game.frame / self.config.fps
         self._draw_card(
@@ -1675,7 +1697,7 @@ class _ShapeSnap:
 
     __slots__ = ("kind", "x", "y", "radius", "angle")
 
-    def __init__(self, shape):
+    def __init__(self, shape: Shape) -> None:
         self.kind, self.x, self.y, self.radius, self.angle = (
             shape.kind,
             shape.x,

@@ -1,4 +1,5 @@
 """이동·회전 행동 번호와 방향·각도 변환. 게임 상태는 보관하지 않는다."""
+from __future__ import annotations
 
 import math
 
@@ -40,7 +41,7 @@ def encode_action(move: int, rotation: int) -> int:
     return move * N_ROTS + rotation
 
 
-def decode_action(action: int):
+def decode_action(action: int) -> tuple[int, int]:
     """행동 번호를 검증하고 이동 번호와 회전 번호로 분리한다.
 
     인자:

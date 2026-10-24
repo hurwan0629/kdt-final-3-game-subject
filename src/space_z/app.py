@@ -1,4 +1,9 @@
 """사람 플레이의 입력·메뉴·시간 누적과 코어·화면 연결."""
+from __future__ import annotations
+from collections.abc import Mapping, Sequence
+from space_z.config import ObsConfig
+from space_z.rendering.renderer import Renderer
+from space_z.rendering.menu_layout import MenuButton
 
 import pygame
 
@@ -18,7 +23,7 @@ from space_z.rendering.progression_panel import (
 MAX_FRAMES_PER_TICK = 5  # 느린 PC에서 밀린 업데이트를 제한한다.
 
 
-def read_player_input(keys, renderer, mouse_pos, buttons):
+def read_player_input(keys: pygame.key.ScancodeWrapper | Mapping[int, bool], renderer: Renderer, mouse_pos: tuple[int, int], buttons: Sequence[bool]) -> tuple[int, tuple[float, float], bool]:
     """현재 키·마우스 상태를 게임 행동과 월드 조준 좌표로 변환한다.
 
     인자:
@@ -44,7 +49,7 @@ def read_player_input(keys, renderer, mouse_pos, buttons):
     return encode_action(move, 0), target, bool(buttons[0])
 
 
-def debug_lines(game, observation_config, action):
+def debug_lines(game: GameCore, observation_config: ObsConfig, action: int) -> list[str]:
     """현재 관측값과 AI 감지 상태를 디버그 화면용 문장 목록으로 만든다.
 
     인자:
@@ -139,7 +144,7 @@ def debug_lines(game, observation_config, action):
 class GameApplication:
     """메뉴와 사람 입력을 관리한다. 열린 메뉴에서는 게임 시간을 진행하지 않는다."""
 
-    def __init__(self, game: GameCore, renderer, seed=None):
+    def __init__(self, game: GameCore, renderer: Renderer, seed: int | None=None) -> None:
         """게임·렌더러를 연결하고 시작 메뉴와 입력 처리 상태를 초기화한다.
 
         인자:
@@ -183,7 +188,7 @@ class GameApplication:
         self.stat_panel_last_used_frame = 0  # 스탯 창을 마지막으로 건드린 게임 프레임
         self.previous_upgrade_points = 0
 
-    def get_menu_buttons(self):
+    def get_menu_buttons(self) -> list[MenuButton]:
         """현재 메뉴 모드와 설정값에 맞는 버튼 목록을 만든다.
 
         인자:
@@ -208,7 +213,7 @@ class GameApplication:
         )
 
     @property
-    def size(self):
+    def size(self) -> tuple[int, int]:
         """입력 영역과 패널 배치에 사용할 현재 화면 크기를 조회한다.
 
         인자:
@@ -222,7 +227,7 @@ class GameApplication:
         """
         return getattr(self.renderer, "size", (self.config.width, self.config.height))
 
-    def mark_stat_panel_used(self):
+    def mark_stat_panel_used(self) -> None:
         """스탯 패널을 사용한 시점을 현재 게임 프레임으로 기록한다.
 
         인자:
@@ -237,7 +242,7 @@ class GameApplication:
         self.stat_panel_last_used_frame = self.game.frame
 
     @property
-    def stat_panel_collapsed(self):
+    def stat_panel_collapsed(self) -> bool:
         """스탯 패널을 접힌 상태로 표시할지 판단한다.
 
         인자:
@@ -257,7 +262,7 @@ class GameApplication:
             and idle_frames >= STAT_PANEL_IDLE_SECONDS * self.config.fps
         )
 
-    def activate_menu_action(self, key):
+    def activate_menu_action(self, key: str) -> None:
         """메뉴 항목의 키에 대응하는 게임 전환 또는 설정 변경을 적용한다.
 
         인자:
@@ -323,7 +328,7 @@ class GameApplication:
         elif key == "auto_pause":
             self.auto_pause = not self.auto_pause
 
-    def handle_event(self, event):
+    def handle_event(self, event: pygame.event.Event) -> None:
         """이벤트 우선순위에 따라 창·일시정지·메뉴·플레이 담당 메서드로 전달한다.
 
         인자:
@@ -352,7 +357,7 @@ class GameApplication:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._handle_play_click(event.pos)
 
-    def pointer_over_minimap(self, position):
+    def pointer_over_minimap(self, position: tuple[int, int]) -> bool:
         """화면 좌표가 미니맵 안에 있는지 조회한다.
 
         인자:
@@ -370,7 +375,7 @@ class GameApplication:
             get_minimap_rect is not None and get_minimap_rect().collidepoint(position)
         )
 
-    def pointer_over_rewards(self, position):
+    def pointer_over_rewards(self, position: tuple[int, int]) -> bool:
         """화면 좌표가 월드 발사를 차단할 스탯·진화 UI 영역에 속하는지 판단한다.
 
         인자:
@@ -406,7 +411,7 @@ class GameApplication:
             )
         return any(pygame.Rect(rect).collidepoint(position) for rect in rects)
 
-    def update(self, elapsed, keys, mouse_pos, buttons):
+    def update(self, elapsed: float, keys: pygame.key.ScancodeWrapper | Mapping[int, bool], mouse_pos: tuple[int, int], buttons: Sequence[bool]) -> None:
         """입력 표시 상태를 갱신하고 누적 시간만큼 고정 프레임으로 게임을 진행한다.
 
         인자:
@@ -479,7 +484,7 @@ class GameApplication:
                 self.accumulated_time = 0.0
                 break
 
-    def draw(self, observation_config):
+    def draw(self, observation_config: ObsConfig) -> None:
         """현재 메뉴·플레이·패널 표시 상태에 맞는 화면을 렌더러에 요청한다.
 
         인자:
@@ -518,7 +523,7 @@ class GameApplication:
             stat_panel_collapsed=self.stat_panel_collapsed,
         )
 
-    def _handle_window_event(self, event) -> bool:
+    def _handle_window_event(self, event: pygame.event.Event) -> bool:
         """창 크기 변경과 종료 이벤트를 처리하고 소비 여부를 반환한다.
 
         인자:
@@ -543,7 +548,7 @@ class GameApplication:
             return True
         return False
 
-    def _handle_pause_event(self, event) -> bool:
+    def _handle_pause_event(self, event: pygame.event.Event) -> bool:
         """포커스 상실과 ESC/P에 따른 일시정지 전환을 처리한다.
 
         인자:
@@ -598,7 +603,7 @@ class GameApplication:
             return True
         return False
 
-    def _handle_menu_event(self, event) -> None:
+    def _handle_menu_event(self, event: pygame.event.Event) -> None:
         """시작·일시정지 메뉴의 마우스 선택과 키보드 탐색을 처리한다.
 
         인자:

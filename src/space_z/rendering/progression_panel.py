@@ -1,9 +1,17 @@
 """강화·진화 패널의 배치와 표시용 계산. 게임 규칙을 적용하지 않는다."""
+from __future__ import annotations
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
+from space_z.config.progression_definitions import RewardCard
+from space_z.rendering.types import RectBounds
+
+if TYPE_CHECKING:
+    from space_z.game.game_core import GameCore
 
 from space_z.config.progression_definitions import STAT_UPGRADES
 
 
-def build_stat_upgrade_rows(width, height, cards=STAT_UPGRADES):
+def build_stat_upgrade_rows(width: int, height: int, cards: Sequence[RewardCard]=STAT_UPGRADES) -> list[tuple[RewardCard, RectBounds]]:
     """창 높이와 카드 목록으로 스탯 행의 배치를 구한다. width는 호환용이다."""
     # 하단 여백과 행 간격을 반영해 첫 스탯 행의 위치를 정한다.
     first_row_y = height - 22 - 24 * len(cards)
@@ -15,13 +23,13 @@ def build_stat_upgrade_rows(width, height, cards=STAT_UPGRADES):
     ]
 
 
-def get_evolution_card_rects(width, height, count=4):
+def get_evolution_card_rects(width: int, height: int, count: int=4) -> list[RectBounds]:
     """진화 카드의 고정 배치를 구한다. width·height는 호환용이다."""
     # 90px 카드 사이에 8px 간격을 두고 클릭 영역을 배치한다.
     return [(14 + card_index * 98, 82, 90, 90) for card_index in range(count)]
 
 
-def get_expanded_stat_panel_rect(width, height, cards=STAT_UPGRADES):
+def get_expanded_stat_panel_rect(width: int, height: int, cards: Sequence[RewardCard]=STAT_UPGRADES) -> RectBounds:
     """스탯 행과 제목을 감싸는 펼친 패널의 영역을 구한다."""
     # 첫 행 위의 제목 공간과 마지막 행 아래의 여백을 포함한다.
     rows = build_stat_upgrade_rows(width, height, cards)
@@ -30,7 +38,7 @@ def get_expanded_stat_panel_rect(width, height, cards=STAT_UPGRADES):
     return (14, top, 272, bottom - top)
 
 
-def get_collapsed_stat_panel_rect(width, height):
+def get_collapsed_stat_panel_rect(width: int, height: int) -> RectBounds:
     """한동안 건드리지 않아 접힌 스탯 창 (클릭 / 마우스를 올리면 다시 펼침)."""
     return (14, height - 54, 196, 38)  # 접힌 패널 (x, y, 너비, 높이), 하단 여백 16px
 
@@ -38,12 +46,12 @@ def get_collapsed_stat_panel_rect(width, height):
 STAT_PANEL_IDLE_SECONDS = 4.0  # 이 시간 동안 건드리지 않으면 스탯 창을 접는다
 
 
-def can_show_stat_upgrades(game):
+def can_show_stat_upgrades(game: GameCore) -> bool:
     """성장 기능과 플레이어 생존 상태로 스탯 패널 표시 여부를 확인한다."""
     return game.config.progression_enabled and game.player.alive and not game.game_over
 
 
-def build_player_stat_summary(game):
+def build_player_stat_summary(game: GameCore) -> tuple[tuple[str, str], ...]:
     """플레이어 능력치를 화면에 표시할 (항목명, 값) 목록으로 변환한다."""
     # 현재 플레이어와 강화·진화·숙련을 반영한 무기 능력치를 읽는다.
     player = game.player

@@ -3,6 +3,7 @@
 python -m space_z
 python -m space_z --seed 42 --map belt
 """
+from __future__ import annotations
 
 import argparse
 import sys
@@ -15,7 +16,7 @@ from space_z.game.terrain import list_maps
 from space_z.app import GameApplication
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument(
