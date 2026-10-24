@@ -8,7 +8,7 @@ from .terrain import TerrainConfig
 # --------------------------------------------------------------------------
 # 도형 종류: 체력, 점수, 반지름, 꼭짓점 수, 생성 가중치
 # --------------------------------------------------------------------------
-SCORE_TIMES = 1
+SCORE_TIMES = 300
 
 SHAPE_TYPES = {
     "square": {  # 사각형 천체
@@ -66,7 +66,7 @@ class GameConfig:
     # 플레이어
     player_hp: float = 100.0         # 플레이어 기본 최대 체력
     player_fire_cooldown: int = 28   # 기본 발사 간격 (프레임): 초당 약 2.1발
-    limited_ammo: bool = True        # 탄약 제한 여부 (False면 재장전 불필요, main.py 기본값은 False)
+    limited_ammo: bool = False        # 탄약 제한 여부 (False면 재장전 불필요, main.py 기본값은 False)
     player_ammo: int = 120           # limited_ammo=True일 때만 쓰는 탄창 용량
     reload_seconds: float = 2.5      # 기본 재장전 소요 시간 (초)
     regen_delay: int = 240           # 마지막 피격 후 회복 시작까지 프레임

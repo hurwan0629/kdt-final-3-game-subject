@@ -187,7 +187,7 @@ class Renderer:
 
     def draw_main_menu(self, buttons, selected_button_index=0):
         self.screen.blit(self.assets.image("backgrounds/main", self.size), (0, 0))
-        self._draw_menu(buttons, "SPACE SKIRMISH", selected_button_index, main=True)
+        self._draw_menu(buttons, "SPACE Z", selected_button_index, main=True)
 
     # ------------------------------------------------------------------
     # 폭발 프레임: 서로 다른 원본 크기를 공통 캔버스에 정렬

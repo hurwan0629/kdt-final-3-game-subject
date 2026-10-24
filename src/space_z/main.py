@@ -27,13 +27,14 @@ def main():
     pygame.init()
 
     # 게임 설정 가져오기
-    game_config = GameConfig(limited_ammo=args.limited_ammo)
+    game_config = GameConfig()
 
     # 맵 설정
     terrain_config = game_config.terrain
     terrain_config.enabled = not args.no_terrain
     terrain_config.random_map = args.random_map or not args.map   # --map을 주지 않으면 랜덤 지형
     terrain_config.mud_enabled = terrain_config.breakable_enabled = args.stage2
+    
     if args.map:
         terrain_config.map_name = args.map
 
