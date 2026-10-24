@@ -1,27 +1,35 @@
 """이동·회전 행동 번호와 방향·각도 변환. 게임 상태는 보관하지 않는다."""
+
 import math
 
 # 행동 정의: 이동 9 × 회전 3 = 27
 # --------------------------------------------------------------------------
 # move: 0=정지, 1=↑, 2=↗, 3=→, 4=↘, 5=↓, 6=↙, 7=←, 8=↖   (화면 좌표: y가 아래로 증가)
-_S = 1.0 / math.sqrt(2.0)
+_DIAGONAL_COMPONENT = 1.0 / math.sqrt(2.0)
 MOVE_VECTORS = [
-    (0.0, 0.0), (0.0, -1.0), (_S, -_S), (1.0, 0.0), (_S, _S),
-    (0.0, 1.0), (-_S, _S), (-1.0, 0.0), (-_S, -_S),
+    (0.0, 0.0),
+    (0.0, -1.0),
+    (_DIAGONAL_COMPONENT, -_DIAGONAL_COMPONENT),
+    (1.0, 0.0),
+    (_DIAGONAL_COMPONENT, _DIAGONAL_COMPONENT),
+    (0.0, 1.0),
+    (-_DIAGONAL_COMPONENT, _DIAGONAL_COMPONENT),
+    (-1.0, 0.0),
+    (-_DIAGONAL_COMPONENT, -_DIAGONAL_COMPONENT),
 ]
 N_MOVES = 9
-N_ROTS = 3          # 0=유지, 1=왼쪽(반시계), 2=오른쪽(시계)
+N_ROTS = 3  # 0=유지, 1=왼쪽(반시계), 2=오른쪽(시계)
 # move * N_ROTS + rot
 N_ACTIONS = N_MOVES * N_ROTS
 ROT_DIR = (0.0, -1.0, 1.0)
 
 
-def encode_action(move: int, rot: int) -> int:
+def encode_action(move: int, rotation: int) -> int:
     """이동 번호와 회전 번호를 하나의 행동 번호로 인코딩한다.
 
     인자:
         move: 이동 번호(0=정지, 1~8=8방향).
-        rot: 회전 번호(0=유지, 1=반시계, 2=시계).
+        rotation: 회전 번호(0=유지, 1=반시계, 2=시계).
 
     처리:
         이동 번호에 회전 경우의 수를 곱하고 회전 번호를 더한다. 입력 범위는 검사하지 않는다.
@@ -29,7 +37,8 @@ def encode_action(move: int, rot: int) -> int:
     반환:
         int: 결합된 행동 번호. 유효한 입력이면 0~26이다.
     """
-    return move * N_ROTS + rot
+    return move * N_ROTS + rotation
+
 
 def decode_action(action: int):
     """행동 번호를 검증하고 이동 번호와 회전 번호로 분리한다.
@@ -48,19 +57,22 @@ def decode_action(action: int):
         ValueError: 정수 변환 실패 또는 행동 범위(0~26) 위반.
         TypeError: 정수로 변환할 수 없는 자료형을 받은 경우.
     """
+
     # 1) 입력을 정수로 변환하고 행동 범위를 검사한다.
     action = int(action)
     if not 0 <= action < N_ACTIONS:
         raise ValueError(f"action must be in [0, {N_ACTIONS}), got {action}")
+
     # 2) 나눗셈의 몫과 나머지로 이동·회전 번호를 분리한다.
     return divmod(action, N_ROTS)
 
-def move_from_vector(dx: float, dy: float) -> int:
+
+def move_from_vector(direction_x: float, direction_y: float) -> int:
     """방향 벡터를 정지 또는 가장 가까운 8방향 이동 번호로 바꾼다.
 
     인자:
-        dx: 가로 방향 성분(오른쪽이 양수).
-        dy: 세로 방향 성분(아래쪽이 양수).
+        direction_x: 가로 방향 성분(오른쪽이 양수).
+        direction_y: 세로 방향 성분(아래쪽이 양수).
 
     처리:
         1) 벡터 길이가 거의 0이면 정지로 처리한다.
@@ -69,19 +81,24 @@ def move_from_vector(dx: float, dy: float) -> int:
     반환:
         int: 정지는 0, 이동 방향은 1~8.
     """
+
     # 1) 벡터 길이가 거의 0이면 정지로 처리한다.
-    if dx * dx + dy * dy < 1e-6:
+    if direction_x * direction_x + direction_y * direction_y < 1e-6:
         return 0
+
     # 2) 벡터 각도를 45도 간격으로 양자화해 이동 번호로 변환한다.
-    ang = math.atan2(dy, dx)                       # 0=→, +π/2=↓
-    sector = int(round(ang / (math.pi / 4))) % 8   # 0=→,1=↘,2=↓,3=↙,4=←,5=↖,6=↑,7=↗
+    angle_radians = math.atan2(direction_y, direction_x)  # 0=→, +π/2=↓
+    sector = (
+        int(round(angle_radians / (math.pi / 4))) % 8
+    )  # 0=→,1=↘,2=↓,3=↙,4=←,5=↖,6=↑,7=↗
     return (3, 4, 5, 6, 7, 8, 1, 2)[sector]
 
-def wrap_angle(a: float) -> float:
+
+def wrap_angle(angle_radians: float) -> float:
     """라디안 각도를 표준 범위로 감싼다.
 
     인자:
-        a: 변환할 각도(라디안).
+        angle_radians: 변환할 각도(라디안).
 
     처리:
         주기 2π의 나머지 연산으로 각도를 정규화한다.
@@ -89,4 +106,4 @@ def wrap_angle(a: float) -> float:
     반환:
         float: -π 이상 π 미만의 각도.
     """
-    return (a + math.pi) % (2 * math.pi) - math.pi
+    return (angle_radians + math.pi) % (2 * math.pi) - math.pi

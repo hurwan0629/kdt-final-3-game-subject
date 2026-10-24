@@ -1,4 +1,5 @@
 """새 아트의 연결·보관 무결성과 렌더링의 게임 상태 독립성을 검증한다."""
+
 import copy
 import hashlib
 import json
@@ -28,10 +29,16 @@ from space_z.game.terrain import BREAKABLE, EMPTY, MUD, WALL, TileMap
 class AssetRefreshTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         pygame.init()
-        cls.cfg = GameConfig(num_enemies=0, num_shapes=0, world_scale=1, world_area_scale=1)
-        cls.cfg.terrain.enabled = False
-        cls.renderer = Renderer(cls.cfg)
+        cls.config = GameConfig(
+            num_enemies=0,
+            num_shapes=0,
+            world_scale=1,
+            world_area_scale=1,
+        )
+        cls.config.terrain.enabled = False
+        cls.renderer = Renderer(cls.config)
 
     @classmethod
     def tearDownClass(cls):
@@ -42,8 +49,11 @@ class AssetRefreshTests(unittest.TestCase):
         self.renderer._terrain_key = None
 
     def test_resource_paths_work_outside_project_directory(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         project_root = Path(__file__).resolve().parents[1]
         previous_directory = Path.cwd()
+
+        # 현재 작업 폴더와 관계없이 프로젝트 리소스를 찾는지 확인한다.
         with tempfile.TemporaryDirectory() as directory:
             try:
                 os.chdir(directory)
@@ -56,63 +66,104 @@ class AssetRefreshTests(unittest.TestCase):
                 os.chdir(previous_directory)
 
     def test_resource_paths_use_pyinstaller_bundle_directory(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         with tempfile.TemporaryDirectory() as directory:
             with patch("space_z.resource_paths.sys._MEIPASS", directory, create=True):
-                self.assertEqual(Path(resource_path("maps/belt.txt")), Path(directory) / "maps/belt.txt")
+                self.assertEqual(
+                    Path(resource_path("maps/belt.txt")),
+                    Path(directory) / "maps/belt.txt",
+                )
 
     def test_catalog_and_archive_preserve_every_listed_file(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         root = Path(__file__).resolve().parents[1] / "assets"
         catalog = json.loads((root / "catalog.json").read_text(encoding="utf-8"))
-        records = json.loads((root / "pre/v2/manifest.json").read_text(encoding="utf-8-sig"))
+        records = json.loads(
+            (root / "pre/v2/manifest.json").read_text(encoding="utf-8-sig")
+        )
+
+        # 현재·보관 에셋의 목록과 파일 해시가 일치하는지 확인한다.
         for entry in catalog["assets"] + records:
             path = root / entry.get("archived_path", entry.get("path"))
             with self.subTest(path=path):
-                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), entry["sha256"])
+                self.assertEqual(
+                    hashlib.sha256(path.read_bytes()).hexdigest(), entry["sha256"]
+                )
         self.assertEqual(len(records), 29)
-        active = {p.relative_to(root).as_posix() for p in root.rglob("*.png")
-                  if p.relative_to(root).parts[0] not in {"pre", "new-images"}}
+        active = {
+            asset_path.relative_to(root).as_posix()
+            for asset_path in root.rglob("*.png")
+            if asset_path.relative_to(root).parts[0] not in {"pre", "new-images"}
+        }
         self.assertEqual(active, {entry["path"] for entry in catalog["assets"]})
 
     def test_wall_art_preserves_collision_damage_and_game_random_state(self):
-        cfg = self.cfg.terrain
-        old_flags = cfg.mud_enabled, cfg.breakable_enabled
-        cfg.mud_enabled = cfg.breakable_enabled = True
+        # 검사에 사용할 설정·개체·입력을 준비한다.
+        config = self.config.terrain
+        old_flags = config.mud_enabled, config.breakable_enabled
+        config.mud_enabled = config.breakable_enabled = True
+
+        # 벽 렌더링이 충돌·피해·게임 난수 상태를 바꾸지 않는지 확인한다.
         try:
-            terrain = TileMap([[WALL] * 4, [MUD, BREAKABLE, EMPTY, EMPTY], [EMPTY] * 4],
-                              cfg.tile_size, (1, 2), [], "art-test", cfg)
+            terrain = TileMap(
+                [[WALL] * 4, [MUD, BREAKABLE, EMPTY, EMPTY], [EMPTY] * 4],
+                config.tile_size,
+                (1, 2),
+                [],
+                "art-test",
+                config,
+            )
             terrain.damage_tile(1, 1, 5)
             before = copy.deepcopy((terrain.tiles, terrain.hp, terrain.version))
-            game = GameCore(self.cfg, seed=8)
+            game = GameCore(self.config, seed=8)
             random_state = copy.deepcopy(game.rng.bit_generator.state)
-            with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+            with patch.object(
+                self.renderer.assets, "image", wraps=self.renderer.assets.image
+            ) as image:
                 self.renderer._ensure_terrain(terrain)
             paths = {call.args[0] for call in image.call_args_list}
-            self.assertTrue({f"etc/guard_{i:02d}" for i in range(1, 5)} <= paths)
+            self.assertTrue(
+                {f"etc/guard_{tile_index:02d}" for tile_index in range(1, 5)} <= paths
+            )
             self.assertIn("objects/gravity_field", paths)
             self.assertEqual((terrain.tiles, terrain.hp, terrain.version), before)
             self.assertEqual(game.rng.bit_generator.state, random_state)
         finally:
-            cfg.mud_enabled, cfg.breakable_enabled = old_flags
+            config.mud_enabled, config.breakable_enabled = old_flags
 
     def test_menu_art_preserves_button_rects_and_cached_normal_image(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         for mode in ("main", "pause"):
             with self.subTest(menu=mode):
-                buttons = build_menu_buttons(mode, self.cfg, size=self.renderer.size)
+                buttons = build_menu_buttons(mode, self.config, size=self.renderer.size)
                 rects = [button.rect.copy() for button in buttons]
-                normal = self.renderer.assets.image("etc/home_selected_normal", buttons[-1].rect.size)
+                normal = self.renderer.assets.image(
+                    "etc/home_selected_normal", buttons[-1].rect.size
+                )
                 before = pygame.image.tobytes(normal, "RGBA")
-                with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
-                    self.renderer._draw_menu(buttons, "TEST", 3 if mode == "main" else 0,
-                                             main=mode == "main")
+                with patch.object(
+                    self.renderer.assets, "image", wraps=self.renderer.assets.image
+                ) as image:
+                    self.renderer._draw_menu(
+                        buttons, "TEST", 3 if mode == "main" else 0, main=mode == "main"
+                    )
                 self.assertEqual([button.rect for button in buttons], rects)
                 paths = {call.args[0] for call in image.call_args_list}
-                self.assertTrue({"etc/home_selected", "etc/home_selected_normal"} <= paths)
+                self.assertTrue(
+                    {"etc/home_selected", "etc/home_selected_normal"} <= paths
+                )
                 self.assertEqual(pygame.image.tobytes(normal, "RGBA"), before)
 
-    def test_confirmed_difficulty_is_dimmed_without_dimming_focus_or_cached_images(self):
-        buttons = build_menu_buttons("main", self.cfg, size=self.renderer.size)
+    def test_confirmed_difficulty_is_dimmed_without_dimming_focus_or_cached_images(
+        self,
+    ):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
+        buttons = build_menu_buttons("main", self.config, size=self.renderer.size)
         easy, normal = buttons[:2]
-        colors = {"etc/home_selected": (220, 160, 40), "etc/home_selected_normal": (40, 100, 140)}
+        colors = {
+            "etc/home_selected": (220, 160, 40),
+            "etc/home_selected_normal": (40, 100, 140),
+        }
         cached_images = {}
 
         def menu_image(path, size):
@@ -123,90 +174,168 @@ class AssetRefreshTests(unittest.TestCase):
             return cached_images[key]
 
         def sample(button):
-            return tuple(self.renderer.screen.get_at((button.rect.left + 8, button.rect.top + 8)))[:3]
+            return tuple(
+                self.renderer.screen.get_at((button.rect.left + 8, button.rect.top + 8))
+            )[:3]
 
-        for pointer, focus, easy_active in [(easy.rect.center, 1, True),
-                                           (normal.rect.center, 0, False),
-                                           ((-1, -1), 0, True), ((-1, -1), 1, False),
-                                           (buttons[3].rect.center, 0, False),
-                                           (buttons[4].rect.center, 0, False),
-                                           ((-1, -1), 3, False), ((-1, -1), 4, False),
-                                           ((-1, -1), -1, False)]:
+        # 확정된 난이도의 밝기만 바뀌고 포커스와 원본 이미지는 유지되는지 확인한다.
+        for pointer, focus, easy_active in [
+            (easy.rect.center, 1, True),
+            (normal.rect.center, 0, False),
+            ((-1, -1), 0, True),
+            ((-1, -1), 1, False),
+            (buttons[3].rect.center, 0, False),
+            (buttons[4].rect.center, 0, False),
+            ((-1, -1), 3, False),
+            ((-1, -1), 4, False),
+            ((-1, -1), -1, False),
+        ]:
             with self.subTest(pointer=pointer, focus=focus):
                 self.renderer.screen.fill((0, 0, 0))
-                with patch("pygame.mouse.get_pos", return_value=pointer), \
-                        patch.object(self.renderer.assets, "image", side_effect=menu_image):
+                with (
+                    patch("pygame.mouse.get_pos", return_value=pointer),
+                    patch.object(self.renderer.assets, "image", side_effect=menu_image),
+                ):
                     self.renderer._draw_menu(buttons, "TEST", focus, main=True)
                 if easy_active:
                     self.assertEqual(sample(easy), colors["etc/home_selected"])
                     self.assertLess(sample(normal)[0], sample(easy)[0])
-                    self.assertGreater(sample(normal)[0], colors["etc/home_selected_normal"][0])
+                    self.assertGreater(
+                        sample(normal)[0], colors["etc/home_selected_normal"][0]
+                    )
                 else:
                     self.assertEqual(sample(normal), colors["etc/home_selected"])
                     self.assertEqual(sample(easy), colors["etc/home_selected_normal"])
-                self.assertEqual([button.key for button in buttons if button.checked], ["difficulty_normal"])
+                self.assertEqual(
+                    [button.key for button in buttons if button.checked],
+                    ["difficulty_normal"],
+                )
         for (path, _), image in cached_images.items():
             self.assertEqual(image.get_alpha(), 255)
             self.assertEqual(tuple(image.get_at((8, 8)))[:3], colors[path])
 
     def test_only_fully_solid_8x8_regions_use_one_large_image(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         tiles = [[WALL] * 16 for _ in range(8)]
-        tiles[0][8] = EMPTY  # 오른쪽 블록에 빈칸 하나: 남은 63칸은 작은 이미지로 처리한다.
-        terrain = TileMap(tiles, self.cfg.terrain.tile_size, (8, 0), [], "blocks", self.cfg.terrain)
+        tiles[0][8] = (
+            EMPTY  # 오른쪽 블록에 빈칸 하나: 남은 63칸은 작은 이미지로 처리한다.
+        )
+        terrain = TileMap(
+            tiles,
+            self.config.terrain.tile_size,
+            (8, 0),
+            [],
+            "blocks",
+            self.config.terrain,
+        )
         before = copy.deepcopy((terrain.tiles, terrain.hp, terrain.version))
-        with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+        with patch.object(
+            self.renderer.assets, "image", wraps=self.renderer.assets.image
+        ) as image:
             self.renderer._ensure_terrain(terrain)
-        sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+        sizes = [
+            call.args[1]
+            for call in image.call_args_list
+            if call.args[0].startswith("etc/guard_")
+        ]
+
+        # 빈칸 없는 8×8 벽 영역에만 큰 이미지를 사용하는지 확인한다.
         self.assertEqual(sizes.count(8 * terrain.tile), 1)
         self.assertEqual(sizes.count(terrain.tile), 63)
         self.assertEqual((terrain.tiles, terrain.hp, terrain.version), before)
 
     def test_large_blocks_follow_random_map_center_offset(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         tiles = [[EMPTY] * 19 for _ in range(13)]
         # 생성기와 동일한 가운데 정렬: (19 % 8) // 2, (13 % 8) // 2 = (1, 2).
         for row in range(2, 10):
             for col in range(1, 9):
                 tiles[row][col] = WALL
-        terrain = TileMap(tiles, self.cfg.terrain.tile_size, (0, 0), [], "random", self.cfg.terrain)
-        with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+        terrain = TileMap(
+            tiles,
+            self.config.terrain.tile_size,
+            (0, 0),
+            [],
+            "random",
+            self.config.terrain,
+        )
+        with patch.object(
+            self.renderer.assets, "image", wraps=self.renderer.assets.image
+        ) as image:
             self.renderer._ensure_terrain(terrain)
-        sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+        sizes = [
+            call.args[1]
+            for call in image.call_args_list
+            if call.args[0].startswith("etc/guard_")
+        ]
+
+        # 큰 벽 이미지가 랜덤 맵의 중앙 정렬 위치와 맞는지 확인한다.
         self.assertEqual(sizes, [8 * terrain.tile])
 
     def test_destroying_one_tile_switches_the_whole_block_to_small_images(self):
-        cfg = self.cfg.terrain
-        old_flag = cfg.breakable_enabled
-        cfg.breakable_enabled = True
+        # 검사에 사용할 설정·개체·입력을 준비한다.
+        config = self.config.terrain
+        old_flag = config.breakable_enabled
+        config.breakable_enabled = True
+
+        # 벽 일부가 파괴되면 해당 블록을 작은 타일 이미지로 다시 그리는지 확인한다.
         try:
             tiles = [[BREAKABLE] * 8 for _ in range(8)]
-            tiles[0][0] = WALL  # 두 벽 종류가 섞여도 빈칸이 없으면 큰 이미지 하나를 사용한다.
-            terrain = TileMap(tiles, cfg.tile_size, (0, 0), [], "breakable-block", cfg)
+            tiles[0][0] = (
+                WALL  # 두 벽 종류가 섞여도 빈칸이 없으면 큰 이미지 하나를 사용한다.
+            )
+            terrain = TileMap(
+                tiles, config.tile_size, (0, 0), [], "breakable-block", config
+            )
             for destroyed in (False, True):
                 if destroyed:
-                    self.assertTrue(terrain.damage_tile(3, 3, cfg.breakable_hp))
-                with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+                    self.assertTrue(terrain.damage_tile(3, 3, config.breakable_hp))
+                with patch.object(
+                    self.renderer.assets, "image", wraps=self.renderer.assets.image
+                ) as image:
                     self.renderer._ensure_terrain(terrain)
-                sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+                sizes = [
+                    call.args[1]
+                    for call in image.call_args_list
+                    if call.args[0].startswith("etc/guard_")
+                ]
                 self.assertEqual(sizes.count(8 * terrain.tile), 0 if destroyed else 1)
                 self.assertEqual(sizes.count(terrain.tile), 63 if destroyed else 0)
         finally:
-            cfg.breakable_enabled = old_flag
+            config.breakable_enabled = old_flag
 
     def test_other_block_sizes_keep_small_images(self):
-        cfg = self.cfg.terrain
-        old_size = cfg.block_tiles
-        cfg.block_tiles = 5
+        # 검사에 사용할 설정·개체·입력을 준비한다.
+        config = self.config.terrain
+        old_size = config.block_tiles
+        config.block_tiles = 5
+
+        # 다른 크기의 블록은 작은 타일 이미지를 유지하는지 확인한다.
         try:
-            terrain = TileMap([[WALL] * 8 for _ in range(8)], cfg.tile_size, (0, 0), [], "other", cfg)
-            with patch.object(self.renderer.assets, "image", wraps=self.renderer.assets.image) as image:
+            terrain = TileMap(
+                [[WALL] * 8 for _ in range(8)],
+                config.tile_size,
+                (0, 0),
+                [],
+                "other",
+                config,
+            )
+            with patch.object(
+                self.renderer.assets, "image", wraps=self.renderer.assets.image
+            ) as image:
                 self.renderer._ensure_terrain(terrain)
-            sizes = [call.args[1] for call in image.call_args_list if call.args[0].startswith("etc/guard_")]
+            sizes = [
+                call.args[1]
+                for call in image.call_args_list
+                if call.args[0].startswith("etc/guard_")
+            ]
             self.assertEqual(sizes, [terrain.tile] * 64)
         finally:
-            cfg.block_tiles = old_size
+            config.block_tiles = old_size
 
     def test_explosion_finishes_after_game_over_without_advancing_simulation(self):
-        game = GameCore(self.cfg, seed=17)
+        # 검사에 사용할 설정·개체·입력을 준비한다.
+        game = GameCore(self.config, seed=17)
         self.renderer._last_frame = -1
         self.renderer._prev_alive.clear()
         self.renderer._ghosts.clear()
@@ -214,37 +343,67 @@ class AssetRefreshTests(unittest.TestCase):
         game.player.alive = False
         game.game_over = True
         self.renderer.draw(game)
+
+        # 게임이 멈춰도 폭발 연출은 끝나고 시뮬레이션 상태는 유지되는지 확인한다.
         self.assertTrue(self.renderer._ghosts)
-        before = copy.deepcopy((game.frame, game.rng.bit_generator.state, game.player, game.events))
+        before = copy.deepcopy(
+            (game.frame, game.rng.bit_generator.state, game.player, game.events)
+        )
         for _ in range(DEATH_FRAMES):
             self.renderer.draw(game)
         self.assertFalse(self.renderer._ghosts)
-        self.assertEqual((game.frame, game.rng.bit_generator.state, game.player, game.events), before)
+        self.assertEqual(
+            (game.frame, game.rng.bit_generator.state, game.player, game.events), before
+        )
         self.assertEqual(len(self.renderer._explosion_frames), 8)
-        self.assertEqual(len({frame.get_size() for frame in self.renderer._explosion_frames}), 1)
+        self.assertEqual(
+            len({frame.get_size() for frame in self.renderer._explosion_frames}), 1
+        )
 
     def score_popup_game(self):
         self.renderer.reset_score_popups()
         self.renderer._last_frame = -1
-        game = GameCore(self.cfg, seed=17)
+        game = GameCore(self.config, seed=17)
         self.renderer._update_camera(game.player)
         return game
 
-    def test_score_popups_do_not_mutate_core_or_repeat_sparks_and_expire_by_game_frame(self):
+    def test_score_popups_do_not_mutate_core_or_repeat_sparks_and_expire_by_game_frame(
+        self,
+    ):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         game = self.score_popup_game()
         game.record_score_award(game.player.x, game.player.y, 10, "square")
         self.renderer.add_score_popups(game.pop_score_award_events())
-        self.assertEqual(self.renderer.score_popups,
-                         [(1, 0, game.player.x, game.player.y, 10, "square")])
-        before = copy.deepcopy((game.frame, game.events, game.score_award_events,
-                                game.progression.score, game.rng.bit_generator.state))
+
+        # 점수 팝업의 수명과 불꽃 생성 횟수·게임 상태 독립성을 확인한다.
+        self.assertEqual(
+            self.renderer.score_popups,
+            [(1, 0, game.player.x, game.player.y, 10, "square")],
+        )
+        before = copy.deepcopy(
+            (
+                game.frame,
+                game.events,
+                game.score_award_events,
+                game.progression.score,
+                game.rng.bit_generator.state,
+            )
+        )
         for _ in range(2):
             self.renderer._track(game)
             self.renderer._draw_score_text(game)
         self.assertEqual(len(self.renderer._sparks), 10)
         self.assertEqual(self.renderer._popups_seen, {1})
-        self.assertEqual((game.frame, game.events, game.score_award_events,
-                          game.progression.score, game.rng.bit_generator.state), before)
+        self.assertEqual(
+            (
+                game.frame,
+                game.events,
+                game.score_award_events,
+                game.progression.score,
+                game.rng.bit_generator.state,
+            ),
+            before,
+        )
         game.frame = SCORE_POPUP_FRAMES
         self.renderer._track(game)
         self.assertEqual(len(self.renderer.score_popups), 1)
@@ -253,6 +412,7 @@ class AssetRefreshTests(unittest.TestCase):
         self.assertEqual(self.renderer.score_popups, [])
 
     def test_application_delivers_all_score_awards_before_drawing(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         game = self.score_popup_game()
         application = GameApplication(game, self.renderer, seed=17)
         application.activate_menu_action("start")
@@ -263,18 +423,25 @@ class AssetRefreshTests(unittest.TestCase):
             original_step(*args, **kwargs)
 
         with patch.object(game, "step", side_effect=step_with_score_award):
-            application.update(3.5 / game.cfg.fps, defaultdict(bool), (0, 0), (False, False, False))
+            application.update(
+                3.5 / game.config.fps, defaultdict(bool), (0, 0), (False, False, False)
+            )
+
+        # 여러 프레임의 점수 이벤트를 그리기 전에 빠짐없이 전달하는지 확인한다.
         self.assertEqual(game.frame, 3)
         self.assertEqual([popup[1] for popup in self.renderer.score_popups], [0, 1, 2])
         self.assertEqual(game.score_award_events, [])
 
     def test_restart_clears_popups_and_effects_even_when_frame_is_unchanged(self):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         game = self.score_popup_game()
         application = GameApplication(game, self.renderer, seed=17)
         application.activate_menu_action("start")
         game.record_score_award(100, 200, 10, "square")
         self.renderer.add_score_popups(game.pop_score_award_events())
         self.renderer._track(game)
+
+        # 프레임 번호가 같아도 새 판에서는 이전 팝업과 연출이 비워지는지 확인한다.
         self.assertTrue(self.renderer._sparks)
         game.record_score_award(300, 400, 20, "enemy")
         application.activate_menu_action("restart")
@@ -290,10 +457,17 @@ class AssetRefreshTests(unittest.TestCase):
         self.renderer._track(game)
         self.assertEqual(len(self.renderer._sparks), 10)
 
-    def test_human_environment_delivers_frame_skip_awards_once_and_clears_on_reset(self):
+    def test_human_environment_delivers_frame_skip_awards_once_and_clears_on_reset(
+        self,
+    ):
+        # 검사에 사용할 설정·개체·입력을 준비한다.
         self.score_popup_game()
-        environment = TankEnv(game_config=self.cfg, render_mode="human")
-        with patch("space_z.rendering.renderer.Renderer", return_value=self.renderer) as create_renderer:
+        environment = TankEnv(game_config=self.config, render_mode="human")
+
+        # 화면을 켠 학습 환경에서 점수 연출이 중복 전달되지 않는지 확인한다.
+        with patch(
+            "space_z.rendering.renderer.Renderer", return_value=self.renderer
+        ) as create_renderer:
             environment.reset(seed=17)
             original_step = environment.game.step
 
@@ -301,17 +475,24 @@ class AssetRefreshTests(unittest.TestCase):
                 environment.game.record_score_award(100, 200, 10, "square")
                 original_step(action)
 
-            with patch.object(environment.game, "step", side_effect=step_with_score_award):
+            with patch.object(
+                environment.game, "step", side_effect=step_with_score_award
+            ):
                 environment.step(0)
-            self.assertEqual([popup[1] for popup in self.renderer.score_popups],
-                             list(range(environment.env_cfg.frame_skip)))
+            self.assertEqual(
+                [popup[1] for popup in self.renderer.score_popups],
+                list(range(environment.environment_config.frame_skip)),
+            )
             self.assertEqual(environment.game.score_award_events, [])
             environment.render()
-            self.assertEqual(len(self.renderer.score_popups), environment.env_cfg.frame_skip)
+            self.assertEqual(
+                len(self.renderer.score_popups),
+                environment.environment_config.frame_skip,
+            )
             environment.reset(seed=17)
             self.assertEqual(self.renderer.score_popups, [])
             self.assertEqual(self.renderer._popups_seen, set())
-            create_renderer.assert_called_once_with(self.cfg)
+            create_renderer.assert_called_once_with(self.config)
 
 
 if __name__ == "__main__":

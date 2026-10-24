@@ -11,10 +11,14 @@
             "id": "3c47a43530498af9",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "development/flows/damage-and-kills.md",
+                "mode": "preview",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "damage-and-kills"
             }
           }
         ]
@@ -186,6 +190,8 @@
   },
   "active": "3c47a43530498af9",
   "lastOpenFiles": [
+    "development/classes/Explosion.md",
+    "development/classes/Beam.md",
     "reinforcement-learning/README.md",
     "reinforcement-learning/environment.md",
     "reinforcement-learning",
@@ -208,11 +214,9 @@
     "development/classes/PlayerProgression.md",
     "development/classes/GameCore.md",
     "development/classes/GameApplication.md",
-    "development/classes/Explosion.md",
     "development/classes/EnemyController.md",
     "development/classes/Combat.md",
     "development/classes/Bullet.md",
-    "development/classes/Beam.md",
     "development/flows",
     "development/classes",
     "development",
