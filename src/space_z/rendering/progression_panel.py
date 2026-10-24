@@ -73,8 +73,8 @@ def build_player_stat_summary(game: GameCore) -> tuple[tuple[str, str], ...]:
     # 화면에서 사용하는 고정 순서와 표시 형식으로 능력치 목록을 만든다.
     return (
         ("체력", f"{player.hp:.0f} / {player.max_hp:.0f}"),
-        ("자가 수리", f"{repair_per_second:.1f} / 초"),
-        ("주무기 피해 · 1발", f"{damage:.2f}"),
+        ("회복", f"{repair_per_second:.1f} / 초"),
+        ("탄환당 공격력", f"{damage:.2f}"),
         ("발사 간격", f"{fire_interval_seconds:.2f}초"),
         ("탄속", f"{bullet_speed_per_second:.0f} px / 초"),
         ("사거리", f"{bullet_range:.0f} px"),

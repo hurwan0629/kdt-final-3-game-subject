@@ -23,7 +23,7 @@ STAT_UPGRADES = (  # 스탯 강화 목록과 화면·숫자 단축키의 고정 
     ),  # 최대·현재 체력 강화
     RewardCard("damage", "공격력", "능력치", ("공격 피해 +25%",)),  # 탄환 공격력 강화
     RewardCard(
-        "range", "사거리 및 탄속도", "능력치", ("탄속 +20%, 수명 +15%",)
+        "range", "사거리 및 탄속도", "능력치", ("탄속 +20%, 탄환 수명 +15%",)
     ),  # 탄속·수명 강화
     RewardCard("rapid", "발사속도", "능력치", ("발사 대기 -5%",)),  # 발사 간격 단축
     RewardCard("speed", "이동속도", "능력치", ("이동 가속도 +7%",)),  # 이동 가속도 강화
@@ -219,7 +219,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         parent="sniper",
         level=20,
         asset="ships/Lv20_헌터",
-        shots=(ShotSpec(forward=1.8621, caliber=19 / 174 * 0.9 * 1.5),),
+        shots=(ShotSpec(forward=1.8621, caliber=15 / 167 * 0.9 * 2 * 1.5),),
         damage=2.3,
         cooldown=1.65,
         speed=1.805,
@@ -366,7 +366,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         parent="railgunner",
         level=30,
         asset="ships/Lv30_하이퍼 레일건",
-        shots=(ShotSpec(forward=2.0099, caliber=16 / 202 * 0.9 * 1.5),),
+        shots=(ShotSpec(forward=2.0099, caliber=15 / 167 * 0.9 * 2 * 1.5),),
         damage=3.2,
         cooldown=2.0,
         speed=3.04,
@@ -380,7 +380,7 @@ SHIP_CLASSES = (  # 21종 우주선의 진화 관계·이미지·사격 패턴·
         parent="hunter",
         level=30,
         asset="ships/Lv30_프레데터",
-        shots=(ShotSpec(forward=1.9514, caliber=18 / 185 * 0.9 * 1.5),),
+        shots=(ShotSpec(forward=1.9514, caliber=15 / 167 * 0.9 * 2 * 1.5),),
         damage=3.27,
         cooldown=1.75,
         speed=2.09,

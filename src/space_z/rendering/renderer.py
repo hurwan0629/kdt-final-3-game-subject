@@ -1454,7 +1454,7 @@ class Renderer:
             number = self.font_body.render(value, True, COLORS["white"])
             self.screen.blit(name, (rect.x + 24, y))
             self.screen.blit(number, number.get_rect(topright=(rect.right - 24, y)))
-        hint = f"수리 대기 {game.config.regen_delay / game.config.fps:g}초 · 이동 속도는 일반 지형 기준"
+        hint = f"회복 대기 {game.config.regen_delay / game.config.fps:g}초 · 이동 속도는 일반 지형 기준"
         self.screen.blit(
             self.font_small.render(hint, True, COLORS["label"]),
             (rect.x + 24, rect.bottom - 55),
